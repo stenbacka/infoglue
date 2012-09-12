@@ -98,11 +98,11 @@
 				maxWidth: 460,
 				minWidth: 250, 
 				start: function (event, ui) {
-					 $("#toolsColumn").append("<div id=\"resizeFramesIsolator\" style=\"position: fixed; z-index: 1000; left: 0pt; top: 0pt; right: 0pt; bottom: 0pt;\"></div>");
+					 $("#menuOverlayDiv").show();
 				},
 				stop: function(event, ui) { 
-					$("#resizeFramesIsolator").remove();
-					resize(false); 
+					resize(false);
+					$("#menuOverlayDiv").hide();
 				} 
 			});
 			
@@ -282,11 +282,9 @@
 	</div>
 </div>
 
-<div id="contextMenuDiv">
-</div>
+<div id="contextMenuDiv"></div>
 
-<div id="menuOverlayDiv" style="display: none; position: absolute; z-index: 100;">
-</div>
+<div id="menuOverlayDiv"></div>
 
 </body>
 </html>

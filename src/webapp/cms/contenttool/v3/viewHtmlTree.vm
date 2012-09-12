@@ -311,7 +311,7 @@
 </head>
 <body class="generaltooledit" onload="if(parent.notifyIsLoaded)parent.notifyIsLoaded();if(parent.notifyExp)parent.notifyExp('${exp}');loaded();">
 
-	<div id="treeDiv" style="float: left; min-width: 200px;">
+	<div id="treeDiv">
 
 	<!-- NEW DYNAMIC VERSION -->
 	<script type="text/javascript">

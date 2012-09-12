@@ -241,8 +241,6 @@ html, body {
 }	
 
 #paletteDiv {
-	float: left; 
-	aheight: 150px;
 	background-image: url(images/sectionBarBackground.png);
 	background-repeat: repeat-x;
 	background-color: #transparent;
