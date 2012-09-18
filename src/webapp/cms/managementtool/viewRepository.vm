@@ -143,7 +143,7 @@
 				#if($languageVOList.size() > 0)
 					<ul style="list-style-type: none; margin: 0px; padding-left: 16px; float: left;">
 					#foreach ($languageVO in $languageVOList)
-						<li style="height: 16px; background-repeat: no-repeat; background-position: 0px 0px; padding-left: 18px; background-image: url(images/v3/check.png);">$languageVO.name #if($velocityCount == 1) (Master) #end</li>
+						<li style="height: 16px; background-repeat: no-repeat; background-position: 0px 0px; padding-left: 18px; background-image: url(css/images/v3/check.png);">$languageVO.name #if($velocityCount == 1) (Master) #end</li>
 					#end
 					</ul>
 				#else

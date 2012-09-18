@@ -61,24 +61,24 @@ var Mac = (navigator.cpuClass && navigator.cpuClass.match(/PPC/))? true: false;
 
 
 var webFXTreeConfig = {
-	rootIcon        : 'images/foldericon.png',
-	openRootIcon    : 'images/openfoldericon.png',
-	folderIcon      : 'images/foldericon.png',
-	openFolderIcon  : 'images/openfoldericon.png',
-	hiddenFolderIcon      : 'images/hiddenFoldericon.png',
-	hiddenOpenFolderIcon  : 'images/hiddenOpenfoldericon.png',
-	protectedFolderIcon   	: 'images/protectedFolder.png',
-	protectedOpenFolderIcon : 'images/protectedOpenFolder.png',
-	fileIcon        : 'images/file.png',
-	protectedFileIcon : 'images/protectedFile.png',
-	iIcon           : 'images/I.png',
-	lIcon           : 'images/L.png',
-	lMinusIcon      : 'images/Lminus.png',
-	lPlusIcon       : 'images/Lplus.png',
-	tIcon           : 'images/T.png',
-	tMinusIcon      : 'images/Tminus.png',
-	tPlusIcon       : 'images/Tplus.png',
-	blankIcon       : 'images/blank.png',
+	rootIcon        : 'css/images/foldericon.png',
+	openRootIcon    : 'css/images/openfoldericon.png',
+	folderIcon      : 'css/images/foldericon.png',
+	openFolderIcon  : 'css/images/openfoldericon.png',
+	hiddenFolderIcon      : 'css/images/hiddenFoldericon.png',
+	hiddenOpenFolderIcon  : 'css/images/hiddenOpenfoldericon.png',
+	protectedFolderIcon   	: 'css/images/protectedFolder.png',
+	protectedOpenFolderIcon : 'css/images/protectedOpenFolder.png',
+	fileIcon        : 'css/images/file.png',
+	protectedFileIcon : 'css/images/protectedFile.png',
+	iIcon           : 'css/images/I.png',
+	lIcon           : 'css/images/L.png',
+	lMinusIcon      : 'css/images/Lminus.png',
+	lPlusIcon       : 'css/images/Lplus.png',
+	tIcon           : 'css/images/T.png',
+	tMinusIcon      : 'css/images/Tminus.png',
+	tPlusIcon       : 'css/images/Tplus.png',
+	blankIcon       : 'css/images/blank.png',
 	defaultText     : 'Tree Item',
 	defaultAction   : 'javascript:void(0);',
 	defaultBehavior : 'classic',
@@ -734,7 +734,7 @@ WebFXTreeItem.prototype.toString = function (nItem, nItemCount) {
 		classInfo = "finishedTreeItem";
 		stateInfo = " (finished)";
 		if(languageCode == "sv")
-			stateInfo = " (slutförd)";
+			stateInfo = " (slutfï¿½rd)";
 	}
 	else if(this.stateId == "2"){ 
 		classInfo = "publishTreeItem";

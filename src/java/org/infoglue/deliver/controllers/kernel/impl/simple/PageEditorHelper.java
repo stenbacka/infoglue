@@ -233,7 +233,7 @@ public class PageEditorHelper extends BaseDeliveryController
 
 				sb.append("	<div class=\"propertyRow\">");
 				sb.append("		<div class=\"propertyRowLeft\">");
-				sb.append("			" + getLocalizedString(locale, "deliver.editOnSight.advancedProperties") + " <img src='images/downArrow.gif' onclick=\"$('.advancedProperty" + componentId + "').toggle();\"/>");
+				sb.append("			" + getLocalizedString(locale, "deliver.editOnSight.advancedProperties") + " <img src='css/images/downArrow.gif' onclick=\"$('.advancedProperty" + componentId + "').toggle();\"/>");
 				sb.append("		</div>");
 				sb.append("	</div>");
 				sb.append("	<div style=\"clear:both;\"></div>");
@@ -1887,7 +1887,7 @@ public class PageEditorHelper extends BaseDeliveryController
 	    	        	
 	    	        	String imageUrl = getDigitalAssetUrl(componentContentVO.getId(), "thumbnail", db);
 	    				if(imageUrl == null || imageUrl.length() == 0)
-	    					imageUrl = "images/componentIcon.gif";
+	    					imageUrl = "css/images/componentIcon.gif";
 
 	    				sb.append("<div id=\"componentRow\" name=\"" +  componentContentVO.getId() + "\" class=\"dragable\">");
 	    	    		
