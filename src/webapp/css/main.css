@@ -2,10 +2,10 @@
 
 body.generaltooledit {
 	color            : #000000;
-	background-color: #f6f6f6;
+	background-color : #f6f6f6;
 	padding			 : 0px;
 	margin			 : 0px;
-	width			 : 100%; 
+	width			 : 100%;
 	float			 : left;
 	font-family      : verdana, arial, sans-serif;
 	font-size        : 11px;
@@ -833,14 +833,17 @@ span.error {
 	width: 100%;
 	height: 100%;
 	position: absolute;
-	z-index: 900;
+	z-index: 1010;
 }
 
 .ui-resizable-e {
-	background-image: url("images/closeIcon.gif");
+	background-image: url("images/grabHandle.png");
 	background-repeat: no-repeat;
 	background-position: center;
 	background-color: #A9A9A9;
 	width: 10px;
 	cursor: move;
+	border-left: 1px solid rgb(130, 130, 130);
+	border-right: 1px solid rgb(130, 130, 130);
+	right: -10px;
 }

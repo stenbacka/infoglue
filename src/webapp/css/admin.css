@@ -6,6 +6,7 @@ html, body {
 	height: 54px;
     background-image: url(images/headerBackground.png); 
 	background-repeat: repeat-x; 
+	min-width: 1024px;
 }
 #searchForm {
 	float: left; 
@@ -184,10 +185,7 @@ html, body {
 	float: left;
 	width: 250px; 
 	margin: 0px 0px 0px 0px;
-	padding-right: 6px;
-	background-image: url(images/verticalDivider.png);
-	background-position: right;
-	background-repeat: repeat-y;
+	border-right: 6px solid rgb(220, 220, 220);
 }
 #repositoryChoiceDiv {
 	height: 30px;

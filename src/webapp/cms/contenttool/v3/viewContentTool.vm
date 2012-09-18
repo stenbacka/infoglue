@@ -110,6 +110,10 @@
 			});
 
 			openUrlInWorkArea("ViewContentToolStartPage!V3.action");
+			
+			$("#menuOverlayDiv").mouseout(function () {
+				$("#structureToolDiv").mouseup();
+			});
 		});
 		
 		function changeRepository(selectBox)

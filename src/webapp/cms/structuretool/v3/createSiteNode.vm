@@ -12,7 +12,9 @@
 <script type="text/javascript">
 <!--
 	$(document).ready(function(){
-		$("#tabsContainer").tabs({ show:function() { resizeScrollArea(); } });
+		$("#tabsContainer").tabs({ show:function() { 
+			resizeScrollArea();
+		}});
 
 		setTimeout("focusFirst();", 200);
 	});
