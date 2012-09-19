@@ -354,6 +354,7 @@ public class LuceneController extends BaseController implements NotificationList
 		logger.warn("INDEXING ALL - correct?");
 		Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 		
+		stopIndexing.set(false);
 		logger.info("------------------------------Got indexAll directive....");
 		if (indexingInitialized.compareAndSet(false, true)) 
 		{
@@ -387,12 +388,13 @@ public class LuceneController extends BaseController implements NotificationList
 						Thread.sleep(5000);
 						newLastContentVersionId = getContentNotificationMessages(languageVO, newLastContentVersionId);
 						RequestAnalyser.getRequestAnalyser().registerComponentStatistics("getNotificationMessages 2", t.getElapsedTime());
+						logger.info("newLastContentVersionId " + newLastContentVersionId);
 					}
 				}
 
 				languageVOList = LanguageController.getController().getLanguageVOList();
 				languageVOListIterator = languageVOList.iterator();
-				while(languageVOListIterator.hasNext())
+				outer:while(languageVOListIterator.hasNext())
 				{
 					LanguageVO languageVO = (LanguageVO)languageVOListIterator.next();
 					
@@ -429,7 +431,6 @@ public class LuceneController extends BaseController implements NotificationList
 			logger.warn("-------------------: Allready running index all...");
 			return false;
 		}
-		*/
 		return true;
 	}
 	
@@ -937,7 +938,7 @@ public class LuceneController extends BaseController implements NotificationList
 		}
 		if(logger.isInfoEnabled())
 			t2.printElapsedTime("All indexing took");
-		*/
+
 		return true;
 	}
 	
@@ -1253,7 +1254,6 @@ public class LuceneController extends BaseController implements NotificationList
 	
 	private void indexInformation(NotificationMessage notificationMessage, IndexWriter writer, List<NotificationMessage> internalMessageList, Boolean forceVersionIndexing, Database db)
 	{
-		/*
     	Timer t = new Timer();
 
 		try 
@@ -1298,7 +1298,6 @@ public class LuceneController extends BaseController implements NotificationList
 	    {
 			logger.error("Error indexing:" + e.getMessage(), e);
 	    }
-	    */
 	}
 	
 	
@@ -1337,7 +1336,7 @@ public class LuceneController extends BaseController implements NotificationList
 			
 			try
 			{			
-				//////////ANTAGLIGEN ON�DIGT MED MEDIUM h�r
+				//////////ANTAGLIGEN ONDIGT MED MEDIUM hr
 				MediumDigitalAssetImpl asset = (MediumDigitalAssetImpl)DigitalAssetController.getMediumDigitalAssetWithIdReadOnly((Integer)notificationMessage.getObjectId(), db2);
 				RequestAnalyser.getRequestAnalyser().registerComponentStatistics("getMediumDigitalAssetWithIdReadOnly", t.getElapsedTime());
 				Collection contentVersions = asset.getContentVersions();
@@ -1377,7 +1376,7 @@ public class LuceneController extends BaseController implements NotificationList
 			//Deleting all info based on content
 			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_34);
 			logger.info("Deleting all info on:" + siteNodeId);
-			//TODO - Fixa s� inte assets tas med h�r....
+			//TODO - Fixa s inte assets tas med hr....
 		    Query query = new QueryParser(Version.LUCENE_34, "siteNodeId", analyzer).parse("" + siteNodeId); 
 			writer.deleteDocuments(query);
 			//End
@@ -1398,7 +1397,7 @@ public class LuceneController extends BaseController implements NotificationList
 			//Deleting all info based on content
 			Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_34);
 			logger.info("Deleting all info on:" + contentId);
-			//TODO - Fixa s� inte assets tas med h�r....
+			//TODO - Fixa s inte assets tas med hr....
 			
 			String[] fields = new String[]{"isAsset","contentId"};
 			String[] queries = new String[]{"true","" + contentId};
