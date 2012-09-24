@@ -6,7 +6,6 @@ html, body {
 	height: 54px;
     background-image: url(images/headerBackground.png); 
 	background-repeat: repeat-x; 
-	min-width: 1024px;
 }
 #searchForm {
 	float: left; 
@@ -169,7 +168,7 @@ html, body {
 #menutoolbarLeft {
 	padding: 0px;
 	margin: 0px;
-	width: 90%; 
+	width: 90%;
 }
 /*
 .igToolbarButton
@@ -255,7 +254,9 @@ html, body {
 	color: #333333;
 	float: left;
 }
-
+.mainTool {
+	min-width: 1024px;
+}
 .mainTool #work {
 	background-image: url("images/v3/toolBackgroundTheme.jpg");
 	background-repeat: no-repeat;
