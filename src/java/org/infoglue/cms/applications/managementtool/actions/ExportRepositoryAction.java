@@ -25,14 +25,17 @@ package org.infoglue.cms.applications.managementtool.actions;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.log4j.Logger;
 import org.exolab.castor.jdo.Database;
@@ -45,6 +48,9 @@ import org.infoglue.cms.controllers.kernel.impl.simple.CastorDatabaseService;
 import org.infoglue.cms.controllers.kernel.impl.simple.CategoryController;
 import org.infoglue.cms.controllers.kernel.impl.simple.ContentController;
 import org.infoglue.cms.controllers.kernel.impl.simple.ContentTypeDefinitionController;
+import org.infoglue.cms.controllers.kernel.impl.simple.ExportImportController;
+import org.infoglue.cms.controllers.kernel.impl.simple.ExportRepositoryController;
+import org.infoglue.cms.controllers.kernel.impl.simple.ExportRepositoryController.ExportInfo;
 import org.infoglue.cms.controllers.kernel.impl.simple.InterceptionPointController;
 import org.infoglue.cms.controllers.kernel.impl.simple.RepositoryController;
 import org.infoglue.cms.controllers.kernel.impl.simple.SiteNodeController;
@@ -60,6 +66,8 @@ import org.infoglue.cms.exception.SystemException;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.cms.util.handlers.DigitalAssetBytesHandler;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.module.propertyset.PropertySetManager;
 
@@ -77,10 +85,29 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	private Integer repositoryId = null;
 	private List repositories = new ArrayList();
 	
+	private String exportId = null;
+	private String exportUUID = null;
+	
 	private String fileUrl 	= "";
 	private String fileName = "";
 	private String exportFileName = null;
 	private int assetMaxSize = -1;
+	
+	/**
+	 * 
+	 * @throws NumberFormatException If any of the values in <code>input</code> cannot be converted to an Integer
+	 */
+	private Integer[] convertToIntergerArray(String[] input) throws NumberFormatException
+	{
+		Integer[] output = new Integer[input.length];
+		
+		for (int i = 0; i < input.length; i++)
+		{
+			output[i] = new Integer(input[i]);
+		}
+		
+		return output;
+	}
 	
 	/**
 	 * This shows the dialog before export.
@@ -95,11 +122,74 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 		return "input";
 	}
 	
+	public String doExportStatus() throws IOException
+	{
+		JsonObject result = new JsonObject();
+		if (exportId == null)
+		{
+			result.addProperty("error", "no-export-id");
+		}
+		else
+		{
+			try
+			{
+				UUID exportUUID = UUID.fromString(exportId);
+				ExportInfo info = ExportRepositoryController.getController().getExportInfo(exportUUID);
+				
+				result.add("info", new Gson().toJsonTree(info));
+			}
+			catch (IllegalArgumentException ex)
+			{
+				result.addProperty("error", "invalid-export-id");
+				logger.info("Got invalid exportId. Id: " + exportId + ". Message: " + ex);
+			}
+			catch (IllegalStateException ex)
+			{
+				result.addProperty("error", "missing-export-id");
+				logger.info("Could not find an export for the given id. Id: " + exportId);
+			}
+		}
+		
+		getResponse().getWriter().write(result.getAsString());
+		return NONE;
+	}
+	
+	protected String doExecute() throws Exception 
+	{
+		// TODO access control
+		
+		String[] repositories = getRequest().getParameterValues("repositoryId");
+		if (repositories == null)
+		{
+			return "error";
+		}
+		else
+		{
+			try
+			{
+				Map<String, Object> exportParams = new HashMap<String, Object>();
+				exportParams.put(ExportRepositoryController.PARAM_REPOSITORIES, convertToIntergerArray(repositories));
+				this.exportUUID = ExportRepositoryController.getController().exportRepository(exportParams, this.getInfoGluePrincipal()).toString();
+				return "success";
+			}
+			catch (NumberFormatException ex)
+			{
+				logger.info("Failed to parse repository id list when preparing to export respository. Ids: " +  Arrays.toString(repositories));
+				return "error";
+			}
+		}
+	}
+	
+	
+	
+	
+	
+	
 	/**
 	 * This handles the actual exporting.
 	 */
 	
-	protected String doExecute() throws Exception 
+	protected String doExecuteOld() throws Exception 
 	{
 		Database db = CastorDatabaseService.getDatabase();
 		
