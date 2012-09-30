@@ -49,8 +49,7 @@ import org.infoglue.cms.controllers.kernel.impl.simple.CategoryController;
 import org.infoglue.cms.controllers.kernel.impl.simple.ContentController;
 import org.infoglue.cms.controllers.kernel.impl.simple.ContentTypeDefinitionController;
 import org.infoglue.cms.controllers.kernel.impl.simple.ExportImportController;
-import org.infoglue.cms.controllers.kernel.impl.simple.ExportRepositoryController;
-import org.infoglue.cms.controllers.kernel.impl.simple.ExportRepositoryController.ExportInfo;
+import org.infoglue.cms.controllers.kernel.impl.simple.ExportImportController.ExportInfo;
 import org.infoglue.cms.controllers.kernel.impl.simple.InterceptionPointController;
 import org.infoglue.cms.controllers.kernel.impl.simple.RepositoryController;
 import org.infoglue.cms.controllers.kernel.impl.simple.SiteNodeController;
@@ -76,6 +75,7 @@ import com.opensymphony.module.propertyset.PropertySetManager;
  * This class handles Exporting of a repository to an XML-file.
  * 
  * @author mattias
+ * @author Erik Stenbäcka <stenbacka@gmail.com>
  */
 
 public class ExportRepositoryAction extends InfoGlueAbstractAction
@@ -134,7 +134,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 			try
 			{
 				UUID exportUUID = UUID.fromString(exportId);
-				ExportInfo info = ExportRepositoryController.getController().getExportInfo(exportUUID);
+				ExportInfo info = ExportImportController.getController().getExportInfo(exportUUID);
 				
 				result.add("info", new Gson().toJsonTree(info));
 			}
@@ -146,7 +146,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 			catch (IllegalStateException ex)
 			{
 				result.addProperty("error", "missing-export-id");
-				logger.info("Could not find an export for the given id. Id: " + exportId);
+				logger.info("Could not find an export for the given id. Id: " + exportId, ex);
 			}
 		}
 		
@@ -168,13 +168,13 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 			try
 			{
 				Map<String, Object> exportParams = new HashMap<String, Object>();
-				exportParams.put(ExportRepositoryController.PARAM_REPOSITORIES, convertToIntergerArray(repositories));
-				this.exportUUID = ExportRepositoryController.getController().exportRepository(exportParams, this.getInfoGluePrincipal()).toString();
+				exportParams.put(ExportImportController.PARAM_REPOSITORIES, convertToIntergerArray(repositories));
+				this.exportUUID = ExportImportController.getController().exportRepository(exportParams, this.getInfoGluePrincipal()).toString();
 				return "success";
 			}
 			catch (NumberFormatException ex)
 			{
-				logger.info("Failed to parse repository id list when preparing to export respository. Ids: " +  Arrays.toString(repositories));
+				logger.warn("Failed to parse repository id list when preparing to export respository. Ids: " +  Arrays.toString(repositories));
 				return "error";
 			}
 		}
@@ -188,7 +188,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	/**
 	 * This handles the actual exporting.
 	 */
-	
+	/*
 	protected String doExecuteOld() throws Exception 
 	{
 		Database db = CastorDatabaseService.getDatabase();
@@ -463,7 +463,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 
 		return properties;
 	}
-
+*/
 	public void setRepositoryId(Integer repositoryId)
 	{
 		this.repositoryId = repositoryId;

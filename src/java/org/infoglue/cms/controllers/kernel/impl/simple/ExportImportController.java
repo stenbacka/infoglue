@@ -5,14 +5,20 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 import org.exolab.castor.jdo.Database;
@@ -29,30 +35,518 @@ import org.infoglue.cms.entities.content.DigitalAsset;
 import org.infoglue.cms.entities.content.impl.simple.ContentImpl;
 import org.infoglue.cms.entities.content.impl.simple.ContentVersionImpl;
 import org.infoglue.cms.entities.kernel.BaseEntityVO;
+import org.infoglue.cms.entities.management.AccessRight;
 import org.infoglue.cms.entities.management.Category;
 import org.infoglue.cms.entities.management.CategoryVO;
 import org.infoglue.cms.entities.management.ContentTypeDefinition;
+import org.infoglue.cms.entities.management.InterceptionPointVO;
 import org.infoglue.cms.entities.management.Language;
+import org.infoglue.cms.entities.management.Repository;
 import org.infoglue.cms.entities.management.impl.simple.CategoryImpl;
 import org.infoglue.cms.entities.management.impl.simple.ContentTypeDefinitionImpl;
 import org.infoglue.cms.entities.management.impl.simple.InfoGlueExportImpl;
-import org.infoglue.cms.entities.management.impl.simple.LanguageImpl;
 import org.infoglue.cms.entities.management.impl.simple.RepositoryImpl;
+import org.infoglue.cms.entities.structure.SiteNode;
+import org.infoglue.cms.entities.structure.SiteNodeVersionVO;
 import org.infoglue.cms.exception.Bug;
 import org.infoglue.cms.exception.SystemException;
+import org.infoglue.cms.security.InfoGluePrincipal;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.cms.util.handlers.DigitalAssetBytesHandler;
 import org.infoglue.cms.util.sorters.ReflectionComparator;
+import org.infoglue.cms.entities.management.impl.simple.LanguageImpl;
 import org.infoglue.deliver.util.Timer;
+
+import com.opensymphony.module.propertyset.PropertySet;
+import com.opensymphony.module.propertyset.PropertySetManager;
 
 public class ExportImportController extends BaseController
 {
     private final static Logger logger = Logger.getLogger(ExportImportController.class.getName());
+    private static final ExportImportController controller = new ExportImportController();
 
+    /** Map key for the export parameters. Should be instance of Integer[]. */
+    public static final String PARAM_REPOSITORIES = "REPOSITORIES";
+    
+    /** Map key for the export parameters. SShould be instance of ??. */
+	public static final String PARAM_SKIP_CATEGORIES = "SKIP_CATEGORIES";
+	
+	/** Map key for the export parameters. Should be instance of ??. */
+	public static final String PARAM_ONLY_USED_CATEGORIES = "ONLY_USED_CATEGORIES";
+	
+	/** Map key for the export parameters. Should be instance of String. */
+	public static final Object PARAM_EXPORT_FILE_NAME = "EXPORT_FILE_NAME";
+	
+	/** Map key for the export parameters. Should be instance of Integer. */
+	public static final Object PARAM_ASSET_MAX_SIZE = "ASSET_MAX_SIZE";
+    
+    private ConcurrentHashMap<UUID, ExportWorker> workers;
+	
+	private ExportImportController()
+	{
+		workers = new ConcurrentHashMap<UUID, ExportWorker>();
+	}
+	
+	/* ############################################################ */
+	/* ####  Public methods  ###################################### */
+	/* ############################################################ */
+	
+	/* ***  Repository Export ************************************* */
+	
+	public ExportInfo getExportInfo(UUID exportUUID) throws IllegalStateException
+	{
+		ExportWorker worker = workers.get(exportUUID);
+		if (worker == null)
+		{
+			throw new IllegalStateException("An export with the given id was not found in the current export worker queue. Export id: " + exportUUID);
+		}
+		return worker.getExportInfo();
+	}
+	
+	public List<UUID> getRepositoryExports(InfoGluePrincipal exportOwner) throws NullPointerException
+	{
+		List<UUID> result = new LinkedList<UUID>();
+		
+		for (ExportWorker value : workers.values())
+		{
+			if (exportOwner.equals(value.getOwner()))
+			{
+				result.add(value.getId());
+			}
+		}
+		
+		logger.info("Found " + result.size() + " number of exports for principal " + exportOwner.getName() + " out of " + workers.size() + " total exports");
+		
+		return result;
+	}
+	
+	public UUID exportRepository(Map<String, Object> exportParams, InfoGluePrincipal exportOwner)
+	{
+		ExportWorker exportWorker = new ExportWorker(exportOwner, exportParams);
+		
+		logger.debug("Adds export repository worker to worker list. UUID: " + exportWorker.getId());
+		workers.put(exportWorker.getId(), exportWorker);
+		new Thread(exportWorker).start();
+		
+		return exportWorker.getId();
+	}
+	
+	
+	
+	/* ############################################################ */
+	/* ####  Auxiliary methods  ################################### */
+	/* ############################################################ */
+	
 	public static ExportImportController getController()
 	{
-		return new ExportImportController();
+		return controller;
 	}
+	
+	/* ############################################################ */
+	/* ####  Private methods  ##################################### */
+	/* ############################################################ */	
+
+	@SuppressWarnings("unchecked")
+	private static void getContentPropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allContentProperties, List<AccessRight> allAccessRights, Content content, Database db) throws SystemException
+	{
+		String allowedContentTypeNames = ps.getString("content_" + content.getId() + "_allowedContentTypeNames");
+		if ( allowedContentTypeNames != null && !allowedContentTypeNames.equals(""))
+	    {
+        	allContentProperties.put("content_" + content.getId() + "_allowedContentTypeNames", allowedContentTypeNames);
+	    }
+
+		if(ps.exists("content_" + content.getId() + "_defaultContentTypeName"))
+			allContentProperties.put("content_" + content.getId() + "_defaultContentTypeName", "" + ps.getString("content_" + content.getId() + "_defaultContentTypeName"));
+	    if(ps.exists("content_" + content.getId() + "_initialLanguageId"))
+	    	allContentProperties.put("content_" + content.getId() + "_initialLanguageId", "" + ps.getString("content_" + content.getId() + "_initialLanguageId"));
+
+	    InterceptionPointVO interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Content.Read", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Content.Write", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Content.Create", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Content.Delete", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Content.Move", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Content.SubmitToPublish", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+	    
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Content.ChangeAccessRights", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Content.CreateVersion", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("ContentVersion.Delete", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("ContentVersion.Write", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("ContentVersion.Read", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+
+	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("ContentVersion.Publish", db);
+	    if(interceptionPointVO != null)
+	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
+        
+        @SuppressWarnings("rawtypes")
+		Iterator childContents = content.getChildren().iterator();
+        while(childContents.hasNext())
+        {
+        	Content childContent = (Content)childContents.next();
+        	getContentPropertiesAndAccessRights(ps, allContentProperties, allAccessRights, childContent, db);
+        }
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void getSiteNodePropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allSiteNodeProperties, List<AccessRight> allAccessRights, SiteNode siteNode, Database db) throws SystemException, Exception
+	{
+		String disabledLanguagesString = "" + ps.getString("siteNode_" + siteNode.getId() + "_disabledLanguages");
+	    String enabledLanguagesString = "" + ps.getString("siteNode_" + siteNode.getId() + "_enabledLanguages");
+
+	    if(disabledLanguagesString != null && !disabledLanguagesString.equals("") && !disabledLanguagesString.equals("null"))
+	    	allSiteNodeProperties.put("siteNode_" + siteNode.getId() + "_disabledLanguages", disabledLanguagesString);
+	    if(enabledLanguagesString != null && !enabledLanguagesString.equals("") && !enabledLanguagesString.equals("null"))
+		    allSiteNodeProperties.put("siteNode_" + siteNode.getId() + "_enabledLanguages", enabledLanguagesString);
+        
+        SiteNodeVersionVO latestSiteNodeVersionVO = SiteNodeVersionController.getController().getLatestActiveSiteNodeVersionVO(db, siteNode.getId());
+        
+        if(latestSiteNodeVersionVO != null)
+        {
+	        InterceptionPointVO interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("SiteNodeVersion.Read", db);
+		    if(interceptionPointVO != null)
+		    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), latestSiteNodeVersionVO.getId().toString(), db));
+	
+		    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("SiteNodeVersion.Write", db);
+		    if(interceptionPointVO != null)
+		    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), latestSiteNodeVersionVO.getId().toString(), db));
+	
+		    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("SiteNodeVersion.CreateSiteNode", db);
+		    if(interceptionPointVO != null)
+		    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), latestSiteNodeVersionVO.getId().toString(), db));
+	
+		    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("SiteNodeVersion.DeleteSiteNode", db);
+		    if(interceptionPointVO != null)
+		    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), latestSiteNodeVersionVO.getId().toString(), db));
+	
+		    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("SiteNodeVersion.MoveSiteNode", db);
+		    if(interceptionPointVO != null)
+		    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), latestSiteNodeVersionVO.getId().toString(), db));
+	
+		    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("SiteNodeVersion.SubmitToPublish", db);
+		    if(interceptionPointVO != null)
+		    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), latestSiteNodeVersionVO.getId().toString(), db));
+	
+		    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("SiteNodeVersion.ChangeAccessRights", db);
+		    if(interceptionPointVO != null)
+		    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), latestSiteNodeVersionVO.getId().toString(), db));
+	
+		    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("SiteNodeVersion.Publish", db);
+		    if(interceptionPointVO != null)
+		    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), latestSiteNodeVersionVO.getId().toString(), db));
+        }
+        
+        @SuppressWarnings("rawtypes")
+		Iterator childSiteNodes = siteNode.getChildSiteNodes().iterator();
+        while(childSiteNodes.hasNext())
+        {
+        	SiteNode childSiteNode = (SiteNode)childSiteNodes.next();
+        	getSiteNodePropertiesAndAccessRights(ps, allSiteNodeProperties, allAccessRights, childSiteNode, db);
+        }
+	}
+
+	private static Hashtable<String,String> getRepositoryProperties(PropertySet ps, Integer repositoryId) throws Exception
+	{
+		Hashtable<String,String> properties = new Hashtable<String,String>();
+			    
+	    byte[] WYSIWYGConfigBytes = ps.getData("repository_" + repositoryId + "_WYSIWYGConfig");
+	    if(WYSIWYGConfigBytes != null)
+	    	properties.put("repository_" + repositoryId + "_WYSIWYGConfig", new String(WYSIWYGConfigBytes, "utf-8"));
+
+	    byte[] StylesXMLBytes = ps.getData("repository_" + repositoryId + "_StylesXML");
+	    if(StylesXMLBytes != null)
+	    	properties.put("repository_" + repositoryId + "_StylesXML", new String(StylesXMLBytes, "utf-8"));
+
+	    byte[] extraPropertiesBytes = ps.getData("repository_" + repositoryId + "_extraProperties");
+	    if(extraPropertiesBytes != null)
+	    	properties.put("repository_" + repositoryId + "_extraProperties", new String(extraPropertiesBytes, "utf-8"));
+	    
+	    if(ps.exists("repository_" + repositoryId + "_defaultFolderContentTypeName"))
+	    	properties.put("repository_" + repositoryId + "_defaultFolderContentTypeName", "" + ps.getString("repository_" + repositoryId + "_defaultFolderContentTypeName"));
+	    if(ps.exists("repository_" + repositoryId + "_defaultTemplateRepository"))
+		    properties.put("repository_" + repositoryId + "_defaultTemplateRepository", "" + ps.getString("repository_" + repositoryId + "_defaultTemplateRepository"));
+	    if(ps.exists("repository_" + repositoryId + "_parentRepository"))
+		    properties.put("repository_" + repositoryId + "_parentRepository", "" + ps.getString("repository_" + repositoryId + "_parentRepository"));
+
+		return properties;
+	}
+	
+	/* ############################################################ */
+	/* ####  Inner classes  ####################################### */
+	/* ############################################################ */
+	
+	private static class ExportWorker implements Runnable
+	{
+		private ExportInfo exportInfo;
+		private UUID id;
+		private InfoGluePrincipal owner;
+		private Integer[] repositoryIds;
+		private String exportFileName;
+		private Integer assetMaxSize = -1;
+		
+		/**
+		 * 
+		 * @param owner
+		 * @param exportParams
+		 * @throws IllegalArgumentException If the <em>exportParams</em> does not contain the key {@link ExportImportController#PARAM_REPOSITORIES}
+		 * @throws ClassCastException If any of the values in the <em>exportParams</em> map has the wrong type.
+		 */
+		public ExportWorker(InfoGluePrincipal owner, Map<String, Object> exportParams) throws IllegalArgumentException, ClassCastException
+		{
+			if (!exportParams.containsKey(ExportImportController.PARAM_REPOSITORIES))
+			{
+				throw new IllegalArgumentException("Export params must contain an entry for the key PARAM_REPOSITORIES");
+			}
+			
+			this.id = UUID.randomUUID();
+			this.owner = owner;
+			this.repositoryIds = (Integer[])exportParams.get(ExportImportController.PARAM_REPOSITORIES);
+			if (exportParams.containsKey(ExportImportController.PARAM_EXPORT_FILE_NAME))
+			{
+				this.exportFileName = (String)exportParams.get(ExportImportController.PARAM_EXPORT_FILE_NAME);
+			}
+			if (exportParams.containsKey(ExportImportController.PARAM_ASSET_MAX_SIZE))
+			{
+				this.assetMaxSize = (Integer)exportParams.get(ExportImportController.PARAM_ASSET_MAX_SIZE);
+			}
+
+			this.exportInfo = new ExportInfo();
+			this.exportInfo.stepsTotal = 7 * this.repositoryIds.length + 3;
+		}
+		
+		public UUID getId()
+		{
+			return id;
+		}
+		
+		public ExportInfo getExportInfo()
+		{
+			return exportInfo;
+		}
+		
+		public InfoGluePrincipal getOwner()
+		{
+			return owner;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void run()
+		{
+			logger.info("Starting repository export in worker thread. Will export repositories with IDs " + Arrays.toString(repositoryIds));
+			
+			exportInfo.status = ExportStatus.Running;
+			
+			Database db = null;
+			try 
+			{
+				db = CastorDatabaseService.getDatabase();
+
+				Mapping map = new Mapping();
+				String exportFormat = CmsPropertyHandler.getExportFormat();
+
+				if(exportFormat.equalsIgnoreCase("2"))
+				{
+					logger.info("MappingFile:" + CastorDatabaseService.class.getResource("/xml_mapping_site_2.5.xml").toString());
+					map.loadMapping(CastorDatabaseService.class.getResource("/xml_mapping_site_2.5.xml").toString());
+				}
+				else
+				{
+					logger.info("MappingFile:" + CastorDatabaseService.class.getResource("/xml_mapping_site.xml").toString());
+					map.loadMapping(CastorDatabaseService.class.getResource("/xml_mapping_site.xml").toString());
+				}
+				
+				// All ODMG database access requires a transaction
+				db.begin();
+
+				List<SiteNode> siteNodes = new ArrayList<SiteNode>();
+				List<Content> contents = new ArrayList<Content>();
+				Hashtable<String,String> allRepositoryProperties = new Hashtable<String,String>();
+				Hashtable<String,String> allSiteNodeProperties = new Hashtable<String,String>();
+				Hashtable<String,String> allContentProperties = new Hashtable<String,String>();
+				List<AccessRight> allAccessRights = new ArrayList<AccessRight>();
+				
+				//TEST
+				Map<String,String> args = new HashMap<String,String>();
+			    args.put("globalKey", "infoglue");
+			    PropertySet ps = PropertySetManager.getInstance("jdbc", args);
+			    //END TEST
+				
+				String names = "";
+				for(int i=0; i < repositoryIds.length; i++)
+				{
+					Integer repositoryId    = repositoryIds[i];
+					Repository repository 	= RepositoryController.getController().getRepositoryWithId(repositoryId, db);
+					exportInfo.stepCompleted();
+					SiteNode siteNode 		= SiteNodeController.getController().getRootSiteNode(repositoryId, db);
+					exportInfo.stepCompleted();
+					Content content 		= ContentController.getContentController().getRootContent(repositoryId, db);
+					exportInfo.stepCompleted();
+					
+				    InterceptionPointVO interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Repository.Read", db);
+				    if(interceptionPointVO != null)
+				    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), repository.getId().toString(), db));
+				    exportInfo.stepCompleted();
+				    
+				    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Repository.ReadForBinding", db);
+				    if(interceptionPointVO != null)
+				    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), repository.getId().toString(), db));
+				    exportInfo.stepCompleted();
+				    
+					getContentPropertiesAndAccessRights(ps, allContentProperties, allAccessRights, content, db);
+					exportInfo.stepCompleted();
+					
+					if(siteNode != null)
+						getSiteNodePropertiesAndAccessRights(ps, allSiteNodeProperties, allAccessRights, siteNode, db);
+					exportInfo.stepCompleted();
+					
+					if(siteNode != null)
+						siteNodes.add(siteNode);
+					contents.add(content);
+					names = names + "_" + repository.getName();
+					allRepositoryProperties.putAll(getRepositoryProperties(ps, repositoryId));
+				}
+				
+				List<ContentTypeDefinition> contentTypeDefinitions = ContentTypeDefinitionController.getController().getContentTypeDefinitionList(db);
+				exportInfo.stepCompleted();
+				List<Category> categories = CategoryController.getController().findAllActiveCategories();
+				exportInfo.stepCompleted();
+				
+				InfoGlueExportImpl infoGlueExportImpl = new InfoGlueExportImpl();
+
+				names = new VisualFormatter().replaceNonAscii(names, '_');
+
+				if(repositoryIds.length > 2 || names.length() > 40)
+					names = "" + repositoryIds.length + "_repositories";
+				
+				String fileName = "Export_" + names + "_" + new SimpleDateFormat("yyyy-MM-dd_HHmm").format(new Date()) + ".xml";
+				if(exportFileName != null && !exportFileName.equals(""))
+					fileName = exportFileName;
+				
+				String filePath = CmsPropertyHandler.getDigitalAssetPath();
+				exportInfo.fileURL =  filePath + File.separator + fileName;
+
+						// ?? CmsPropertyHandler.getWebServerAddress() + "/" + CmsPropertyHandler.getDigitalAssetBaseUrl() + "/" + fileName;
+				// TODO what is this used for?
+				//this.fileName = fileName;
+				
+				// TODO generate summary
+							
+				String encoding = "UTF-8";
+				File file = new File(exportInfo.fileURL);
+	            FileOutputStream fos = new FileOutputStream(file);
+	            OutputStreamWriter osw = new OutputStreamWriter(fos, encoding);
+	            Marshaller marshaller = new Marshaller(osw);
+	            marshaller.setMapping(map);
+				marshaller.setEncoding(encoding);
+				DigitalAssetBytesHandler.setMaxSize(assetMaxSize);
+
+				infoGlueExportImpl.getRootContent().addAll(contents);
+				infoGlueExportImpl.getRootSiteNode().addAll(siteNodes);
+				
+				infoGlueExportImpl.setContentTypeDefinitions(contentTypeDefinitions);
+				infoGlueExportImpl.setCategories(categories);
+				
+				infoGlueExportImpl.setRepositoryProperties(allRepositoryProperties);
+				infoGlueExportImpl.setContentProperties(allContentProperties);
+				infoGlueExportImpl.setSiteNodeProperties(allSiteNodeProperties);
+				infoGlueExportImpl.setAccessRights(allAccessRights);
+				
+				marshaller.marshal(infoGlueExportImpl);
+				
+				osw.flush();
+				osw.close();
+				
+				// TODO generate summary file
+				
+				exportInfo.stepCompleted();
+				exportInfo.status = ExportStatus.Finished;
+			} 
+			catch (Exception e) 
+			{
+				exportInfo.status = ExportStatus.Error;
+				logger.error("An error was found exporting a repository: " + e.getMessage(), e);
+			}
+			finally
+			{
+				if (db != null)
+				{
+					try
+					{
+						db.rollback();
+						db.close();
+					}
+					catch (Exception e)
+					{
+						logger.error("Could not rollback or close database transaction for repository export", e);
+					}
+				}
+			}
+			
+			logger.info("Finishing export in worker thread");
+		}
+	}
+
+	public static class ExportInfo
+	{
+		private ExportStatus status = ExportStatus.Queued;
+		private int stepsDone = 0, stepsTotal = -1;
+		private String fileURL;
+		
+		public ExportStatus getStatus()
+		{
+			return status;
+		}
+		public int getStepsDone()
+		{
+			return stepsDone;
+		}
+		public int getStepsTotal()
+		{
+			return stepsTotal;
+		}
+		public void stepCompleted()
+		{
+			stepsDone++;
+			if (logger.isDebugEnabled() && stepsDone >= stepsTotal)
+			{
+				logger.debug("ExportInfo has completed all steps. Steps done: " + stepsDone + " of total steps: " + stepsTotal);
+			}
+		}
+	}
+	
+	enum ExportStatus{ Queued, Running, Finished, Error }
+
+	/* ***  Content Export **************************************** */
 	
 	public String exportContent(List contentIdList, String path, String fileNamePrefix, boolean includeContentTypes, boolean includeCategories) throws Exception
 	{
@@ -134,7 +628,7 @@ public class ExportImportController extends BaseController
 		
 		return fileName;
 	}
-
+	
 	public void exportContents(Integer contentId, Integer newParentContentId, Integer assetMaxSize, String onlyLatestVersions) throws SystemException, Bug, Exception 
 	{
 		Timer t = new Timer();
@@ -849,5 +1343,4 @@ public class ExportImportController extends BaseController
 	{
 		return null;
 	}
-	
 }
