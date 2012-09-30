@@ -7,13 +7,28 @@
 <div class="fullymarginalized">
 
 	<h3>$ui.getString("tool.managementtool.exportRepository.headerFinished")</h3>
-	<p>
+	
+	<div>
+		<h4>[Export in progress]</h4>
+		<textarea id="repositoryExportStatus" cols="50" rows="10">
+			Dummy text
+		</textarea>
+	</div>
+	<script type="text/javascript">
+		var statusPoller = setInterval(function() {
+			$.get('ExportRepository!exportStatus.action?exportId=$exportId', function(data) {
+				$("#repositoryExportStatus").val(data);
+			});
+			
+		}, 5000);
+	</script>
+#*	<p>
 		$ui.getString("tool.managementtool.exportRepository.finishedText")
 	</p>
 	<p>
 		<a href="$fileUrl">$fileName</a>	
 	</p>
-
+*#
 </div>
 
 <div onfocus="this.blur();" id="footertoolbar">

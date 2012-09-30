@@ -86,7 +86,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	private List repositories = new ArrayList();
 	
 	private String exportId = null;
-	private String exportUUID = null;
+	private String exportStatus = null;
 	
 	private String fileUrl 	= "";
 	private String fileName = "";
@@ -125,6 +125,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	public String doExportStatus() throws IOException
 	{
 		JsonObject result = new JsonObject();
+		Gson gson = new Gson();
 		if (exportId == null)
 		{
 			result.addProperty("error", "no-export-id");
@@ -136,7 +137,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 				UUID exportUUID = UUID.fromString(exportId);
 				ExportInfo info = ExportImportController.getController().getExportInfo(exportUUID);
 				
-				result.add("info", new Gson().toJsonTree(info));
+				result.add("info", gson.toJsonTree(info));
 			}
 			catch (IllegalArgumentException ex)
 			{
@@ -149,9 +150,12 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 				logger.info("Could not find an export for the given id. Id: " + exportId, ex);
 			}
 		}
-		
-		getResponse().getWriter().write(result.getAsString());
-		return NONE;
+		//getResponse().getOutputStream().write(result.getAsString().getBytes());
+		//getResponse().getWriter().write(result.getAsString());
+		//this.getResponse().setContentType("text/plain");
+        //this.getResponse().getWriter().println(result.getAsString());
+		this.exportStatus = gson.toJson(result);
+		return "status";
 	}
 	
 	protected String doExecute() throws Exception 
@@ -169,7 +173,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 			{
 				Map<String, Object> exportParams = new HashMap<String, Object>();
 				exportParams.put(ExportImportController.PARAM_REPOSITORIES, convertToIntergerArray(repositories));
-				this.exportUUID = ExportImportController.getController().exportRepository(exportParams, this.getInfoGluePrincipal()).toString();
+				this.exportId = ExportImportController.getController().exportRepository(exportParams, this.getInfoGluePrincipal()).toString();
 				return "success";
 			}
 			catch (NumberFormatException ex)
@@ -312,8 +316,29 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 		
 		return "success";
 	}
-
-
+*/
+	/**
+	 * @deprecated Use {@link ExportImportController#getContentPropertiesAndAccessRights(PropertySet, Hashtable, List, Content, Database)} instead. Or better yet refactor the entire solution
+	 */
+	public static void getContentPropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allContentProperties, List<AccessRight> allAccessRights, Content content, Database db) throws SystemException
+	{
+		ExportImportController.getContentPropertiesAndAccessRights(ps, allContentProperties, allAccessRights, content, db);
+	}
+	/**
+	 * @deprecated Use {@link ExportImportController#getSiteNodePropertiesAndAccessRights(PropertySet, Hashtable, List, SiteNode, Database)} instead. Or better yet refactor the entire solution
+	 */
+	public static void getSiteNodePropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allSiteNodeProperties, List<AccessRight> allAccessRights, SiteNode siteNode, Database db) throws SystemException, Exception
+	{
+		ExportImportController.getSiteNodePropertiesAndAccessRights(ps, allSiteNodeProperties, allAccessRights, siteNode, db);
+	}
+	/**
+	 * @deprecated Use {@link ExportImportController#getRepositoryProperties(PropertySet, Integer)} instead. Or better yet refactor the entire solution
+	 */
+	public static Hashtable<String,String> getRepositoryProperties(PropertySet ps, Integer repositoryId) throws Exception
+	{
+		return ExportImportController.getRepositoryProperties(ps, repositoryId);
+	}
+/*
 	public static void getContentPropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allContentProperties, List<AccessRight> allAccessRights, Content content, Database db) throws SystemException
 	{
 		String allowedContentTypeNames = ps.getString("content_" + content.getId() + "_allowedContentTypeNames");
@@ -473,6 +498,11 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	{
 		return fileName;
 	}
+	
+	public String getExportStatus()
+	{
+		return exportStatus;
+	}
 
 	public String getFileUrl()
 	{
@@ -497,6 +527,16 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	public void setExportFileName(String exportFileName)
 	{
 		this.exportFileName = exportFileName;
+	}
+
+	public void setExportId(String exportId)
+	{
+		this.exportId = exportId;
+	}
+	
+	public String getExportId()
+	{
+		return this.exportId;
 	}
 
 	public int getAssetMaxSize()

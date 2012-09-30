@@ -147,7 +147,7 @@ public class ExportImportController extends BaseController
 	/* ############################################################ */	
 
 	@SuppressWarnings("unchecked")
-	private static void getContentPropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allContentProperties, List<AccessRight> allAccessRights, Content content, Database db) throws SystemException
+	public static void getContentPropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allContentProperties, List<AccessRight> allAccessRights, Content content, Database db) throws SystemException
 	{
 		String allowedContentTypeNames = ps.getString("content_" + content.getId() + "_allowedContentTypeNames");
 		if ( allowedContentTypeNames != null && !allowedContentTypeNames.equals(""))
@@ -218,7 +218,7 @@ public class ExportImportController extends BaseController
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void getSiteNodePropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allSiteNodeProperties, List<AccessRight> allAccessRights, SiteNode siteNode, Database db) throws SystemException, Exception
+	public static void getSiteNodePropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allSiteNodeProperties, List<AccessRight> allAccessRights, SiteNode siteNode, Database db) throws SystemException, Exception
 	{
 		String disabledLanguagesString = "" + ps.getString("siteNode_" + siteNode.getId() + "_disabledLanguages");
 	    String enabledLanguagesString = "" + ps.getString("siteNode_" + siteNode.getId() + "_enabledLanguages");
@@ -274,7 +274,7 @@ public class ExportImportController extends BaseController
         }
 	}
 
-	private static Hashtable<String,String> getRepositoryProperties(PropertySet ps, Integer repositoryId) throws Exception
+	public static Hashtable<String,String> getRepositoryProperties(PropertySet ps, Integer repositoryId) throws Exception
 	{
 		Hashtable<String,String> properties = new Hashtable<String,String>();
 			    
@@ -546,7 +546,16 @@ public class ExportImportController extends BaseController
 	
 	enum ExportStatus{ Queued, Running, Finished, Error }
 
-	/* ***  Content Export **************************************** */
+	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
+	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
+	/* %%%%  Content  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
+	/* %%%%  Export   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
+	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
+	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
+	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
+	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
+	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
+	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
 	
 	public String exportContent(List contentIdList, String path, String fileNamePrefix, boolean includeContentTypes, boolean includeCategories) throws Exception
 	{
