@@ -46,7 +46,7 @@ html, body {
     position:absolute;
     text-align:left;
 	display: none;
-	z-index: 1;
+	z-index: 1015;
 }
 #contextMenuDiv ul
 {
@@ -190,7 +190,7 @@ html, body {
 	border-bottom: 1px solid #9caabb;
 }
 #repositorySelect {
-	width: 200px; 
+	width: 175px; 
 	float: left; 
 	margin-left: 6px; 
 	margin-top: 6px;

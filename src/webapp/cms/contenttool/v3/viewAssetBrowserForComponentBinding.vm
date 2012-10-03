@@ -177,7 +177,7 @@
 
 	<div style="clear: both;"></div>
 	
-	<h3>$ui.getString("tool.contenttool.assetDialog.assetDialogHeader") - filtered on: "$assetTypeFilter"</h3>
+	<h3>$ui.getString("tool.contenttool.assetDialog.assetDialogHeader") - $ui.getString("tool.contenttool.assetDialog.filteredOn"): "$assetTypeFilter"</h3>
 
 	<div id="tabsContainer" class="flora">      
 

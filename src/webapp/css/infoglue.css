@@ -579,10 +579,10 @@ li.page { background:url(images/v3/pageIcon.gif) no-repeat left center; backgrou
 }
 
 .okstatus {
-	background:url(../../images/ok_icon.gif) no-repeat left center; background-position: 4px 2px;
+	background:url(images/ok_icon.gif) no-repeat left center; background-position: 4px 2px;
 }
 .nokstatus {
-	background:url(../../images/v3/cross.png) no-repeat left center; background-position: 4px 2px;
+	background:url(images/v3/cross.png) no-repeat left center; background-position: 4px 2px;
 }
 
 /******************
@@ -668,7 +668,7 @@ p.errorNotice {
 	color: red;
 	font-weight: bold;
 	padding-left: 20px;
-	background: url("../../images/v3/denyPublicationIcon.png") no-repeat 0px 0px;
+	background: url("images/v3/denyPublicationIcon.png") no-repeat 0px 0px;
 	line-height: 20px;
 }
 
@@ -1133,4 +1133,35 @@ tr.darkblue {
 .generaltooledit td.menu
 {
 	min-width: 250px;
+}
+
+#selectedAssetsListHeader 
+{
+	float: left; 
+	width: 100%; 
+	border-bottom: 1px solid #9caabd; 
+	height: 14px; 
+	padding-top: 2px; 
+	background-color: #ccc; 
+	font-size: 10px; 
+	font-family: verdana; 
+	font-weight: bold; 
+	text-indent: 16px; 
+	background-image:url("css/images/v3/tableHeaderBackground.gif"); 
+	background-repeat:repeat-x;	
+}
+#selectedAssetsList 
+{
+	overflow: auto; 
+	width: 100%; 
+	border: 0px solid #ccc; 
+	float: left; 
+	height: 120px; 
+	background-color: white;
+}
+#selectedAssetsListMargin 
+{
+	float: left; 
+	margin-left: 14px; 
+	margin-right: 14px;
 }
