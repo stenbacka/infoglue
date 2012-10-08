@@ -26,6 +26,8 @@ package org.infoglue.cms.applications.contenttool.actions;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
@@ -473,17 +475,43 @@ public class UpdateContentVersionAction extends ViewContentVersionAction
     {
         return this.contentVersionVO.getVersionValue();
     }
-        
+    private String stripInvalidXml(String value)
+    {
+    	/* http://stackoverflow.com/questions/93655/stripping-invalid-xml-characters-in-java */
+        if (value == null) 
+        {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+
+        char[] valueBytes = value.toCharArray();
+        char c;
+        for (int i = 0; i < valueBytes.length; i++)
+        {
+            c = valueBytes[i];
+            if ((c == 0x9) || (c == 0xA) || (c == 0xD) ||
+                ((c >= 0x20) && (c <= 0xD7FF)) ||
+                ((c >= 0xE000) && (c <= 0xFFFD)) ||
+                ((c >= 0x10000) && (c <= 0x10FFFF)))
+            {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
     public void setVersionValue(java.lang.String versionValue) throws Exception
     {
     	try
     	{
+    		versionValue = stripInvalidXml(versionValue);
+
     		SAXReader reader = new SAXReader(false);
     		reader.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             Document document = reader.read(new java.io.ByteArrayInputStream(versionValue.getBytes("UTF-8")));
             if(document == null)
             	throw new Exception("Faulty dom... must be corrupt");
-            
+
             int preTemplateElements = 0;
             int preTemplateStart = versionValue.indexOf("<PreTemplate>");
             while(preTemplateStart > -1)
