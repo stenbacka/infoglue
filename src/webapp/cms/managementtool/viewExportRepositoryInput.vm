@@ -2,7 +2,9 @@
  
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
   
-#beginManagementTool("tool.managementtool.exportRepository.header" "tool.managementtool.exportRepository.header" "")
+##beginManagementTool( "tool.managementtool.exportRepository.header" "")
+#beginManagementToolV3("tool.managementtool.exportRepository.header" "" "" true true)
+## #macro(beginManagementToolV3 $titleKey $primaryKey $extraData $hasDataTable $endHeadAndDefineBody)
 
 <script type="text/javascript">
 <!--
@@ -17,6 +19,10 @@
 	}
 -->
 </script>
+
+<style type="text/css">
+	@import "script/jqueryplugins-latest/dataTables/media/css/ig_table.css";
+</style>
 
 <style type="text/css">
 	fieldset
@@ -68,58 +74,75 @@
 </style>
 
 <div class="fullymarginalized">
-
-<form name="editForm" method="POST" action="ExportRepository.action">
-<input type="hidden" name="igSecurityCode" value="$!securityCode"/>
-<input type="hidden" name="repositoryId" value="$!repositoryId">
-<table width="300">
-	<tr>
-		<td class="biglabel">
-			$ui.getString("tool.managementtool.exportRepository.header")
-		</td>
-	</tr>		
-	<tr>
-		<td>
-			$ui.getString("tool.managementtool.exportRepository.introduction")<br/><br/>
-		</td>
-	</tr>		
-	<tr>
-		<td>
-	 		<fieldset>
-			<legend>Export options</legend>
-	 		<p>
-		 		<label for="assetMaxSize">$ui.getString("tool.contenttool.exportContent.assetMaxSizeLabel"):</label>
-		 		<select name="assetMaxSize">
-		 			<option value="-1" #checkSelected("-1" "$assetMaxSize")>No limit</option>
-		 			<option value="50000" #checkSelected("50000" "$assetMaxSize")>50 KB</option>
-		 			<option value="100000" #checkSelected("100000" "$assetMaxSize")>100 KB</option>
-		 			<option value="300000" #checkSelected("300000" "$assetMaxSize")>300 KB</option>
-		 			<option value="500000" #checkSelected("500000" "$assetMaxSize")>500 KB</option>
-		 			<option value="1000000" #checkSelected("1000000" "$assetMaxSize")>1 MB</option>
-		 			<option value="5000000" #checkSelected("5000000" "$assetMaxSize")>5 MB</option>
-		 			<option value="10000000" #checkSelected("10000000" "$assetMaxSize")>10 MB</option>
-		 			<option value="100000000" #checkSelected("100000000" "$assetMaxSize")>100 MB</option>
-		 		</select>
-	 		</p>
-	 		<p>
-				<label for="exportFileName">Export file name (optional):</label>
-				<input type="textfield" name="exportFileName" value="">
-	 		</p>
-	 		<p>
-				<label for="exportFileName">Additional repositories to include:</label>
-				<select name="repositoryId" multiple="true" size="10">
-				#foreach($repository in $repositories)
-					#if($repository.id != $!repositoryId)
-						<option value="$repository.id"> $repository.name</option>
-					#end
-				#end		
-				</select>
-	 		</p>
-			</fieldset><br/>
-		</td>
-	</tr>
-	</form>	
-</table>
+	<form name="editForm" method="POST" action="ExportRepository.action">
+		<input type="hidden" name="igSecurityCode" value="$!securityCode"/>
+		<input type="hidden" name="repositoryId" value="$!repositoryId">
+		<table width="300">
+			<tr>
+				<td class="biglabel">
+					$ui.getString("tool.managementtool.exportRepository.header")
+				</td>
+			</tr>		
+			<tr>
+				<td>
+					$ui.getString("tool.managementtool.exportRepository.introduction")<br/><br/>
+				</td>
+			</tr>		
+			<tr>
+				<td>
+			 		<fieldset>
+					<legend>Export options</legend>
+			 		<p>
+				 		<label for="assetMaxSize">$ui.getString("tool.contenttool.exportContent.assetMaxSizeLabel"):</label>
+				 		<select name="assetMaxSize">
+				 			<option value="-1" #checkSelected("-1" "$assetMaxSize")>No limit</option>
+				 			<option value="50000" #checkSelected("50000" "$assetMaxSize")>50 KB</option>
+				 			<option value="100000" #checkSelected("100000" "$assetMaxSize")>100 KB</option>
+				 			<option value="300000" #checkSelected("300000" "$assetMaxSize")>300 KB</option>
+				 			<option value="500000" #checkSelected("500000" "$assetMaxSize")>500 KB</option>
+				 			<option value="1000000" #checkSelected("1000000" "$assetMaxSize")>1 MB</option>
+				 			<option value="5000000" #checkSelected("5000000" "$assetMaxSize")>5 MB</option>
+				 			<option value="10000000" #checkSelected("10000000" "$assetMaxSize")>10 MB</option>
+				 			<option value="100000000" #checkSelected("100000000" "$assetMaxSize")>100 MB</option>
+				 		</select>
+			 		</p>
+			 		<p>
+						<label for="exportFileName">Export file name (optional):</label>
+						<input type="textfield" name="exportFileName" value="">
+			 		</p>
+			 		<p>
+						<label for="exportFileName">Additional repositories to include:</label>
+						<select name="repositoryId" multiple="true" size="10">
+						#foreach($repository in $repositories)
+							#if($repository.id != $!repositoryId)
+								<option value="$repository.id"> $repository.name</option>
+							#end
+						#end
+						</select>
+			 		</p>
+					</fieldset><br/>
+				</td>
+			</tr>
+		</table>
+	</form>
+	#if("$!exports" != "")
+	<table width="300" class="display">
+		<thead>
+			<tr>
+				<th>Export</th>
+				<th>Detaljer</th>
+				<th>Ta bort</th>
+			</tr>
+		</thead>
+		#foreach($export in $exports)
+		<tr>
+			<td>$export.fileURL</td>
+			<td><button onclick="ExportRepository!viewExportSummary.action?exportId=$export.id">Summary</button></td>
+			<td><button onclick="ExportRepository!removeExport.action?exportId=$export.id">Remove</button></td>
+		</tr>
+		#end
+	</table>
+	#end
 </div>
 
 <div onfocus="this.blur();" id="footertoolbar">

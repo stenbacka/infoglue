@@ -22,7 +22,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 import org.exolab.castor.jdo.Database;
+import org.exolab.castor.jdo.OQLQuery;
 import org.exolab.castor.jdo.PersistenceException;
+import org.exolab.castor.jdo.QueryResults;
 import org.exolab.castor.jdo.TransactionNotInProgressException;
 import org.exolab.castor.mapping.Mapping;
 import org.exolab.castor.xml.Marshaller;
@@ -30,6 +32,7 @@ import org.exolab.castor.xml.Unmarshaller;
 import org.infoglue.cms.applications.common.VisualFormatter;
 import org.infoglue.cms.entities.content.Content;
 import org.infoglue.cms.entities.content.ContentCategory;
+import org.infoglue.cms.entities.content.ContentVO;
 import org.infoglue.cms.entities.content.ContentVersion;
 import org.infoglue.cms.entities.content.DigitalAsset;
 import org.infoglue.cms.entities.content.impl.simple.ContentImpl;
@@ -42,6 +45,7 @@ import org.infoglue.cms.entities.management.ContentTypeDefinition;
 import org.infoglue.cms.entities.management.InterceptionPointVO;
 import org.infoglue.cms.entities.management.Language;
 import org.infoglue.cms.entities.management.Repository;
+import org.infoglue.cms.entities.management.RepositoryVO;
 import org.infoglue.cms.entities.management.impl.simple.CategoryImpl;
 import org.infoglue.cms.entities.management.impl.simple.ContentTypeDefinitionImpl;
 import org.infoglue.cms.entities.management.impl.simple.InfoGlueExportImpl;
@@ -56,7 +60,10 @@ import org.infoglue.cms.util.handlers.DigitalAssetBytesHandler;
 import org.infoglue.cms.util.sorters.ReflectionComparator;
 import org.infoglue.cms.entities.management.impl.simple.LanguageImpl;
 import org.infoglue.deliver.util.Timer;
+import org.jfree.util.Log;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.module.propertyset.PropertySetManager;
 
@@ -103,15 +110,15 @@ public class ExportImportController extends BaseController
 		return worker.getExportInfo();
 	}
 	
-	public List<UUID> getRepositoryExports(InfoGluePrincipal exportOwner) throws NullPointerException
+	public List<ExportInfo> getRepositoryExports(InfoGluePrincipal exportOwner) throws NullPointerException
 	{
-		List<UUID> result = new LinkedList<UUID>();
+		List<ExportInfo> result = new LinkedList<ExportInfo>();
 		
 		for (ExportWorker value : workers.values())
 		{
 			if (exportOwner.equals(value.getOwner()))
 			{
-				result.add(value.getId());
+				result.add(value.getExportInfo());
 			}
 		}
 		
@@ -124,11 +131,11 @@ public class ExportImportController extends BaseController
 	{
 		ExportWorker exportWorker = new ExportWorker(exportOwner, exportParams);
 		
-		logger.debug("Adds export repository worker to worker list. UUID: " + exportWorker.getId());
-		workers.put(exportWorker.getId(), exportWorker);
+		logger.debug("Adds export repository worker to worker list. UUID: " + exportWorker.getExportInfo().getId());
+		workers.put(exportWorker.getExportInfo().getId(), exportWorker);
 		new Thread(exportWorker).start();
 		
-		return exportWorker.getId();
+		return exportWorker.getExportInfo().getId();
 	}
 	
 	
@@ -147,7 +154,7 @@ public class ExportImportController extends BaseController
 	/* ############################################################ */	
 
 	@SuppressWarnings("unchecked")
-	public static void getContentPropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allContentProperties, List<AccessRight> allAccessRights, Content content, Database db) throws SystemException
+	public static void getContentPropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allContentProperties, List<AccessRight> allAccessRights, Content content, ExportInfo exportInfo, Database db) throws SystemException
 	{
 		String allowedContentTypeNames = ps.getString("content_" + content.getId() + "_allowedContentTypeNames");
 		if ( allowedContentTypeNames != null && !allowedContentTypeNames.equals(""))
@@ -207,18 +214,24 @@ public class ExportImportController extends BaseController
 	    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("ContentVersion.Publish", db);
 	    if(interceptionPointVO != null)
 	    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), content.getId().toString(), db));
-        
+
+	    // Some old APIs call this method without an exportInfo object
+	    if (exportInfo != null)
+	    {
+	    	exportInfo.contentAdded(content.getName());
+	    }
+
         @SuppressWarnings("rawtypes")
 		Iterator childContents = content.getChildren().iterator();
         while(childContents.hasNext())
         {
         	Content childContent = (Content)childContents.next();
-        	getContentPropertiesAndAccessRights(ps, allContentProperties, allAccessRights, childContent, db);
+        	getContentPropertiesAndAccessRights(ps, allContentProperties, allAccessRights, childContent, exportInfo, db);
         }
 	}
 
 	@SuppressWarnings("unchecked")
-	public static void getSiteNodePropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allSiteNodeProperties, List<AccessRight> allAccessRights, SiteNode siteNode, Database db) throws SystemException, Exception
+	public static void getSiteNodePropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allSiteNodeProperties, List<AccessRight> allAccessRights, SiteNode siteNode, ExportInfo exportInfo, Database db) throws SystemException, Exception
 	{
 		String disabledLanguagesString = "" + ps.getString("siteNode_" + siteNode.getId() + "_disabledLanguages");
 	    String enabledLanguagesString = "" + ps.getString("siteNode_" + siteNode.getId() + "_enabledLanguages");
@@ -227,9 +240,9 @@ public class ExportImportController extends BaseController
 	    	allSiteNodeProperties.put("siteNode_" + siteNode.getId() + "_disabledLanguages", disabledLanguagesString);
 	    if(enabledLanguagesString != null && !enabledLanguagesString.equals("") && !enabledLanguagesString.equals("null"))
 		    allSiteNodeProperties.put("siteNode_" + siteNode.getId() + "_enabledLanguages", enabledLanguagesString);
-        
+
         SiteNodeVersionVO latestSiteNodeVersionVO = SiteNodeVersionController.getController().getLatestActiveSiteNodeVersionVO(db, siteNode.getId());
-        
+
         if(latestSiteNodeVersionVO != null)
         {
 	        InterceptionPointVO interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("SiteNodeVersion.Read", db);
@@ -264,13 +277,18 @@ public class ExportImportController extends BaseController
 		    if(interceptionPointVO != null)
 		    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), latestSiteNodeVersionVO.getId().toString(), db));
         }
-        
+
+        if (exportInfo != null)
+        {
+        	exportInfo.siteNodeAdded(siteNode.getName());
+        }
+
         @SuppressWarnings("rawtypes")
 		Iterator childSiteNodes = siteNode.getChildSiteNodes().iterator();
         while(childSiteNodes.hasNext())
         {
         	SiteNode childSiteNode = (SiteNode)childSiteNodes.next();
-        	getSiteNodePropertiesAndAccessRights(ps, allSiteNodeProperties, allAccessRights, childSiteNode, db);
+        	getSiteNodePropertiesAndAccessRights(ps, allSiteNodeProperties, allAccessRights, childSiteNode, null, db);
         }
 	}
 
@@ -299,15 +317,73 @@ public class ExportImportController extends BaseController
 
 		return properties;
 	}
-	
+
+	protected static Long getRepositoryContentCount(Database db, int repositoryId) throws PersistenceException
+	{
+		long timeStart_countContents = System.currentTimeMillis();
+		Long numberOfContents = 0L;
+
+		OQLQuery oql = db.getOQLQuery("SELECT COUNT(*) FROM org.infoglue.cms.entities.content.impl.simple.SmallContentImpl c WHERE c.repositoryId = $1");
+		oql.bind(repositoryId);
+		QueryResults results = oql.execute(Database.READONLY);
+		if (results.hasMore()) 
+        {
+			numberOfContents = (Long)results.next();
+        }
+        else
+        {
+        	logger.warn("Tried to count Content in repository '" + repositoryId + "' but got no result.");
+        }
+
+		results.close();
+		oql.close();
+		long timeEnd_countContents = System.currentTimeMillis();
+
+		if (logger.isInfoEnabled())
+		{
+			logger.info("Counted all Contents in repository '" + repositoryId + "' It took: " + (timeEnd_countContents - timeStart_countContents) + " ms");
+		}
+
+		return numberOfContents;
+	}
+
+	protected static Long getRepositorySiteNodeCount(Database db, int repositoryId) throws PersistenceException
+	{
+		long timeStart_countSiteNode = System.currentTimeMillis();
+		Long numberOfSiteNodes = 0L;
+
+		OQLQuery oql = db.getOQLQuery("SELECT COUNT(*) FROM org.infoglue.cms.entities.structure.impl.simple.SmallSiteNodeImpl s WHERE s.repositoryId = $1");
+		oql.bind(repositoryId);
+		QueryResults results = oql.execute(Database.READONLY);
+		if (results.hasMore()) 
+		{
+			numberOfSiteNodes = (Long)results.next();
+		}
+		else
+		{
+			logger.warn("Tried to count SiteNodes in repository '" + repositoryId + "' but got no result.");
+		}
+
+		results.close();
+		oql.close();
+		long timeEnd_countSiteNode = System.currentTimeMillis();
+
+		if (logger.isInfoEnabled())
+		{
+			logger.info("Counted all SiteNodes in repository '" + repositoryId + "'. It took: " + (timeEnd_countSiteNode - timeStart_countSiteNode) + " ms");
+		}
+
+		return numberOfSiteNodes;
+	}
+
 	/* ############################################################ */
 	/* ####  Inner classes  ####################################### */
 	/* ############################################################ */
-	
+
 	private static class ExportWorker implements Runnable
 	{
 		private ExportInfo exportInfo;
-		private UUID id;
+		
 		private InfoGluePrincipal owner;
 		private Integer[] repositoryIds;
 		private String exportFileName;
@@ -326,8 +402,7 @@ public class ExportImportController extends BaseController
 			{
 				throw new IllegalArgumentException("Export params must contain an entry for the key PARAM_REPOSITORIES");
 			}
-			
-			this.id = UUID.randomUUID();
+
 			this.owner = owner;
 			this.repositoryIds = (Integer[])exportParams.get(ExportImportController.PARAM_REPOSITORIES);
 			if (exportParams.containsKey(ExportImportController.PARAM_EXPORT_FILE_NAME))
@@ -339,15 +414,9 @@ public class ExportImportController extends BaseController
 				this.assetMaxSize = (Integer)exportParams.get(ExportImportController.PARAM_ASSET_MAX_SIZE);
 			}
 
-			this.exportInfo = new ExportInfo();
-			this.exportInfo.stepsTotal = 7 * this.repositoryIds.length + 3;
+			this.exportInfo = new ExportInfo(repositoryIds.length);
 		}
-		
-		public UUID getId()
-		{
-			return id;
-		}
-		
+
 		public ExportInfo getExportInfo()
 		{
 			return exportInfo;
@@ -363,13 +432,16 @@ public class ExportImportController extends BaseController
 		public void run()
 		{
 			logger.info("Starting repository export in worker thread. Will export repositories with IDs " + Arrays.toString(repositoryIds));
-			
-			exportInfo.status = ExportStatus.Running;
-			
+
+			//exportInfo.status = ExportStatus.Running;
+			exportInfo.start();
+
 			Database db = null;
 			try 
 			{
 				db = CastorDatabaseService.getDatabase();
+
+				long startTime = System.currentTimeMillis();
 
 				Mapping map = new Mapping();
 				String exportFormat = CmsPropertyHandler.getExportFormat();
@@ -384,7 +456,7 @@ public class ExportImportController extends BaseController
 					logger.info("MappingFile:" + CastorDatabaseService.class.getResource("/xml_mapping_site.xml").toString());
 					map.loadMapping(CastorDatabaseService.class.getResource("/xml_mapping_site.xml").toString());
 				}
-				
+
 				// All ODMG database access requires a transaction
 				db.begin();
 
@@ -394,73 +466,119 @@ public class ExportImportController extends BaseController
 				Hashtable<String,String> allSiteNodeProperties = new Hashtable<String,String>();
 				Hashtable<String,String> allContentProperties = new Hashtable<String,String>();
 				List<AccessRight> allAccessRights = new ArrayList<AccessRight>();
-				
+
 				//TEST
 				Map<String,String> args = new HashMap<String,String>();
 			    args.put("globalKey", "infoglue");
 			    PropertySet ps = PropertySetManager.getInstance("jdbc", args);
 			    //END TEST
-				
-				String names = "";
+
+				//String names = "";
 				for(int i=0; i < repositoryIds.length; i++)
 				{
 					Integer repositoryId    = repositoryIds[i];
 					Repository repository 	= RepositoryController.getController().getRepositoryWithId(repositoryId, db);
-					exportInfo.stepCompleted();
-					SiteNode siteNode 		= SiteNodeController.getController().getRootSiteNode(repositoryId, db);
-					exportInfo.stepCompleted();
-					Content content 		= ContentController.getContentController().getRootContent(repositoryId, db);
-					exportInfo.stepCompleted();
-					
-				    InterceptionPointVO interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Repository.Read", db);
+
+					exportInfo.startRepository(repository.getName());
+
+					exportInfo.initRepository();
+					// TODO Check for more Repository.* AccessRights
+					long timeStart_repositoryAccess = System.currentTimeMillis();
+					InterceptionPointVO interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Repository.Read", db);
 				    if(interceptionPointVO != null)
 				    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), repository.getId().toString(), db));
-				    exportInfo.stepCompleted();
-				    
+
+
 				    interceptionPointVO = InterceptionPointController.getController().getInterceptionPointVOWithName("Repository.ReadForBinding", db);
 				    if(interceptionPointVO != null)
 				    	allAccessRights.addAll(AccessRightController.getController().getAccessRightListOnlyReadOnly(interceptionPointVO.getId(), repository.getId().toString(), db));
-				    exportInfo.stepCompleted();
-				    
-					getContentPropertiesAndAccessRights(ps, allContentProperties, allAccessRights, content, db);
-					exportInfo.stepCompleted();
-					
+				    long timeEnd_repositoryAccess = System.currentTimeMillis();
+				    logger.info("Got root SiteNode for repository '" + repositoryId + "' took: " + (timeEnd_repositoryAccess - timeStart_repositoryAccess) + " ms");
+
+
+					exportInfo.initSiteNodes();
+					Long totalSiteNodes = getRepositorySiteNodeCount(db, repositoryId);
+
+					long timeStart_rootSiteNode = System.currentTimeMillis();
+					SiteNode siteNode 		= SiteNodeController.getController().getRootSiteNode(repositoryId, db);
+					long timeEnd_rootSiteNode = System.currentTimeMillis();
+					logger.info("Got root SiteNode for repository '" + repositoryId + "' took: " + (timeEnd_rootSiteNode - timeStart_rootSiteNode) + " ms");
+
+
+					exportInfo.initContents();
+					Long totalContents = getRepositoryContentCount(db, repositoryId);
+
+					long timeStart_rootContent = System.currentTimeMillis();
+					Content content 		= ContentController.getContentController().getRootContent(repositoryId, db);
+					long timeEnd_rootContent = System.currentTimeMillis();
+					logger.info("Got root Content for repository '" + repositoryId + "' took: " + (timeEnd_rootContent - timeStart_rootContent) + " ms");
+
+					exportInfo.setStatsRepositoryExport(totalContents, totalSiteNodes);
+
+					long timeStart_contentProperties = System.currentTimeMillis();
+					exportInfo.startContentExport();
+					getContentPropertiesAndAccessRights(ps, allContentProperties, allAccessRights, content, exportInfo, db);
+					long timeEnd_contentProperties = System.currentTimeMillis();
+					logger.info("Got properties and access rights for Contents in '" + repositoryId + "' took: " + (timeEnd_contentProperties - timeStart_contentProperties) + " ms");
+
 					if(siteNode != null)
-						getSiteNodePropertiesAndAccessRights(ps, allSiteNodeProperties, allAccessRights, siteNode, db);
-					exportInfo.stepCompleted();
-					
+					{
+						long timeStart_siteNodeProperties = System.currentTimeMillis();
+						exportInfo.startSiteNodeExport();
+						getSiteNodePropertiesAndAccessRights(ps, allSiteNodeProperties, allAccessRights, siteNode, exportInfo, db);
+						long timeEnd_siteNodeProperties = System.currentTimeMillis();
+						logger.info("Got properties and access rights for SiteNodes in '" + repositoryId + "' took: " + (timeEnd_siteNodeProperties - timeStart_siteNodeProperties) + " ms");
+					}
+
 					if(siteNode != null)
+					{
 						siteNodes.add(siteNode);
+					}
 					contents.add(content);
-					names = names + "_" + repository.getName();
+					// TODO Fix names
+					//names = names + "_" + repository.getName();
+					long timeStart_repositoryProperties = System.currentTimeMillis();
+					exportInfo.startRepositoryPropertiesExport();
 					allRepositoryProperties.putAll(getRepositoryProperties(ps, repositoryId));
+					long timeEnd_repositoryProperties = System.currentTimeMillis();
+					logger.info("Got properties and access rights for Repository in '" + repositoryId + "' took: " + (timeEnd_repositoryProperties - timeStart_repositoryProperties) + " ms");
+
+					exportInfo.finishCurrentRepository();
 				}
-				
+
+				long timeStart_contentTypeDefinitions = System.currentTimeMillis();
+				exportInfo.startContentTypeDefinitionExport();
 				List<ContentTypeDefinition> contentTypeDefinitions = ContentTypeDefinitionController.getController().getContentTypeDefinitionList(db);
-				exportInfo.stepCompleted();
+				long timeEnd_contentTypeDefinitions = System.currentTimeMillis();
+				logger.info("Got all content type definitions took: " + (timeEnd_contentTypeDefinitions - timeStart_contentTypeDefinitions) + " ms");
+
+				long timeStart_category = System.currentTimeMillis();
+				exportInfo.startCategoryExport();
 				List<Category> categories = CategoryController.getController().findAllActiveCategories();
-				exportInfo.stepCompleted();
-				
+				long timeEnd_category = System.currentTimeMillis();
+				logger.info("Got all categories took: " + (timeEnd_category - timeStart_category) + " ms");
+
+
 				InfoGlueExportImpl infoGlueExportImpl = new InfoGlueExportImpl();
 
-				names = new VisualFormatter().replaceNonAscii(names, '_');
+//				names = new VisualFormatter().replaceNonAscii(names, '_');
+//
+//				if(repositoryIds.length > 2 || names.length() > 40)
+//					names = "" + repositoryIds.length + "_repositories";
 
-				if(repositoryIds.length > 2 || names.length() > 40)
-					names = "" + repositoryIds.length + "_repositories";
-				
-				String fileName = "Export_" + names + "_" + new SimpleDateFormat("yyyy-MM-dd_HHmm").format(new Date()) + ".xml";
+				String fileName = "Export_" + "TODO-FIX" + "_" + new SimpleDateFormat("yyyy-MM-dd_HHmm").format(new Date()) + ".xml";
 				if(exportFileName != null && !exportFileName.equals(""))
 					fileName = exportFileName;
-				
+
 				String filePath = CmsPropertyHandler.getDigitalAssetPath();
 				exportInfo.fileURL =  filePath + File.separator + fileName;
 
-						// ?? CmsPropertyHandler.getWebServerAddress() + "/" + CmsPropertyHandler.getDigitalAssetBaseUrl() + "/" + fileName;
+				// ?? CmsPropertyHandler.getWebServerAddress() + "/" + CmsPropertyHandler.getDigitalAssetBaseUrl() + "/" + fileName;
 				// TODO what is this used for?
 				//this.fileName = fileName;
-				
+
 				// TODO generate summary
-							
+
 				String encoding = "UTF-8";
 				File file = new File(exportInfo.fileURL);
 	            FileOutputStream fos = new FileOutputStream(file);
@@ -472,29 +590,32 @@ public class ExportImportController extends BaseController
 
 				infoGlueExportImpl.getRootContent().addAll(contents);
 				infoGlueExportImpl.getRootSiteNode().addAll(siteNodes);
-				
+
 				infoGlueExportImpl.setContentTypeDefinitions(contentTypeDefinitions);
 				infoGlueExportImpl.setCategories(categories);
-				
+
 				infoGlueExportImpl.setRepositoryProperties(allRepositoryProperties);
 				infoGlueExportImpl.setContentProperties(allContentProperties);
 				infoGlueExportImpl.setSiteNodeProperties(allSiteNodeProperties);
 				infoGlueExportImpl.setAccessRights(allAccessRights);
-				
+
+				exportInfo.startFileExport();
 				marshaller.marshal(infoGlueExportImpl);
-				
+
 				osw.flush();
 				osw.close();
-				
+
 				// TODO generate summary file
-				
-				exportInfo.stepCompleted();
-				exportInfo.status = ExportStatus.Finished;
+
+				exportInfo.exportCompleted();
+
+				long endTime = System.currentTimeMillis();
+				Log.info("Export of " + Arrays.toString(repositoryIds) + " done. Took: " + (endTime - startTime) + " ms");
 			} 
 			catch (Exception e) 
 			{
 				exportInfo.status = ExportStatus.Error;
-				logger.error("An error was found exporting a repository: " + e.getMessage(), e);
+				logger.error("An error was found exporting repository(ies) with ids: " + Arrays.toString(repositoryIds) + ". Message: " + e.getMessage(), e);
 			}
 			finally
 			{
@@ -511,40 +632,187 @@ public class ExportImportController extends BaseController
 					}
 				}
 			}
-			
+
 			logger.info("Finishing export in worker thread");
 		}
 	}
 
 	public static class ExportInfo
 	{
-		private ExportStatus status = ExportStatus.Queued;
-		private int stepsDone = 0, stepsTotal = -1;
+		private UUID id;
+		private transient String foobar = "barfoo";
+		private ExportStatus status;
+		private int repositoryCounter, numberOfRepositories;
+		private ExportImportController.ExportStep currentStep;
+		private String currentRepository;
+		private Long totalContents, totalSiteNodes;
+		private int currentContentCount, currentSiteNodeCount;
 		private String fileURL;
-		
+		private String summaryURL;
+
+		public ExportInfo(int numberOfRepositories)
+		{
+			this.id = UUID.randomUUID();
+			this.repositoryCounter = 0;
+			this.numberOfRepositories = numberOfRepositories;
+			this.status = ExportStatus.Queued;
+			this.currentStep = null;
+			this.currentRepository = null;
+		}
+
+		private void setStatsRepositoryExport(Long totalContents, Long totalSiteNodes)
+		{
+			this.totalContents = totalContents;
+			this.totalSiteNodes = totalSiteNodes;
+		}
+
+		private void start()
+		{
+			this.status = ExportStatus.Running;
+			this.currentStep = ExportImportController.ExportStep.START;
+		}
+
+		private void startRepository(String name)
+		{
+			this.currentStep = ExportImportController.ExportStep.STARTREPOSITORY;
+			this.currentRepository = name;
+			this.repositoryCounter++;
+			this.currentContentCount = 0;
+			this.currentSiteNodeCount = 0;
+		}
+
+		private void initRepository()
+		{
+			this.currentStep = ExportImportController.ExportStep.INITREPOSITORY;
+		}
+
+		private void initSiteNodes()
+		{
+			this.currentStep = ExportImportController.ExportStep.INITSITENODES;
+		}
+
+		private void initContents()
+		{
+			this.currentStep = ExportImportController.ExportStep.INITCONTENTS;
+		}
+
+		private void startContentExport()
+		{
+			this.currentStep = ExportImportController.ExportStep.STARTSITENODEEXPORT;
+		}
+
+		private void startSiteNodeExport()
+		{
+			this.currentStep = ExportImportController.ExportStep.STARTCONTENTEXPORT;
+		}
+
+		private void startRepositoryPropertiesExport()
+		{
+			this.currentStep = ExportImportController.ExportStep.STARTREPOSITORYPROPERTIESEXPORT;
+		}
+
+		private void finishCurrentRepository()
+		{
+			this.currentStep = ExportImportController.ExportStep.FINISHCURRENTREPOSITORY;
+			this.currentRepository = null;
+		}
+
+		private void startContentTypeDefinitionExport()
+		{
+			this.currentStep = ExportImportController.ExportStep.STARTCONTENTTYPEDEFINITIONEXPORT;
+		}
+
+		private void startCategoryExport()
+		{
+			this.currentStep = ExportImportController.ExportStep.STARTCATEGORYEXPORT;
+		}
+
+		private void startFileExport()
+		{
+			this.currentStep = ExportImportController.ExportStep.STARTFILEEXPORT;
+		}
+
+		private void exportCompleted()
+		{
+			this.status = ExportStatus.Finished;
+		}
+
+		private void contentAdded(String contentName)
+		{
+			this.currentContentCount++;
+		}
+
+		private void siteNodeAdded(String siteNodeName)
+		{
+			this.currentSiteNodeCount++;
+		}
+
+
+		public UUID getId()
+		{
+			return id;
+		}
+		public String getFileURL()
+		{
+			return fileURL;
+		}
+		public String getSummaryURL()
+		{
+			return summaryURL;
+		}
 		public ExportStatus getStatus()
 		{
 			return status;
 		}
-		public int getStepsDone()
+		public String getCurrentRepository()
 		{
-			return stepsDone;
+			return this.currentRepository;
 		}
-		public int getStepsTotal()
+		public int getRepositoryCounter()
 		{
-			return stepsTotal;
+			return this.repositoryCounter;
 		}
-		public void stepCompleted()
+		public int getNumberOfRepositories()
 		{
-			stepsDone++;
-			if (logger.isDebugEnabled() && stepsDone >= stepsTotal)
+			return this.numberOfRepositories;
+		}
+		public ExportImportController.ExportStep getStepMessage()
+		{
+			return currentStep;
+		}
+		public String getStepDetails()
+		{
+			switch (this.currentStep)
 			{
-				logger.debug("ExportInfo has completed all steps. Steps done: " + stepsDone + " of total steps: " + stepsTotal);
+				case STARTCONTENTEXPORT: return this.currentContentCount + " / " + this.totalContents;
+				case STARTSITENODEEXPORT: return this.currentSiteNodeCount + " / " + this.totalSiteNodes;
+				case STARTFILEEXPORT: return "TODO File size measure";
+				default: return "";
 			}
 		}
+/*
+		public JsonElement toJSON()
+		{
+			JsonObject info = new JsonObject();
+			
+			info.addProperty("status", status.name());
+			info.addProperty("currentRepository", currentRepository);
+			info.addProperty("numberOfRepositories", numberOfRepositories);
+			info.addProperty("completedRepositories", repositoryCounter);
+			info.addProperty("stepMessage", currentStep.name());
+			info.addProperty("stepDetails", getStepDetails());
+			return info;
+		}*/
 	}
-	
-	enum ExportStatus{ Queued, Running, Finished, Error }
+
+	public enum ExportStatus{ Queued, Running, Finished, Error }
+
+	public enum ExportStep
+	{
+		  START, STARTREPOSITORY, INITREPOSITORY, INITSITENODES, INITCONTENTS
+		, STARTCONTENTEXPORT, STARTSITENODEEXPORT, STARTREPOSITORYPROPERTIESEXPORT
+		, FINISHCURRENTREPOSITORY, STARTCONTENTTYPEDEFINITIONEXPORT, STARTCATEGORYEXPORT, STARTFILEEXPORT;
+	}
 
 	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
 	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
@@ -556,7 +824,7 @@ public class ExportImportController extends BaseController
 	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
 	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
 	/* %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% */
-	
+
 	public String exportContent(List contentIdList, String path, String fileNamePrefix, boolean includeContentTypes, boolean includeCategories) throws Exception
 	{
 		VisualFormatter vf = new VisualFormatter();

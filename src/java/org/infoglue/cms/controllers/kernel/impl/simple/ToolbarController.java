@@ -2777,7 +2777,7 @@ public class ToolbarController implements ToolbarProvider
 		buttons.add(new ToolbarButton("",
 				  getLocalizedString(locale, "tool.managementtool.exportRepository.header"), 
 				  getLocalizedString(locale, "tool.managementtool.exportRepository.header"),
-				  "javascript:openPopup('ExportRepository!input.action?repositoryId=" + request.getParameter("repositoryId") + "', 'Export', 'width=600,height=500,resizable=no');",
+				  "javascript:openPopup('ExportRepository!input.action?repositoryId=" + request.getParameter("repositoryId") + "', 'Export', 'width=600,height=700,resizable=no');",
 				  "",
 				  "left",
 				  "exportContent",

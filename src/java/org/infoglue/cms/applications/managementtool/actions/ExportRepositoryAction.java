@@ -50,6 +50,7 @@ import org.infoglue.cms.controllers.kernel.impl.simple.ContentController;
 import org.infoglue.cms.controllers.kernel.impl.simple.ContentTypeDefinitionController;
 import org.infoglue.cms.controllers.kernel.impl.simple.ExportImportController;
 import org.infoglue.cms.controllers.kernel.impl.simple.ExportImportController.ExportInfo;
+import org.infoglue.cms.controllers.kernel.impl.simple.ExportImportController.ExportStep;
 import org.infoglue.cms.controllers.kernel.impl.simple.InterceptionPointController;
 import org.infoglue.cms.controllers.kernel.impl.simple.RepositoryController;
 import org.infoglue.cms.controllers.kernel.impl.simple.SiteNodeController;
@@ -58,6 +59,7 @@ import org.infoglue.cms.entities.content.Content;
 import org.infoglue.cms.entities.management.AccessRight;
 import org.infoglue.cms.entities.management.InterceptionPointVO;
 import org.infoglue.cms.entities.management.Repository;
+import org.infoglue.cms.entities.management.RepositoryVO;
 import org.infoglue.cms.entities.management.impl.simple.InfoGlueExportImpl;
 import org.infoglue.cms.entities.structure.SiteNode;
 import org.infoglue.cms.entities.structure.SiteNodeVersionVO;
@@ -80,13 +82,17 @@ import com.opensymphony.module.propertyset.PropertySetManager;
 
 public class ExportRepositoryAction extends InfoGlueAbstractAction
 {
-    private final static Logger logger = Logger.getLogger(ExportRepositoryAction.class.getName());
+	private static final long serialVersionUID = -4241910176955800632L;
+
+	private final static Logger logger = Logger.getLogger(ExportRepositoryAction.class.getName());
 
 	private Integer repositoryId = null;
-	private List repositories = new ArrayList();
+	private List<RepositoryVO> repositories = new ArrayList<RepositoryVO>();
 	
 	private String exportId = null;
 	private String exportStatus = null;
+	private ExportInfo exportInfo = null;
+	private List<ExportInfo> exports = null;
 	
 	private String fileUrl 	= "";
 	private String fileName = "";
@@ -118,7 +124,8 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	public String doInput() throws Exception
 	{
 		repositories = RepositoryController.getController().getRepositoryVOListNotMarkedForDeletion();
-		
+		exports = ExportImportController.getController().getRepositoryExports(getInfoGluePrincipal());
+
 		return "input";
 	}
 	
@@ -135,9 +142,9 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 			try
 			{
 				UUID exportUUID = UUID.fromString(exportId);
-				ExportInfo info = ExportImportController.getController().getExportInfo(exportUUID);
-				
-				result.add("info", gson.toJsonTree(info));
+				ExportInfo exportInfo = ExportImportController.getController().getExportInfo(exportUUID);
+
+				result.add("info", gson.toJsonTree(exportInfo));
 			}
 			catch (IllegalArgumentException ex)
 			{
@@ -150,10 +157,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 				logger.info("Could not find an export for the given id. Id: " + exportId, ex);
 			}
 		}
-		//getResponse().getOutputStream().write(result.getAsString().getBytes());
-		//getResponse().getWriter().write(result.getAsString());
-		//this.getResponse().setContentType("text/plain");
-        //this.getResponse().getWriter().println(result.getAsString());
+
 		this.exportStatus = gson.toJson(result);
 		return "status";
 	}
@@ -161,7 +165,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	protected String doExecute() throws Exception 
 	{
 		// TODO access control
-		
+
 		String[] repositories = getRequest().getParameterValues("repositoryId");
 		if (repositories == null)
 		{
@@ -183,12 +187,33 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 			}
 		}
 	}
-	
-	
-	
-	
-	
-	
+
+
+
+
+	private String getStatusMessage(ExportImportController.ExportStep step)
+	{
+		switch (step)
+		{
+			case START: 							return "export.repository.preparing";
+			case STARTREPOSITORY: 					return "export.repository.start";
+			case INITREPOSITORY: 					return "export.repository.preparing";
+			case INITSITENODES: 					return "export.repository.siteNodes";
+			case INITCONTENTS: 						return "export.repository.contents";
+			case STARTCONTENTEXPORT: 				return "export.repository.content";
+			case STARTSITENODEEXPORT: 				return "export.repository.siteNode";
+			case STARTREPOSITORYPROPERTIESEXPORT: 	return "export.repository.repository";
+			case FINISHCURRENTREPOSITORY: 			return "export.repository.finish";
+			case STARTCONTENTTYPEDEFINITIONEXPORT: 	return "export.repository.contentTypeDefinition";
+			case STARTCATEGORYEXPORT: 				return "export.repository.category";
+			case STARTFILEEXPORT: 					return "export.repository.file";
+			default: 								return null;
+		}
+	}
+
+
+
+
 	/**
 	 * This handles the actual exporting.
 	 */
@@ -322,14 +347,14 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	 */
 	public static void getContentPropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allContentProperties, List<AccessRight> allAccessRights, Content content, Database db) throws SystemException
 	{
-		ExportImportController.getContentPropertiesAndAccessRights(ps, allContentProperties, allAccessRights, content, db);
+		ExportImportController.getContentPropertiesAndAccessRights(ps, allContentProperties, allAccessRights, content, null, db);
 	}
 	/**
 	 * @deprecated Use {@link ExportImportController#getSiteNodePropertiesAndAccessRights(PropertySet, Hashtable, List, SiteNode, Database)} instead. Or better yet refactor the entire solution
 	 */
 	public static void getSiteNodePropertiesAndAccessRights(PropertySet ps, Hashtable<String, String> allSiteNodeProperties, List<AccessRight> allAccessRights, SiteNode siteNode, Database db) throws SystemException, Exception
 	{
-		ExportImportController.getSiteNodePropertiesAndAccessRights(ps, allSiteNodeProperties, allAccessRights, siteNode, db);
+		ExportImportController.getSiteNodePropertiesAndAccessRights(ps, allSiteNodeProperties, allAccessRights, siteNode, null, db);
 	}
 	/**
 	 * @deprecated Use {@link ExportImportController#getRepositoryProperties(PropertySet, Integer)} instead. Or better yet refactor the entire solution
@@ -499,6 +524,11 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 		return fileName;
 	}
 	
+	public ExportInfo getExportInfo()
+	{
+		return exportInfo;
+	}
+	
 	public String getExportStatus()
 	{
 		return exportStatus;
@@ -514,7 +544,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 		return repositoryId;
 	}
 
-	public List getRepositories() 
+	public List<RepositoryVO> getRepositories() 
 	{
 		return repositories;
 	}
@@ -539,6 +569,11 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 		return this.exportId;
 	}
 
+	public List<ExportInfo> exports()
+	{
+		return this.exports;
+	}
+	
 	public int getAssetMaxSize()
 	{
 		return assetMaxSize;
