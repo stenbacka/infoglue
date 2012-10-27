@@ -1,0 +1,181 @@
+#define( $headerMarkup )
+	<link rel="stylesheet" type="text/css" href="applications/jscalendar/skins/aqua/theme.css" />
+	<script type="text/javascript" src="applications/jscalendar/calendar.js"></script>
+	<script type="text/javascript" src="applications/jscalendar/lang/calendar-en.js"></script>
+	<script type="text/javascript" src="applications/jscalendar/calendar-setup.js"></script>
+	
+	<style type="text/css">
+		@import "script/jqueryplugins-latest/dataTables/media/css/ig_table.css";
+	</style>
+	<script type="text/javascript" language="javascript" src="script/jqueryplugins-latest/dataTables/media/js/jquery.dataTables.min.js"></script>
+
+	<style type="text/css">
+		body {overflow-x:hidden}
+		.fieldGroup p
+		{
+			display: inline-block;
+		}
+		.fieldGroup p.description
+		{
+			display: block;
+		}
+		#searchLayer label span {display:block;}
+		.contentSearchForm fieldset {border-width:0;margin:0px;padding:0px;}
+		#result {width: 100%;margin-bottom:16px;border-collapse:collapse;}
+		th.sorting {background-color: #ececec;}
+		th.sorting_asc, th.sorting_desc {background-color: #ececec;}
+		tr.even {background-color:white;}
+		#result td, #result th {padding: 3px; line-height: 20px;}
+		#result tr {cursor: pointer;}
+		#result tr {
+			-webkit-user-select: none;
+			-moz-user-select: none;
+			-ms-user-select: none;
+			user-select: none;
+		}
+
+		@-webkit-keyframes fadePulse {
+		    0%   {background-color: rgba(255,255,255,1);}
+	    	100% {background-color: rgba(255,255,69,0.5);}
+		}
+		tr.selected td {-webkit-animation: fadePulse 0.7s infinite alternate;}
+	</style>
+#end
+
+#beginLightCommonToolV3Impl("tool.contenttool.searchResultHeader" "" "" false true true $headerMarkup false "")
+
+<form method="POST" id="contentSearchForm" class="contentSearchForm" name="editForm" action="SearchContent!searchBindingV3.action">
+	<fieldset>
+		<div id="searchLayer" style="display:block;">
+		#foreach ($repositoryVO in $repositories)
+			<input type="hidden" name="repositoryIdToSearch" value="$repositoryVO.id" />
+	    #end
+
+			<p>
+				#editTextField3($ui.getString("tool.contenttool.contentSearch.search.label") "tool.contenttool.contentSearch.search.label" "searchString" $formatter.escapeHTML($searchString) "30" "normaltextfield") 
+			</p>
+
+#define( $customConfig )
+	, ifFormat:    "%Y-%m-%d"
+	, align : "BR"
+	, showsTime: false
+	, timeFormat: "24"
+	, cache: true
+#end
+			<div class="fieldGroup">
+				<p class="description">
+					$ui.getString("tool.contenttool.contentSearch.date.description")
+				</p>
+				<p>
+					#editDateFieldCustom( "tool.contenttool.contentSearch.fields.fromDate" "fromDate" $searchFromDate "10" "" "" 'readonly="readonly"' $customConfig )
+				</p>
+				<p>
+					#editDateFieldCustom( "tool.contenttool.contentSearch.fields.toDate" "toDate" $searchToDate "10" "" "" 'readonly="readonly"' $customConfig )
+				</p>
+			</div>
+
+			<p class="buttonPane">
+				<input type="submit" value="$ui.getString("tool.contenttool.contentSearch.button.search")" class="search"/>
+			</p>
+		</div>
+	</fieldset>
+</form>
+
+#if( "$!contentVOSet" != "" )
+<table id="result">
+	<thead>
+		<tr>
+			<th>$ui.getString("tool.contenttool.contentSearch.resultTable.header.name")</th>
+			<th>$ui.getString("tool.contenttool.contentSearch.resultTable.header.date")</th>
+		</tr>
+	</thead>
+#set($cnt = 0)
+#foreach ($contentVO in $contentVOSet)
+	#set( $contentRepositoryId = $contentVO.repositoryId ) 
+	#set( $path = $contentVO.name ) ##$this.getContentPath($contentVO.contentId)
+	<script type="text/javascript">var path_${contentVO.contentId} = "$path";</script>	
+	<tr onclick="select(this, $contentVO.contentId, $contentRepositoryId, path_${contentVO.contentId});" ondblclick="add(this, $contentVO.contentId, $contentRepositoryId, path_${contentVO.contentId})">
+		<td>$contentVO.name</td>
+		<td>$formatter.formatDate($contentVO.publishDateTime, "yyyy-MM-dd")</td>
+	</tr>
+#end
+</table>
+#end
+
+#*
+tool.contenttool.contentSearch
+tool.contenttool.contentSearch.button.search=Search
+tool.contenttool.contentSearch.fields.text.dates=Defina a date range when the content was created
+tool.contenttool.contentSearch.fields.fromDate=From
+tool.contenttool.contentSearch.fields.toDate=To
+tool.contenttool.contentSearch.fields.toDate
+tool.contenttool.contentSearch.binding.button.reset=Reset
+tool.contenttool.contentSearch.binding.button.search=Search
+tool.contenttool.contentSearch.resultTable.header.name=Name
+tool.contenttool.contentSearch.resultTable.header.date=Date
+tool.contenttool.contentSearch.search.label=Search
+tool.contenttool.contentSearch.date.description=Define the date range when the content was created.
+
+*#
+
+<script type="text/javascript">
+<!-- 
+	var resultTable = $("#result").dataTable({
+	    "bAutoWidth": false,
+	    "oLanguage": {
+					"sZeroRecords": "$ui.getString("tool.common.datatable.sZeroRecords")",
+				},
+		"bSearchable": false,
+		"bPaginate": false,
+		"bFilter": false,
+		"bInfo": false,
+		"aaSorting": [[1,'desc'], [0,'asc']],
+		"aoColumns": [{ "sType": "string"}, {"sType": "date"}]
+	});
+
+	function setSelected(itemId, repoId, path)
+	{
+		if(itemId)
+			parent.document.inputForm.entityId.value     = itemId;
+		if(repoId)
+			parent.document.inputForm.repositoryId.value = repoId;
+		if(path)
+		 	parent.document.inputForm.path.value         = path;
+	}
+	
+	function unsetSelected()
+	{
+		parent.document.inputForm.entityId.value     = '';
+		parent.document.inputForm.repositoryId.value = '';
+		parent.document.inputForm.path.value         = '';
+	}
+
+	function select(row, itemId, repoId, path)
+	{
+		if ($(row).hasClass("selected")) {
+			$(row).removeClass("selected");
+			unsetSelected();
+		} else {
+			$("#result tr").removeClass("selected");
+			$(row).addClass("selected");
+			setSelected(itemId, repoId, path);
+		}
+	};
+	
+	function add(row, itemId, repoId, path)
+	{
+		if ($(row).hasClass("selected")) {
+			$(row).removeClass("selected");
+		} 
+
+		setSelected(itemId, repoId, path)
+		parent.addQualifyer();
+	};
+
+-->
+</script>
+
+#endLightCommonToolV3()
+
+
+

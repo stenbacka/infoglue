@@ -810,6 +810,7 @@
 	<action name="org.infoglue.cms.applications.contenttool.actions.SearchContentAction" alias="SearchContent">
 		<view name="input">/cms/contenttool/viewContentVersionSearch.vm</view>
 		<view name="inputBinding">/cms/contenttool/viewContentVersionSearchForBinding.vm</view>
+		<view name="searchBindingV3">/cms/contenttool/v3/viewContentSearchForBinding.vm</view>
 		<view name="inputInlineAsset">/cms/contenttool/viewContentVersionSearchResultForInlineAsset.vm</view>
 		<view name="inputInlineAssetV3">/cms/contenttool/v3/viewDigitalAssetSearchResultForInlineAsset.vm</view>
 		<view name="successBindingResult">/cms/contenttool/viewContentVersionSearchResultForBinding.vm</view>

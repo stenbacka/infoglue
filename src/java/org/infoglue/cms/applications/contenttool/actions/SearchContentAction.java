@@ -24,7 +24,11 @@
 package org.infoglue.cms.applications.contenttool.actions;
 
 import java.net.URLEncoder;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +43,10 @@ import org.infoglue.cms.controllers.kernel.impl.simple.UserControllerProxy;
 import org.infoglue.cms.entities.content.ContentVO;
 import org.infoglue.cms.entities.content.DigitalAssetVO;
 import org.infoglue.cms.entities.kernel.BaseEntityVO;
+import org.infoglue.cms.entities.management.ContentTypeDefinitionVO;
 import org.infoglue.cms.entities.management.LanguageVO;
+import org.infoglue.cms.exception.Bug;
+import org.infoglue.cms.exception.SystemException;
 import org.infoglue.cms.util.CmsPropertyHandler;
 
 import webwork.action.Action;
@@ -49,7 +56,7 @@ import webwork.action.Action;
  * Action class for usecase SearchContentAction. Was better before but due to wanted support for multiple 
  * databases and lack of time I had to cut down on functionality - sorry Magnus. 
  *
- * @author Magnus Güvenal
+ * @author Magnus Gï¿½venal
  * @author Mattias Bogeblad
  */
 
@@ -67,6 +74,8 @@ public class SearchContentAction extends InfoGlueAbstractAction
 	private List<DigitalAssetVO> digitalAssetVOList = null;
 	private Integer repositoryId;
 	private String searchString;
+	private String searchFromDate;
+	private String searchToDate;
 	private String name;
 	private Integer languageId;
 	private Integer contentTypeDefinitionId;
@@ -109,7 +118,37 @@ public class SearchContentAction extends InfoGlueAbstractAction
 	
 	public String getSearchString()
 	{
-		return this.searchString;	
+		return this.searchString;
+	}
+
+	public void setSearchFromDate(String searchFromDate)
+	{
+	    this.searchFromDate = searchFromDate;
+		//this.searchString = s.replaceAll("'","");
+	}
+
+	public String getSearchFromDate()
+	{
+		if (searchFromDate == null)
+		{
+			return new SimpleDateFormat("yyyy-MM-dd").format(new Date().getTime() - 604800000); // 604,800,000 = 1 week
+		}
+		return searchFromDate;
+	}
+
+	public void setSearchToDate(String searchToDate)
+	{
+	    this.searchToDate = searchToDate;
+		//this.searchString = s.replaceAll("'","");
+	}
+
+	public String getSearchToDate()
+	{
+		if (searchToDate == null)
+		{
+			return new SimpleDateFormat("yyyy-MM-dd").format(new Date().getTime());
+		}
+		return searchToDate;
 	}
 	
 	public void setMaxRows(int r)
@@ -365,6 +404,52 @@ public class SearchContentAction extends InfoGlueAbstractAction
 	    
 	    return Action.INPUT + "Binding";
 	}
+	
+	public String doSearchBindingV3() throws Exception 
+	{
+		this.repositories = RepositoryController.getController().getAuthorizedRepositoryVOList(this.getInfoGluePrincipal(), false);
+
+		if (getSearchString() != null)
+		{
+			logger.debug("Will search");
+			Integer[] allowedContentTypeId = new Integer[0];
+			if(allowedContentTypeIds != null && allowedContentTypeIds.length != 0)
+			{
+				allowedContentTypeId = new Integer[allowedContentTypeIds.length];
+				for(int i=0; i<allowedContentTypeIds.length; i++)
+					allowedContentTypeId[i] = new Integer(allowedContentTypeIds[i]);
+			}
+			
+			int maxRows = 100;
+			try
+			{
+				maxRows = Integer.parseInt(CmsPropertyHandler.getMaxRows());
+			}
+			catch(Exception e)
+			{
+			}
+	
+			String[] repositoryIdToSearch = this.getRequest().getParameterValues("repositoryIdToSearch");
+			if(repositoryIdToSearch != null)
+			{
+				Integer[] repositoryIdAsIntegerToSearch = new Integer[repositoryIdToSearch.length];
+				for(int i=0; i < repositoryIdToSearch.length; i++)
+				{
+					repositoryIdAsIntegerToSearch[i] = new Integer(repositoryIdToSearch[i]);
+					selectedRepositoryIdList.add(repositoryIdToSearch[i]);
+				}
+	
+				contentVOSet = searchController.getContents(repositoryIdAsIntegerToSearch, this.getSearchString(), maxRows, name, languageId, allowedContentTypeId, caseSensitive, stateId);
+			}
+			else
+			{
+				contentVOSet = searchController.getContents(this.repositoryId, this.getSearchString(), maxRows, name, languageId, allowedContentTypeId, caseSensitive, stateId);
+				selectedRepositoryIdList.add("" + this.repositoryId);
+			}
+		}
+		
+		return "searchBindingV3";
+	}
 
 	/**
 	 * This method returns the binding search interface to the user.
@@ -580,6 +665,19 @@ public class SearchContentAction extends InfoGlueAbstractAction
 	public String[] getAllowedContentTypeIds()
 	{
 		return allowedContentTypeIds;
+	}
+	
+	public ContentTypeDefinitionVO getContentTypeWithId(Integer id)
+	{
+		try
+		{
+			return ContentTypeDefinitionController.getController().getContentTypeDefinitionVOWithId(id);
+		}
+		catch (Exception ex)
+		{
+			logger.warn("Error when retrieving content type definition. Exception type: " + ex.getClass() + ", Message " + ex.getMessage());
+			return null;
+		}
 	}
 
 	public boolean getIncludeAssets()

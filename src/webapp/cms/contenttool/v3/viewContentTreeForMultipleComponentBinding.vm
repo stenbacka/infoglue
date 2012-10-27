@@ -393,6 +393,30 @@
 		});
 	-->    
 	</script>
+	
+	<style type="text/css">
+		#tabsContainer {border:1px solid lightgrey;}
+		#basicTab, #searchTab {width: 340px; display: block;}
+		/*#itreeFrame {width:340px}*/
+		.repositoryRow {height: 25px;}
+		#addColumn {width:30px;}
+		#addColumn img {margin: 0 auto; display:block;}
+		#tabsContainer {
+		position: relative; 
+		}
+		
+		#basicTab > div, #search > div {
+			margin: 8px 0px 0px 8px;
+			position: relative; 
+		}
+		#tabsContainer > div {margin-bottom:0}
+	</style>
+	
+	<script type="text/javascript">
+		$(document).ready(function(){
+			$("#tabsContainer").tabs({ show:function(event, ui) { /*resizeInlineTabDivsFullOnPosition(ui.panel.id);*/} });
+		});
+	</script>
 #end
 
 #beginLightCommonToolV3Impl("tool.structuretool.chooseContentsLabel" "" "" false true $!disableCloseButton $headerMarkup false "")
@@ -400,55 +424,48 @@
 	#lightMenuToolbar("" $buttons $rightButtons) 
 
 	<div style="clear: both;"></div>
-		
+
+	<h3>$ui.getString("tool.structuretool.chooseContentsForBindingLabel")</h3>
+
 	<div style="margin: 5px;">
 		<table cellpadding="0" cellspacing="0" border="0">
 		<tr>
 			<td valign="top">
-				
-				<table cellpadding="0" cellspacing="0" border="0">
-				<tr>
-					<td class="smalllabel">$ui.getString("tool.structuretool.chooseContentsForBindingLabel")</td>
-				</tr>
-				<tr>
-					<td height="1"><img src="css/images/trans.gif" width="1" height="7"></td>
-				</tr>		
-				<tr>
-					<td>
-				  		<select size="1" name="repositoryId" class="sitedropbox" onChange="javascript:changeRepository(this);" class="contenttool">
-						    <option value="">$ui.getString("tool.contenttool.chooseRepositoryLabel")</option>
-						    #foreach ($repositoryVO in $repositories)
-						    <option value="$repositoryVO.getRepositoryId()">$repositoryVO.getName()</option>
-						    #end
-						</select>
-					</td>
-				</tr>
-				<tr>
-					<td height="1"><img src="css/images/trans.gif" width="1" height="5"></td>
-				</tr>	
-				<tr>
-					<td class="menu" style="border: 1px solid #C7D1B3;">    
-						<iframe frameborder="0" name="itreeFrame" id="itreeFrame" src="ViewContentHtmlTree!bindingViewV3.action?repositoryId=${repositoryId}&${allowedContentTypeIdsAsUrlEncodedString}" width="350" height="430" align="baseline"></IFRAME>
-					</td>
-				</tr>	
-				<tr>
-					<td>&nbsp;</td>
-				</tr>
-				<tr>
-					<td>
-						<form name="inputForm" action="CreateServiceBinding.action">
-							<input type="hidden" name="draggedComponentId" value="">
-							<input type="hidden" name="entityId" value="">
-							<input type="hidden" name="repositoryId" value="">
-							<input type="hidden" name="path" value="">
-							<input type="hidden" name="qualifyerXML" value="">
-						</form>
-					</td>
-				</tr>		
-				</table>
+				<div id="tabsContainer" class="flora">
+					<ul>
+				        <li><a href="#basicTab"><span>$ui.getString("tool.contenttool.assetDialog.repositoryBrowserTabLabel")</span></a></li>
+				        <li><a href="#searchTab"><span>$ui.getString("tool.common.searchTabLabelPrefix")</span></a></li>	        
+				    </ul>
+	
+				    <div id="basicTab" >##class="inlineTabDiv"
+						<div>
+							<select size="1" name="repositoryId" class="sitedropbox" onchange="changeRepository(this);">
+							    <option value="">$ui.getString("tool.contenttool.chooseRepositoryLabel")</option>
+							    #foreach ($repositoryVO in $repositories)
+							    <option value="$repositoryVO.getRepositoryId()">$repositoryVO.getName()</option>
+							    #end
+							</select><br/>
+	
+							<iframe frameborder="0" name="itreeFrame" id="itreeFrame" src="ViewContentHtmlTree!bindingViewV3.action?repositoryId=${repositoryId}&${allowedContentTypeIdsAsUrlEncodedString}" width="100%" height="426" ></iframe>
+							##<iframe frameborder="0" name="itreeFrame" id="bindingItreeFrame" src="ViewContentHtmlTree!V3.action?repositoryId=${repositoryId}&${allowedContentTypeIdsAsUrlEncodedString}" width="100%" height="460" ></iframe>	
+						</div>
+					</div>
+					<div id="searchTab">##class="inlineTabDiv"
+						<div>
+							<iframe frameborder="0" name="itreeFrame" id="searchItreeFrame" src="SearchContent!searchBindingV3.action?${allowedContentTypeIdsAsUrlEncodedString}" width="340" height="426" ></iframe>
+						</div>
+					</div>
+				</div>
+
+				<form name="inputForm" action="CreateServiceBinding.action">
+					<input type="hidden" name="entityId" value=""/>
+					<input type="hidden" name="repositoryId" value=""/>
+					<input type="hidden" name="path" value=""/>
+					<input type="hidden" name="qualifyerXML" value=""/>
+				</form>
 			</td>	
 			
-			<td><a href="javascript:addQualifyer();"><img src="css/images/arrowRightBig.gif" border="0"></a></td>
+			<td id="addColumn"><a href="javascript:addQualifyer();"><img src="css/images/arrowRightBig.gif" border="0"></a></td>
 			
 			<td valign="top">
 				<table cellpadding="0" cellspacing="0" border="0" width="100%">
