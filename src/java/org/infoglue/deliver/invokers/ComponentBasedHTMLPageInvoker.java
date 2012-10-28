@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.dom4j.Element;
 import org.exolab.castor.jdo.Database;
 import org.infoglue.cms.applications.common.VisualFormatter;
 import org.infoglue.cms.controllers.kernel.impl.simple.ContentVersionController;
@@ -74,6 +75,7 @@ import org.xmlpull.v1.builder.XmlAttribute;
 import org.xmlpull.v1.builder.XmlDocument;
 import org.xmlpull.v1.builder.XmlElement;
 import org.xmlpull.v1.builder.XmlInfosetBuilder;
+import org.xmlpull.v1.builder.impl.XmlNamespaceImpl;
 import org.xmlpull.v1.builder.xpath.Xb1XPath;
 
 /**
@@ -2854,6 +2856,7 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 								String entity = bindingElement.getAttributeValue(bindingElement.getNamespaceName(), "entity");
 								String entityId = bindingElement.getAttributeValue(bindingElement.getNamespaceName(), "entityId");
 								String assetKey = bindingElement.getAttributeValue(bindingElement.getNamespaceName(), "assetKey");
+								XmlElement supplementingBindingElement = bindingElement.element(bindingElement.getNamespace(), "binding");
 
 								ComponentBinding componentBinding = new ComponentBinding();
 								//componentBinding.setId(new Integer(id));
@@ -2862,7 +2865,14 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 								componentBinding.setEntityId(new Integer(entityId));
 								componentBinding.setAssetKey(assetKey);
 								componentBinding.setBindingPath(path);
-								
+								if (supplementingBindingElement != null)
+								{
+									ComponentBinding supplementingComponentBinding = new ComponentBinding();
+									supplementingComponentBinding.setEntityClass(supplementingBindingElement.getAttributeValue(supplementingBindingElement.getNamespaceName(), "entity"));
+									supplementingComponentBinding.setEntityId(new Integer(supplementingBindingElement.getAttributeValue(supplementingBindingElement.getNamespaceName(), "entityId")));
+									supplementingComponentBinding.setAssetKey(supplementingBindingElement.getAttributeValue(supplementingBindingElement.getNamespaceName(), "assetKey"));
+									componentBinding.setSupplementingBinding(supplementingComponentBinding);
+								}
 								bindings.add(componentBinding);
 							}
 			

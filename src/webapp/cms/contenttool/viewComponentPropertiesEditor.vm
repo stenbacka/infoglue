@@ -92,6 +92,7 @@
 				propertyAutoCreateContentMethod	= property.getAutoCreateContentMethod();
 				propertyAutoCreateContentPath	= property.getAutoCreateContentPath();
 				propertyCustomMarkup			= property.getCustomMarkup();
+				propertySupplementingEntity		= property.getSupplementingEntity();
 				
 				//alert("propertyCustomMarkup:" + propertyCustomMarkup);
 				document.getElementById("componentPropertyDefinition_customMarkup").value = propertyCustomMarkup;
@@ -115,7 +116,7 @@
 					propertiesXML += "</property>";					
 				}
 				else
-					propertiesXML += "<property name='" + clean(propertyName) + "' displayName='" + clean(propertyDisplayName) + "' type='" + propertyType + "' entity='" + propertyEntity + "' multiple='" + propertyMultiple + "' assetBinding='" + propertyAssetBinding + "' assetMask='" + propertyAssetMask + "' isPuffContentForPage='" + isPuffContentForPage + "' allowedContentTypeDefinitionNames='" + propertyAllowedContentTypeNames + "' description='" + clean(propertyDescription) + "' defaultValue='" + clean(propertyDefaultValue) + "' allowLanguageVariations='" + propertyAllowLanguageVariations + "' WYSIWYGEnabled='" + propertyWYSIWYGEnabled + "' WYSIWYGToolbar='" + propertyWYSIWYGToolbar + "' dataProvider='" + propertyDataProvider + "' dataProviderParameters='" + propertyDataProviderParameters + "' autoCreateContent='" + propertyAutoCreateContent + "' autoCreateContentMethod='" + propertyAutoCreateContentMethod + "' autoCreateContentPath='" + propertyAutoCreateContentPath + "' customMarkup='" + encodeXML(propertyCustomMarkup) + "'/>";
+					propertiesXML += "<property name='" + clean(propertyName) + "' displayName='" + clean(propertyDisplayName) + "' type='" + propertyType + "' entity='" + propertyEntity + "' multiple='" + propertyMultiple + "' assetBinding='" + propertyAssetBinding + "' assetMask='" + propertyAssetMask + "' isPuffContentForPage='" + isPuffContentForPage + "' allowedContentTypeDefinitionNames='" + propertyAllowedContentTypeNames + "' description='" + clean(propertyDescription) + "' defaultValue='" + clean(propertyDefaultValue) + "' allowLanguageVariations='" + propertyAllowLanguageVariations + "' WYSIWYGEnabled='" + propertyWYSIWYGEnabled + "' WYSIWYGToolbar='" + propertyWYSIWYGToolbar + "' dataProvider='" + propertyDataProvider + "' dataProviderParameters='" + propertyDataProviderParameters + "' autoCreateContent='" + propertyAutoCreateContent + "' autoCreateContentMethod='" + propertyAutoCreateContentMethod + "' autoCreateContentPath='" + propertyAutoCreateContentPath + "' supplementingEntity='" + propertySupplementingEntity + "' customMarkup='" + encodeXML(propertyCustomMarkup) + "'/>";
 			}
 		   	
 		   	propertiesXML += "</properties>";
@@ -326,6 +327,13 @@
 			//document.componentPropertyDefinitionForm.componentPropertyDefinition_autoCreateContentMethod.value 	= componentPropertyDefinition.autoCreateContentMethod;
 			document.componentPropertyDefinitionForm.componentPropertyDefinition_autoCreateContentPath.value 	= componentPropertyDefinition.autoCreateContentPath;
 			
+			if(componentPropertyDefinition.supplementingContent == "Content")
+				document.componentPropertyDefinitionForm.componentPropertyDefinition_entity.options[1].selected = 1;
+			else if(componentPropertyDefinition.supplementingContent == "SiteNode")
+				document.componentPropertyDefinitionForm.componentPropertyDefinition_entity.options[2].selected = 1;
+			else if(componentPropertyDefinition.supplementingContent == "Asset")
+				document.componentPropertyDefinitionForm.componentPropertyDefinition_entity.options[3].selected = 1;
+			
 			var allowedContentTypeNamesArray = componentPropertyDefinition.getAllowedContentTypeNames().split(",");
 			var selObject = document.componentPropertyDefinitionForm.componentPropertyDefinition_allowedContentTypeNames;
 
@@ -406,6 +414,7 @@
 				componentPropertyDefinition.setAssetBinding(document.getElementById("componentPropertyDefinition_assetBinding").value);
 				componentPropertyDefinition.setAssetMask(document.getElementById("componentPropertyDefinition_assetMask").value);
 				componentPropertyDefinition.setIsPuffContentForPage(document.getElementById("componentPropertyDefinition_isPuffContentForPage").value);
+				componentPropertyDefinition.setSupplementingEntity(document.getElementById("componentPropertyDefinition_supplementingEntity").value);
 				
 				componentPropertyDefinition.setAutoCreateContent(document.getElementById("componentPropertyDefinition_autoCreateContent").value);
 				componentPropertyDefinition.setAutoCreateContentMethod(document.getElementById("componentPropertyDefinition_autoCreateContentMethod").value);
@@ -614,7 +623,7 @@
 
 		function addProperty()
 		{
-			property = new ComponentPropertyDefinition("NewProperty", "NewProperty", "binding", "Content", "false", "false", "", "false", "", "No description yet", "", "false", "Basic", "", "", "false", "", "", "", "false");
+			property = new ComponentPropertyDefinition("NewProperty", "NewProperty", "binding", "Content", "false", "false", "", "false", "", "No description yet", "", "false", "Basic", "", "", "false", "", "", "", "false", "");
 			propertyVector.addElement(property);
 				
 			drawList();
@@ -651,6 +660,7 @@
 				allowMultipleSelections = property.getAllowMultipleSelections();
 				customMarkup 			= property.getCustomMarkup();
 				options					= property.getOptions();
+				supplementingEntity 	= property.getSupplementingEntity();
 				
 				property.setName(previousProperty.getName());
 				property.setDisplayName(previousProperty.getDisplayName());
@@ -675,6 +685,7 @@
 				property.setAutoCreateContentPath(previousProperty.getAutoCreateContentPath());
 				property.setCustomMarkup(previousProperty.getCustomMarkup());
 				property.setOptions(previousProperty.getOptions());
+				property.setSupplementingEntity(previousProperty.getSupplementingEntity());
 				
 				previousProperty.setName(name);
 				previousProperty.setDisplayName(displayName);
@@ -700,6 +711,7 @@
 				previousProperty.setAutoCreateContentPath(property.getAutoCreateContentPath());
 				previousProperty.setCustomMarkup(property.getCustomMarkup());
 				previousProperty.setOptions(options);
+				previousProperty.setSupplementingEntity(supplementingEntity);
 				
 				drawList();
 			}			
@@ -735,6 +747,7 @@
 				allowMultipleSelections = property.getAllowMultipleSelections();
 				customMarkup 			= property.getCustomMarkup();
 				options					= property.getOptions();
+				supplementingEntity 	= property.getSupplementingEntity();
 				
 				property.setName(previousProperty.getName())
 				property.setDisplayName(previousProperty.getDisplayName())
@@ -759,6 +772,7 @@
 				property.setAutoCreateContentPath(previousProperty.getAutoCreateContentPath());
 				property.setCustomMarkup(previousProperty.getCustomMarkup());
 				property.setOptions(previousProperty.getOptions());
+				property.setSupplementingEntity(previousProperty.getSupplementingEntity());
 				
 				previousProperty.setName(name);
 				previousProperty.setDisplayName(displayName)
@@ -784,6 +798,7 @@
 				previousProperty.setAutoCreateContentPath(property.getAutoCreateContentPath());
 				previousProperty.setCustomMarkup(property.getCustomMarkup());
 				previousProperty.setOptions(options);
+				previousProperty.setSupplementingEntity(supplementingEntity);
 			
 				drawList();
 			}
@@ -881,6 +896,7 @@
 				document.getElementById("allowedContentTypeNamesParagraph").style.display = "none";
 				document.getElementById("autoCreateContentParagraph").style.display = "none";
 				document.getElementById("isPuffContentForPageParagraph").style.display = "none";
+				document.getElementById("supplementingEntityParagraph").style.display = "none";
 			}
 			else if(selectBox.value == "textarea")
 			{							 
@@ -895,6 +911,7 @@
 				document.getElementById("allowedContentTypeNamesParagraph").style.display = "none";
 				document.getElementById("autoCreateContentParagraph").style.display = "none";
 				document.getElementById("isPuffContentForPageParagraph").style.display = "none";
+				document.getElementById("supplementingEntityParagraph").style.display = "none";
 			}
 			else if(selectBox.value == "select" || selectBox.value == "checkbox")
 			{
@@ -915,6 +932,7 @@
 				document.getElementById("allowedContentTypeNamesParagraph").style.display = "none";
 				document.getElementById("autoCreateContentParagraph").style.display = "none";
 				document.getElementById("isPuffContentForPageParagraph").style.display = "none";
+				document.getElementById("supplementingEntityParagraph").style.display = "none";
 			}
 			else if(selectBox.value == "datefield")
 			{							 
@@ -929,6 +947,7 @@
 				document.getElementById("autoCreateContentParagraph").style.display = "none";
 				document.getElementById("isPuffContentForPageParagraph").style.display = "none";
 				document.getElementById("dataProviderParagraph").style.display = "none";
+				document.getElementById("supplementingEntityParagraph").style.display = "none";
 			}
 			else if(selectBox.value == "customfield")
 			{							 
@@ -943,6 +962,7 @@
 				document.getElementById("autoCreateContentParagraph").style.display = "none";
 				document.getElementById("isPuffContentForPageParagraph").style.display = "none";
 				document.getElementById("dataProviderParagraph").style.display = "none";
+				document.getElementById("supplementingEntityParagraph").style.display = "none";
 			}
 			else
 			{
@@ -954,6 +974,7 @@
 				document.getElementById("allowedContentTypeNamesParagraph").style.display = "block";
 				document.getElementById("isPuffContentForPageParagraph").style.display = "block";
 				document.getElementById("dataProviderParagraph").style.display = "none";
+				document.getElementById("supplementingEntityParagraph").style.display = "block";
 			}
 		}
 
@@ -980,7 +1001,7 @@
 		function init()
 		{
 			#foreach($propertyDefinition in $componentPropertyDefinitions)
-				property = new ComponentPropertyDefinition("$propertyDefinition.name", "$!propertyDefinition.displayName", "$propertyDefinition.type", "$propertyDefinition.entity", "$propertyDefinition.multiple", "$propertyDefinition.assetBinding", "$propertyDefinition.assetMask", "$propertyDefinition.isPuffContentForPage", "$propertyDefinition.allowedContentTypeNames", "$propertyDefinition.description", "$!propertyDefinition.defaultValue", "$!propertyDefinition.allowLanguageVariations", "$!propertyDefinition.WYSIWYGEnabled", "$!propertyDefinition.WYSIWYGToolbar", "$!propertyDefinition.dataProvider", "$!propertyDefinition.dataProviderParameters", "$!propertyDefinition.autoCreateContent", "$!propertyDefinition.autoCreateContentMethod", "$!propertyDefinition.autoCreateContentPath", "$!propertyDefinition.encodedCustomMarkup", "$!propertyDefinition.allowMultipleSelections");
+				property = new ComponentPropertyDefinition("$propertyDefinition.name", "$!propertyDefinition.displayName", "$propertyDefinition.type", "$propertyDefinition.entity", "$propertyDefinition.multiple", "$propertyDefinition.assetBinding", "$propertyDefinition.assetMask", "$propertyDefinition.isPuffContentForPage", "$propertyDefinition.allowedContentTypeNames", "$propertyDefinition.description", "$!propertyDefinition.defaultValue", "$!propertyDefinition.allowLanguageVariations", "$!propertyDefinition.WYSIWYGEnabled", "$!propertyDefinition.WYSIWYGToolbar", "$!propertyDefinition.dataProvider", "$!propertyDefinition.dataProviderParameters", "$!propertyDefinition.autoCreateContent", "$!propertyDefinition.autoCreateContentMethod", "$!propertyDefinition.autoCreateContentPath", "$!propertyDefinition.encodedCustomMarkup", "$!propertyDefinition.allowMultipleSelections", "$propertyDefinition.supplementingEntity");
 
 				#foreach($propertyOptionDefinition in $propertyDefinition.options)
 					propertyOption = new ComponentPropertyOptionDefinition("$propertyOptionDefinition.name", "$propertyOptionDefinition.value");
@@ -1188,6 +1209,14 @@
 						<input type="textfield" name="componentPropertyDefinition_autoCreateContentPath" id="componentPropertyDefinition_autoCreateContentPath" value=""/>
 						</p>
 					</div>
+					<p id="supplementingEntityParagraph" style="display: block;"><label for="componentPropertyDefinition_supplementingEntity">Supplementing entity:</label>
+						<select size="1" name="componentPropertyDefinition_supplementingEntity" id="componentPropertyDefinition_supplementingEntity" class="sitedropbox">
+						    <option value="">--</option>
+						    <option value="Content">Content</option>
+						    <option value="SiteNode">SiteNode</option>
+						    <option value="Asset">Asset</option>
+						</select>
+					</p>
 				</form>
 
 				</div>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<components>
+	<component contentId="5" id="0" name="base">
+		<properties></properties>
+		<bindings></bindings>
+		<components>
+			<component contentId="16" id="1" name="main">
+				<properties>
+					<property name="TheBind" path="foo Metainfo" type="contentBinding">
+						<binding entity="Content" entityId="23"></binding>
+					</property>
+					<property name="CBinder"
+						path="Apa Metainfo, XMLTest Metainfo, Big repo Metainfo, Big repo Metainfo"
+						path_en="Apa Metainfo, XMLTest Metainfo, Big repo Metainfo, Big repo Metainfo"
+						type="contentBinding">
+						<binding assetKey="" entity="Content" entityId="20"></binding>
+						<binding assetKey="" entity="Content" entityId="25"></binding>
+						<binding assetKey="" entity="Content" entityId="14"></binding>
+						<binding assetKey="" entity="Content" entityId="14"></binding>
+					</property>
+					<property name="AssetBinder" path="2010-11-21 17.32.12, 2011-02-02 20.13.23"
+						path_en="2010-11-21 17.32.12, 2011-02-02 20.13.23" type="contentBinding">
+						<binding assetKey="2010-11-21 17.32.12" entity="Content"
+							entityId="11"></binding>
+						<binding assetKey="2011-02-02 20.13.23" entity="Content"
+							entityId="11"></binding>
+					</property>
+				</properties>
+				<components></components>
+			</component>
+		</components>
+	</component>
+</components>

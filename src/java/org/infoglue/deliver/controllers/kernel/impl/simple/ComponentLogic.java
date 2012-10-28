@@ -39,10 +39,14 @@ import org.apache.log4j.Logger;
 import org.dom4j.Attribute;
 import org.exolab.castor.jdo.Database;
 import org.infoglue.cms.applications.databeans.ComponentPropertyDefinition;
+import org.infoglue.cms.controllers.kernel.impl.simple.ContentController;
 import org.infoglue.cms.controllers.kernel.impl.simple.ContentVersionController;
+import org.infoglue.cms.controllers.kernel.impl.simple.DigitalAssetController;
 import org.infoglue.cms.controllers.kernel.impl.simple.LanguageController;
+import org.infoglue.cms.controllers.kernel.impl.simple.SiteNodeController;
 import org.infoglue.cms.entities.content.ContentVO;
 import org.infoglue.cms.entities.content.ContentVersionVO;
+import org.infoglue.cms.entities.kernel.BaseEntityVO;
 import org.infoglue.cms.entities.management.ContentTypeDefinitionVO;
 import org.infoglue.cms.entities.management.LanguageVO;
 import org.infoglue.cms.entities.structure.SiteNodeVO;
@@ -955,6 +959,54 @@ public class ComponentLogic
 		return contents;
 	}
 	
+	public List getBoundContents(String propertyName, boolean useInheritance, boolean useRepositoryInheritance, boolean useStructureInheritance, Map<Integer, ComponentBinding> supplementingEntities)
+	{
+		List contents = new ArrayList();
+		
+		Map property = getInheritedComponentProperty(this.infoGlueComponent, propertyName, useInheritance, useRepositoryInheritance, useStructureInheritance);
+		contents = getBoundContents(property);
+		if (property != null && supplementingEntities != null)
+		{
+			@SuppressWarnings("unchecked")
+			List<ComponentBinding> bindings = (List<ComponentBinding>)property.get("bindings");
+			Iterator<ComponentBinding> bindingsIterator = bindings.iterator();
+			while(bindingsIterator.hasNext())
+			{
+				ComponentBinding componentBinding = bindingsIterator.next();
+				ComponentBinding supplementingEntity = componentBinding.getSupplementingBinding();
+				if (supplementingEntity != null)
+				{
+//					BaseEntityVO entity = null;
+//					try
+//					{
+//						if ("Content".equalsIgnoreCase(supplementingEntity.getEntityClass()))
+//						{
+//							if ("".equals(supplementingEntity.getAssetKey()))
+//							{
+//								entity = ContentController.getContentController().getContentVOWithId(supplementingEntity.getEntityId());
+//							}
+//							else
+//							{
+//								entity = DigitalAssetController.getDigitalAssetVOWithId(supplementingEntity.getEntityId());
+//							}
+//						}
+//						else if ("SiteNode".equalsIgnoreCase(supplementingEntity.getEntityClass()))
+//						{
+//							entity = SiteNodeController.getController().getSiteNodeVOWithId(supplementingEntity.getEntityId());
+//						}
+//					}
+//					catch (Exception ex)
+//					{
+//						logger.warn("Error getting an object for the given supplementingEntity. Id: " + supplementingEntity.getEntityId() + ", Entity class: " + supplementingEntity.getEntityClass() + ", Asset key: " + supplementingEntity.getAssetKey());
+//					}
+					supplementingEntities.put(componentBinding.getEntityId(), supplementingEntity);
+				}
+			}
+		}
+		
+		return contents;
+	}
+	
 	/**
 	 * This method returns a list of childContents using inheritence as default.
 	 */
@@ -1499,14 +1551,14 @@ public class ComponentLogic
 			if(propertyCandidate != null)
 			{
 				if(propertyCandidate instanceof NullObject)
-					property = null;				
+					property = null;
 				else
 					property = (Map)propertyCandidate;
 					
 				if(propertyCandidateVersions != null)
-					contentVersionIdList.addAll(propertyCandidateVersions);				
+					contentVersionIdList.addAll(propertyCandidateVersions);
 				if(propertyUsedEntities != null)
-					usedContentEntities.addAll(propertyUsedEntities);				
+					usedContentEntities.addAll(propertyUsedEntities);
 			}
 			else
 			{
@@ -3768,10 +3820,11 @@ public class ComponentLogic
 					String autoCreatContentMethod 	= element.attributeValue("autoCreatContentMethod");
 					String autoCreatContentPath		= element.attributeValue("autoCreatContentPath");
 					String customMarkup 			= element.attributeValue("customMarkup");
+					String supplementingEntity		= element.attributeValue("supplementingEntity");
 					if(allowLanguageVariations == null || allowLanguageVariations.equals(""))
 						allowLanguageVariations = "true";
 					
-					propertyDefinition = new ComponentPropertyDefinition(name, displayName, type, entity, new Boolean(multiple), new Boolean(assetBinding), assetMask, new Boolean(isPuffContentForPage), allowedContTypeDefNames, description, defaultValue, new Boolean(allowLanguageVariations), new Boolean(WYSIWYGEnabled), WYSIWYGToolbar, dataProvider, dataProviderParameters, new Boolean(autoCreatContent), autoCreatContentMethod, autoCreatContentPath, customMarkup, new Boolean(allowMultipleSelections));
+					propertyDefinition = new ComponentPropertyDefinition(name, displayName, type, entity, new Boolean(multiple), new Boolean(assetBinding), assetMask, new Boolean(isPuffContentForPage), allowedContTypeDefNames, description, defaultValue, new Boolean(allowLanguageVariations), new Boolean(WYSIWYGEnabled), WYSIWYGToolbar, dataProvider, dataProviderParameters, new Boolean(autoCreatContent), autoCreatContentMethod, autoCreatContentPath, customMarkup, new Boolean(allowMultipleSelections), supplementingEntity);
 				}
 			}
 		}

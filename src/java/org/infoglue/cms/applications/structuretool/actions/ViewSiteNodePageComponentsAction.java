@@ -1679,7 +1679,7 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 					if(toEncoding == null)
 						toEncoding = "utf-8";
 					
-					String[] controlChars = new String[]{"å","ä","ö","Å","Ä","Ö","Â","‰","ˆ","≈","ƒ","÷"};
+					String[] controlChars = new String[]{"ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ"};
 					boolean convert = true;
 					for(String charToTest : controlChars)
 					{
@@ -1875,6 +1875,7 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 			Integer siteNodeId = new Integer(this.getRequest().getParameter("siteNodeId"));
 			Integer languageId = new Integer(this.getRequest().getParameter("languageId"));
 			Integer contentId  = new Integer(this.getRequest().getParameter("contentId"));
+			String supplementingEntityType = this.getRequest().getParameter("supplementingEntityType");
 			String propertyName = this.getRequest().getParameter("propertyName");
 	
 			//logger.info("**********************************************************************************");
@@ -1898,7 +1899,8 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 				String entityName = component.getAttribute("entity");
 				String entityId = component.getAttribute("entityId");
 				String assetKey = component.getAttribute("assetKey");
-				
+				NodeList supplementingEntities = component.getElementsByTagName("binding");
+
 				try
 				{
 					String path = "Undefined";
@@ -1912,12 +1914,37 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 						ContentVO contentVO = ContentController.getContentController().getContentVOWithId(new Integer(entityId));
 						path = contentVO.getName();
 					}
-					
+
 					Map binding = new HashMap();
 					binding.put("entityName", entityName);
 					binding.put("entityId", entityId);
 					binding.put("assetKey", assetKey);
 					binding.put("path", path);
+
+					if (supplementingEntityType != null && !"".equals(supplementingEntityType))
+					{
+						Map<String, String> supplementingBinding = new HashMap<String, String>();
+						supplementingBinding.put("entityType", supplementingEntityType);
+
+						if (supplementingEntities != null && supplementingEntities.getLength() > 0)
+						{
+							Node supplementingEntity = supplementingEntities.item(0);
+							if (supplementingEntity instanceof Element)
+							{
+								Element supplementingElement = (Element)supplementingEntity;
+								supplementingBinding.put("entityName", supplementingElement.getAttribute("entity"));
+								supplementingBinding.put("entityId", supplementingElement.getAttribute("entityId"));
+								supplementingBinding.put("assetKey", supplementingElement.getAttribute("assetKey"));
+							}
+							else
+							{
+								logger.warn("SupplementingBinding was not of type Element. Really Weired. Node value of component:" + component.getNodeValue());
+							}
+						}
+
+						binding.put("supplementingBinding", supplementingBinding);
+					}
+
 					bindings.add(binding);
 				}
 				catch(Exception e) 
@@ -2282,6 +2309,11 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 		}
 		
 		return imageHref;
+	}
+	
+	public String getSupplementingEntityType()
+	{
+		return this.getRequest().getParameter("supplementingEntityType");
 	}
 	
 	public Integer getContentId()

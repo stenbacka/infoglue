@@ -23,8 +23,12 @@
 
 package org.infoglue.deliver.taglib.content;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.jsp.JspException;
 
+import org.infoglue.deliver.applications.databeans.ComponentBinding;
 import org.infoglue.deliver.taglib.component.ComponentLogicTag;
 
 public class BoundContentsTag extends ComponentLogicTag 
@@ -32,6 +36,7 @@ public class BoundContentsTag extends ComponentLogicTag
 	private static final long serialVersionUID = 4050206323348354355L;
 
 	private String propertyName;
+	private String supplementingEntities;
 	private Integer siteNodeId;
 	private boolean useInheritance = true;
 	private boolean useRepositoryInheritance = true;
@@ -46,14 +51,24 @@ public class BoundContentsTag extends ComponentLogicTag
     {
         if(siteNodeId == null)
         {
-        	setResultAttribute(getComponentLogic().getBoundContents(propertyName, useInheritance, useRepositoryInheritance, useStructureInheritance));
+        	if (supplementingEntities != null)
+        	{
+        		Map<Integer, ComponentBinding> supplimentingEntitiesMap = new HashMap<Integer, ComponentBinding>();
+        		setResultAttribute(getComponentLogic().getBoundContents(propertyName, useInheritance, useRepositoryInheritance, useStructureInheritance, supplimentingEntitiesMap));
+        		pageContext.setAttribute(supplementingEntities, supplimentingEntitiesMap);
+        	}
+        	else
+        	{
+        		setResultAttribute(getComponentLogic().getBoundContents(propertyName, useInheritance, useRepositoryInheritance, useStructureInheritance));
+        	}
         }
         else
         {
-        	setResultAttribute(getComponentLogic().getBoundContents(siteNodeId, propertyName, useInheritance));        	
+        	setResultAttribute(getComponentLogic().getBoundContents(siteNodeId, propertyName, useInheritance));
         }
         
 		propertyName = null;
+		supplementingEntities = null;
 		siteNodeId = null;
 		useInheritance = true;
 		useRepositoryInheritance = true;
@@ -65,6 +80,11 @@ public class BoundContentsTag extends ComponentLogicTag
 	public void setSiteNodeId(String siteNodeId) throws JspException
 	{
         this.siteNodeId = evaluateInteger("boundContents", "siteNodeId", siteNodeId);
+	}
+
+	public void setSupplementingEntities(String supplementingEntities) throws JspException
+	{
+		this.supplementingEntities = supplementingEntities;
 	}
 
 	public void setPropertyName(String propertyName) throws JspException

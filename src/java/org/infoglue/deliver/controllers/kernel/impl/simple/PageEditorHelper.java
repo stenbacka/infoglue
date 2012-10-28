@@ -2257,6 +2257,7 @@ public class PageEditorHelper extends BaseDeliveryController
 								String entity = bindingElement.attributeValue("entity");
 								String entityId = bindingElement.attributeValue("entityId");
 								String assetKey = bindingElement.attributeValue("assetKey");
+								Element supplementingBindingElement = bindingElement.element("supplementingBinding");
 
 								ComponentBinding componentBinding = new ComponentBinding();
 								//componentBinding.setId(new Integer(id));
@@ -2265,12 +2266,19 @@ public class PageEditorHelper extends BaseDeliveryController
 								componentBinding.setEntityId(new Integer(entityId));
 								componentBinding.setAssetKey(assetKey);
 								componentBinding.setBindingPath(path);
-								
+								if (supplementingBindingElement != null)
+								{
+									ComponentBinding supplementingComponentBinding = new ComponentBinding();
+									supplementingComponentBinding.setEntityClass(supplementingBindingElement.attributeValue("entity"));
+									supplementingComponentBinding.setEntityId(new Integer(supplementingBindingElement.attributeValue("entityId")));
+									supplementingComponentBinding.setAssetKey(supplementingBindingElement.attributeValue("assetKey"));
+									componentBinding.setSupplementingBinding(supplementingComponentBinding);
+								}
 								bindings.add(componentBinding);
 							}
-			
+
 							property.put("bindings", bindings);
-							
+
 							component.getProperties().put(propertyName, property);
 						}
 					}

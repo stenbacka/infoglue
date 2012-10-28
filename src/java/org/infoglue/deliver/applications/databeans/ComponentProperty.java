@@ -73,6 +73,7 @@ public class ComponentProperty
 	private String dataProvider 			= null;
 	private String dataProviderParameters 	= null;
 	private String customMarkup				= "";
+	private String supplementingEntityType	= null;
 	private boolean allowMultipleSelections = false;
 	
 	private List options = new ArrayList();
@@ -80,6 +81,7 @@ public class ComponentProperty
 	private List contentBindings = new ArrayList();
 	private List siteNodeBindings = new ArrayList();
 	private List<ComponentBinding> bindings = new ArrayList<ComponentBinding>();
+
 		
 		
 	public Integer getComponentId()
@@ -459,5 +461,36 @@ public class ComponentProperty
 	public void setAllowMultipleSelections(boolean allowMultipleSelections)
 	{
 		this.allowMultipleSelections = allowMultipleSelections;
+	}
+
+	public void setSupplementingEntityType(String supplementingEntityType)
+	{
+		this.supplementingEntityType = supplementingEntityType;
+	}
+	
+	public String getSupplementingEntityType()
+	{
+		return this.supplementingEntityType;
+	}
+	
+	public ComponentBinding getSupplementingEntity()
+	{
+		if (getBindings() != null && getBindings().size() > 0)
+		{
+			return getBindings().get(0).getSupplementingBinding();
+		}
+		return null;
+	}
+	
+	public boolean getHasSupplementingEntity()
+	{
+		try
+		{
+			return getBindings().size() > 0 && getBindings().get(0).getSupplementingBinding() != null;
+		}
+		catch (NullPointerException ex)
+		{
+			return false;
+		}
 	}
 }

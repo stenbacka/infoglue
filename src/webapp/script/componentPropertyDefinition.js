@@ -12,7 +12,7 @@
  * ComponentPropertyDefinition object
  */
 
-function ComponentPropertyDefinition(name, displayName, type, entity, multiple, assetBinding, assetMask, isPuffContentForPage, allowedContentTypeNames, description, defaultValue, allowLanguageVariations, WYSIWYGEnabled, WYSIWYGToolbar, dataProvider, dataProviderParameters, autoCreateContent, autoCreateContentMethod, autoCreateContentPath, customMarkup, allowMultipleSelections)
+function ComponentPropertyDefinition(name, displayName, type, entity, multiple, assetBinding, assetMask, isPuffContentForPage, allowedContentTypeNames, description, defaultValue, allowLanguageVariations, WYSIWYGEnabled, WYSIWYGToolbar, dataProvider, dataProviderParameters, autoCreateContent, autoCreateContentMethod, autoCreateContentPath, customMarkup, allowMultipleSelections, supplementingEntity)
 {
 	this.name 						= name;
 	this.displayName				= displayName;
@@ -35,6 +35,7 @@ function ComponentPropertyDefinition(name, displayName, type, entity, multiple, 
 	this.autoCreateContentMethod	= autoCreateContentMethod;
 	this.autoCreateContentPath		= autoCreateContentPath;
 	this.customMarkup 				= customMarkup;
+	this.supplementingEntity 		= supplementingEntity;
 	this.options					= new Vector(0);
 	  
   	this.getName 					= getName;
@@ -59,6 +60,7 @@ function ComponentPropertyDefinition(name, displayName, type, entity, multiple, 
 	this.getAutoCreateContentMethod	= getAutoCreateContentMethod;
 	this.getAutoCreateContentPath	= getAutoCreateContentPath;
 	this.getCustomMarkup			= getCustomMarkup;
+	this.getSupplementingEntity		= getSupplementingEntity;
 	
   	this.setName 					= setName;
   	this.setDisplayName 			= setDisplayName;
@@ -81,6 +83,7 @@ function ComponentPropertyDefinition(name, displayName, type, entity, multiple, 
 	this.setAutoCreateContentMethod	= setAutoCreateContentMethod;
 	this.setAutoCreateContentPath	= setAutoCreateContentPath;
 	this.setCustomMarkup			= setCustomMarkup;
+	this.setSupplementingEntity		= setSupplementingEntity;
 	this.setOptions					= setOptions;
 }
   
@@ -302,4 +305,13 @@ function getCustomMarkup()
 function setCustomMarkup(customMarkup)
 {
 	this.customMarkup = customMarkup;
+}
+function getSupplementingEntity()
+{
+	return this.supplementingEntity;
+}
+
+function setSupplementingEntity(supplementingEntity)
+{
+	this.supplementingEntity = supplementingEntity;
 }

@@ -105,18 +105,21 @@
 		 * Binding object
 		 */
 
-		function Binding(entityName, entityId, path)
+		function Binding(entityName, entityId, path, supplementingBinding)
 		{
 			this.entityName = entityName;
 			this.entityId 	= entityId;
 			this.path 		= path;
+			this.supplementingBinding = supplementingBinding;
 		  
 		  	this.getPath 		= getPath;
 		  	this.getEntityName 	= getEntityName;
 		  	this.getEntityId 	= getEntityId;
+		  	this.getSupplementingBinding 	= getSupplementingBinding;
 		  	this.setPath 		= setPath;
 		  	this.setEntityName 	= setEntityName;
 		  	this.setEntityId 	= setEntityId;
+		  	this.setSupplementingBinding 	= setSupplementingBinding;
 		}
 		  
 		function getPath()
@@ -134,6 +137,11 @@
 		  	return this.entityId;
 		}
 
+		function getSupplementingBinding()
+		{
+		  	return this.supplementingBinding;
+		}
+
 		function setPath(path)
 		{
 		  	this.path = path;
@@ -147,6 +155,11 @@
 		function setEntityId(entityId)
 		{
 			this.entityId = entityId;
+		}
+
+		function setSupplementingBinding(supplementingBinding)
+		{
+			this.supplementingBinding = supplementingBinding;
 		}
 
 	  
@@ -258,6 +271,27 @@
 				
 				var bindingText = document.createTextNode(binding.getPath());
 				myLI.appendChild(bindingText);
+				if (binding.getSupplementingBinding())
+				{
+					var supplementingA = document.createElement("a");
+					supplementingA.setAttribute("class", "supplementingBinding");
+					var supplementingBindingText;
+					if (binding.getSupplementingBinding().entityId)
+					{
+						var sb = binding.getSupplementingBinding();
+						#if( "$supplementingEntityType" == "Asset" )
+						supplementingBindingText = document.createTextNode("(" + sb.entityId + " [" + sb.assetKey + "])");
+						#else
+						supplementingBindingText = document.createTextNode("(" + sb.entityId + ")");
+						#end
+					}
+					else
+					{
+						supplementingBindingText = document.createTextNode("(Not set)");
+					}
+					supplementingA.appendChild(supplementingBindingText);
+					myLI.appendChild(supplementingA);
+				}
 				addDividerImage(myLI, 5, 16);
 				
 				myList.appendChild(myLI);
@@ -349,7 +383,15 @@
 		function init()
 		{
 			#foreach($binding in $componentBindings)
+				#if( "$!binding.supplementingBinding" != "" )
+				var supplementingBinding = {};
+				#foreach($mapEntry in $binding.supplementingBinding.entrySet())
+					supplementingBinding["$mapEntry.key"] = "$!mapEntry.value";
+				#end
+				binding = new Binding("Content", "$binding.entityId", "$formatter.cleanForJavascriptStrings($binding.path)", supplementingBinding);
+				#else
 				binding = new Binding("Content", "$binding.entityId", "$formatter.cleanForJavascriptStrings($binding.path)");
+				#end
 				siteNodesVector.addElement(binding);
 			#end
 	
@@ -395,6 +437,8 @@
 	</script>
 	
 	<style type="text/css">
+		.supplementingBinding {margin-left:10px;}
+	
 		#tabsContainer {border:1px solid lightgrey;}
 		#basicTab, #searchTab {width: 340px; display: block;}
 		/*#itreeFrame {width:340px}*/

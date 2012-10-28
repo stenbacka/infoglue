@@ -1151,7 +1151,7 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 										assignUrl = componentEditorUrl + "ViewContentVersion!viewAssetBrowserForMultipleComponentBindingV3.action?repositoryId=" + repositoryId + "&siteNodeId=" + siteNodeId + "&languageId=" + languageId + "&contentId=" + contentId + "&componentId=" + componentId + "&propertyName=" + componentProperty.getName() + allowedContentTypeIdParameters + "&assetTypeFilter=" + componentProperty.getAssetMask() + "&showSimple=" + getTemplateController().getDeliveryContext().getShowSimple();
 								}
 								else
-									assignUrl = componentEditorUrl + "ViewSiteNodePageComponents!showContentTreeForMultipleBindingV3.action?repositoryId=" + repositoryId + "&siteNodeId=" + siteNodeId + "&languageId=" + languageId + "&contentId=" + contentId + "&componentId=" + componentId + "&propertyName=" + componentProperty.getName() + allowedContentTypeIdParameters + "&showSimple=" + getTemplateController().getDeliveryContext().getShowSimple();
+									assignUrl = componentEditorUrl + "ViewSiteNodePageComponents!showContentTreeForMultipleBindingV3.action?repositoryId=" + repositoryId + "&siteNodeId=" + siteNodeId + "&languageId=" + languageId + "&contentId=" + contentId + "&componentId=" + componentId + "&propertyName=" + componentProperty.getName() + allowedContentTypeIdParameters + "&showSimple=" + getTemplateController().getDeliveryContext().getShowSimple() + "&supplementingEntityType=" + componentProperty.getSupplementingEntityType();
 							
 								if(componentProperty.getBindings().size() > 0)
 								{
@@ -1286,7 +1286,18 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 						sb.append("<a title=\"" + title + "\" class=\"componentEditorLink\" href=\"#\" onclick=\"if(checkDirty('" + warningText + "')){openInlineDivImpl('" + assignUrl + "', 900, 850, true, true);} return false;\">");
 					}
 	
-					sb.append("" + (componentProperty.getValue() == null || componentProperty.getValue().equalsIgnoreCase("") ? "Undefined" : componentProperty.getValue()) + (componentProperty.getIsAssetBinding() ? " (" + componentProperty.getAssetKey() + ")" : ""));
+					String additionalInformation = "";
+					if(componentProperty.getIsAssetBinding())
+					{
+						additionalInformation += " (" + componentProperty.getAssetKey() + ")";
+					}
+					if(componentProperty.getHasSupplementingEntity())
+					{
+						additionalInformation += " (" + "*" + ")";
+					}
+					
+					
+					sb.append("" + (componentProperty.getValue() == null || componentProperty.getValue().equalsIgnoreCase("") ? "Undefined" : componentProperty.getValue()) + additionalInformation);
 					
 					if(hasAccessToProperty)
 						sb.append("</a>");
@@ -2643,15 +2654,18 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 					
 					if(type.equalsIgnoreCase(ComponentProperty.BINDING))
 					{
-						String entity 	= binding.attributeValue("entity");
+						String entity 					= binding.attributeValue("entity");
+						String supplementingEntityType	= binding.attributeValue("supplementingEntity");
 						boolean isMultipleBinding 		= new Boolean(binding.attributeValue("multiple")).booleanValue();
 						boolean isAssetBinding 	  		= new Boolean(binding.attributeValue("assetBinding")).booleanValue();
 						String assetMask				= binding.attributeValue("assetMask");
 						boolean isPuffContentForPage 	= new Boolean(binding.attributeValue("isPuffContentForPage")).booleanValue();
-						
+
 						property.setEntityClass(entity);
 						String value = getComponentPropertyValue(componentId, name, false);
 						timer.printElapsedTime("Set property1");
+						
+						property.setSupplementingEntityType(supplementingEntityType);
 
 						property.setValue(value);
 						property.setIsMultipleBinding(isMultipleBinding);
@@ -3251,11 +3265,23 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 			String entity   = property.attributeValue("entity");
 			String entityId = property.attributeValue("entityId");
 			String assetKey = property.attributeValue("assetKey");
+			Element supplementingBinding = property.element("binding");
 			
 			ComponentBinding componentBinding = new ComponentBinding();
 			componentBinding.setEntityClass(entity);
 			componentBinding.setEntityId(new Integer(entityId));
 			componentBinding.setAssetKey(assetKey);
+			if (supplementingBinding != null)
+			{
+				String supplementingEntity   = supplementingBinding.attributeValue("entity");
+				String supplementingEntityId = supplementingBinding.attributeValue("entityId");
+				String supplementingAssetKey = supplementingBinding.attributeValue("assetKey");
+				ComponentBinding supplementingComponentBinding = new ComponentBinding();
+				supplementingComponentBinding.setEntityClass(supplementingEntity);
+				supplementingComponentBinding.setEntityId(new Integer(supplementingEntityId));
+				supplementingComponentBinding.setAssetKey(supplementingAssetKey);
+				componentBinding.setSupplementingBinding(supplementingComponentBinding);
+			}
 
 			componentBindings.add(componentBinding);
 		}

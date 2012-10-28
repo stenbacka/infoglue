@@ -63,11 +63,12 @@ public class ComponentPropertyDefinition
 	private String autoCreateContentPath	= "";
 	private String customMarkup 			= "";
 	private Boolean allowMultipleSelections	= new Boolean(false);
+	private String supplementingEntity		= "";
 	
     private List options = new ArrayList();
 
     
-    public ComponentPropertyDefinition(String name, String displayName, String type, String entity, Boolean multiple, Boolean assetBinding, String assetMask, Boolean isPuffContentForPage, String allowedContentTypeNames, String description, String defaultValue, Boolean allowLanguageVariations, Boolean WYSIWYGEnabled, String WYSIWYGToolbar, String dataProvider, String dataProviderParameters, Boolean autoCreateContent, String autoCreateContentMethod, String autoCreateContentPath, String customMarkup, boolean allowMultipleSelections)
+    public ComponentPropertyDefinition(String name, String displayName, String type, String entity, Boolean multiple, Boolean assetBinding, String assetMask, Boolean isPuffContentForPage, String allowedContentTypeNames, String description, String defaultValue, Boolean allowLanguageVariations, Boolean WYSIWYGEnabled, String WYSIWYGToolbar, String dataProvider, String dataProviderParameters, Boolean autoCreateContent, String autoCreateContentMethod, String autoCreateContentPath, String customMarkup, boolean allowMultipleSelections, String supplementingEntity)
     {
         this.name 						= name;
         this.displayName				= displayName;
@@ -90,6 +91,7 @@ public class ComponentPropertyDefinition
         this.autoCreateContentPath		= autoCreateContentPath;
         this.customMarkup 				= customMarkup;
         this.allowMultipleSelections 	= allowMultipleSelections;
+        this.supplementingEntity 		= supplementingEntity;
     }
         
     public String getEntity()
@@ -212,4 +214,8 @@ public class ComponentPropertyDefinition
 		return allowMultipleSelections;
 	}
 
+	public String getSupplementingEntity()
+	{
+		return supplementingEntity;
+	}
 }
