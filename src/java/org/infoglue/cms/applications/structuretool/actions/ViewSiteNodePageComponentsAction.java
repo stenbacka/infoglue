@@ -28,6 +28,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1679,7 +1680,7 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 					if(toEncoding == null)
 						toEncoding = "utf-8";
 					
-					String[] controlChars = new String[]{"å","ä","ö","Å","Ä","Ö","Â","‰","ˆ","≈","ƒ","÷"};
+					String[] controlChars = new String[]{"ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ","ÔøΩ"};
 					boolean convert = true;
 					for(String charToTest : controlChars)
 					{
@@ -1933,7 +1934,42 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 		
 		return bindings;
 	}
-			    
+
+	public List<Map<String,String>> getExternalBindings() throws Exception
+	{
+		List<Map<String,String>> bindings = new LinkedList<Map<String,String>>();
+
+//		bindings.add(new HashMap<String, String>() {{put("entityId", "123");put("displayName", "apa");}});
+//		bindings.add(new HashMap<String, String>() {{put("entityId", "456");put("displayName", "bepa");}});
+//		bindings.add(new HashMap<String, String>() {{put("entityId", "789");put("displayName", "crepa");}});
+		
+		Integer siteNodeId = new Integer(this.getRequest().getParameter("siteNodeId"));
+//		Integer languageId = new Integer(this.getRequest().getParameter("languageId"));
+//		Integer contentId  = new Integer(this.getRequest().getParameter("contentId"));
+		String propertyName = this.getRequest().getParameter("propertyName");
+
+		String componentXML   = getPageComponentsString(siteNodeId, this.masterLanguageVO.getId());
+
+		Document document = XMLHelper.readDocumentFromByteArray(componentXML.getBytes("UTF-8"));
+		String componentXPath = "//component[@id=" + this.componentId + "]/properties/property[@name='" + propertyName + "']/external-binding";
+
+		NodeList anl = org.apache.xpath.XPathAPI.selectNodeList(document.getDocumentElement(), componentXPath);
+		for(int i=0; i<anl.getLength(); i++)
+		{
+			Element component = (Element)anl.item(i);
+			String entityId    = component.getAttribute("entityId");
+			// TODO language support?
+			String displayName = component.getAttribute("displayName");
+
+			Map<String, String> binding = new HashMap<String, String>();
+			binding.put("entityId", entityId);
+			binding.put("displayName", displayName);
+			bindings.add(binding);
+		}
+
+		return bindings;
+	}
+
 	//Nice code
 	
 	/**
@@ -2007,7 +2043,14 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 		this.getResponse().sendRedirect(url);
 	    return NONE; 
 	}
-		    
+
+	public String doShowExternalBinding()
+	{
+		
+		
+		return "showExternalBinding";
+	}
+	
 	/**
 	 * This method creates a parameter for the given input type.
 	 * This is to support form steering information later.

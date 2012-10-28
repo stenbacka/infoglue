@@ -1,0 +1,437 @@
+#define( $headerMarkup )
+	<link rel="stylesheet" type="text/css" href="css/cms.css" /> 
+	<link rel="stylesheet" type="text/css" href="css/infogluecommons.css" /> 
+	<style type="text/css">
+		#bindings li {
+			cursor: default;
+		}
+	</style>
+	
+	<script type="text/javascript" src="script/vector.js"></script>
+	<script type="text/javascript" src="script/qualifyer.js"></script>
+	<script type="text/javascript" src="script/infogluecommons.js"></script>
+	
+	<script type="text/javascript">
+	<!-- 
+		var exp;
+	
+		/**
+		 * This is just a hook for the tree to notify us about whats expanded.
+		 */
+
+	    function notifyExp(v)
+	    {
+	    	exp=v;
+	    }
+	    
+		function loadMainArea(entityId, repositoryId, path)
+		{
+			document.inputForm.entityId.value = entityId;
+		 	document.inputForm.repositoryId.value = repositoryId;
+		 	document.inputForm.path.value = path;	
+		}
+	    
+	    function addQualifyer()
+		{
+			entityId = document.inputForm.entityId.value;
+			if(entityId == '' || entityId == '${select}')
+			{
+				alert("You must choose a content to add");
+			}
+			else
+			{
+				path     = document.inputForm.path.value;
+				bindingTypeId = 1; //0 = Content, 1 = SiteNode
+				
+			    var binding = new Binding("Content", entityId, path);
+				bindingVector.addElement(binding);
+				drawList();
+			}
+		}
+		
+		function submitBinding()
+		{
+		    qualifyerXML = "<?xml version='1.0' encoding='UTF-8'?>";
+			qualifyerXML += "<qualifyer>";
+			var path = "";
+			for (var i=0; i<bindingVector.getSize(); i++)
+			{
+				var binding = bindingVector.getElementAt(i);
+				if(i > 0) 
+					path = path + ", ";
+				path 		= path + binding.getPath();
+				entityName 	= binding.getEntityName();
+				entityId   	= binding.getEntityId();
+				qualifyerXML += "<" + entityName + ">" + entityId + "</" + entityName + ">";
+			}
+		   	qualifyerXML += "</qualifyer>";
+			
+			document.submitForm.path.value = path;
+		    document.submitForm.qualifyerXML.value = qualifyerXML;
+		    //document.submitForm.submit();
+		    //self.opener.location.href = self.opener.location.href + "&refresh=true";
+		    //window.close();
+
+			if(self.opener)
+		    {
+				document.submitForm.target = self.opener.name;
+			    document.submitForm.submit();
+			    window.close();
+			}
+			else if(parent)
+			{
+				document.submitForm.target = parent.name;
+			    document.submitForm.submit();
+			}
+		}
+
+		/**
+		 * Binding object
+		 */
+		function Binding(entityId, displayName)
+		{
+			this.entityId 	= entityId;
+			this.displayName = displayName;
+
+		  	this.getEntityId 	= getEntityId;
+		  	this.getDisplayName = getDisplayName;
+		  	this.setEntityId 	= setEntityId;
+		  	this.setDisplayName = setDisplayName;
+		}
+
+		function getEntityId()
+		{
+		  	return this.entityId;
+		}
+
+		function getDisplayName()
+		{
+		  	return this.displayName;
+		}
+
+		function setEntityId(entityId)
+		{
+			this.entityId = entityId;
+		}
+
+		function setDisplayName(displayName)
+		{
+		  	this.displayName = displayName;
+		}
+
+	  	/**
+	  	 * This function creates a href-tag by manipulating the DOM.
+	  	 */
+		function addTextLink(parent, address, text)
+		{
+			var link = document.createElement("a");
+			link.setAttribute("href", address);
+			var linkText = document.createTextNode(text);
+			link.appendChild(linkText);
+			parent.appendChild(link);
+		}
+	
+	  	/**
+	  	 * This function creates a href-tag by manipulating the DOM.
+	  	 */
+		function addImageLink(parent, address, src)
+		{
+			var link = document.createElement("a");
+			link.setAttribute("href", address);
+
+			var image = document.createElement("img");
+			image.setAttribute("src", src);
+			image.setAttribute("border", "0");
+
+			link.appendChild(image);
+			parent.appendChild(link);
+
+			var separator = document.createElement("img");
+			separator.setAttribute("src", "css/images/trans.gif");
+			separator.setAttribute("border", "0");
+			separator.setAttribute("width", "5");
+			separator.setAttribute("height", "1");
+			parent.appendChild(separator);
+		}
+		
+		/**
+	  	 * This function creates a href-tag by manipulating the DOM.
+	  	 */
+	  	 
+		function addDividerImage(parent, width, height)
+		{
+			var separator = document.createElement("img");
+			separator.setAttribute("src", "css/images/trans.gif");
+			separator.setAttribute("border", "0");
+			separator.setAttribute("width", width);
+			separator.setAttribute("height", height);
+			parent.appendChild(separator);
+		}
+
+		/**
+		 * This method draws the list of bindings.
+		 */
+		 
+		function drawList()
+		{
+			var mytable = document.getElementById("bindings")
+			var parent = mytable.parentNode;
+			parent.removeChild(mytable);
+
+			mytable = document.createElement("TABLE");
+			mytable.setAttribute("id", "bindings");
+			mytable.setAttribute("border", "0");
+			mytable.setAttribute("width", "100%");
+			mytable.setAttribute("cellpadding", "0");
+			mytable.setAttribute("cellspacing", "0");
+	        mytablebody = document.createElement("TBODY");
+
+			var myTR = document.createElement("TR");
+			var bindingTD = document.createElement("TD");
+			bindingTD.setAttribute("width", "100%");
+			var actionTD = document.createElement("TD");
+			actionTD.setAttribute("width", "100");
+						
+			myActionList = document.createElement("ul");
+			myActionList.setAttribute("id", "actions");
+
+	        for (var i=0; i<bindingVector.getSize(); i++)
+			{
+				var binding = bindingVector.getElementAt(i);
+
+				var myLI = document.createElement("li");
+				myLI.setAttribute("itemID", i);
+				
+				addImageLink(myLI, "javascript:moveBindingDown(" + i + ");", "css/images/downArrow.gif");
+				addImageLink(myLI, "javascript:moveBindingUp(" + i + ");", "css/images/upArrow.gif");
+				addImageLink(myLI, "javascript:deleteBinding(" + i + ");", "css/images/delete.gif");
+				addDividerImage(myLI, 1, 16);
+
+				myActionList.appendChild(myLI);
+			}
+			actionTD.appendChild(myActionList);
+
+			myList = document.createElement("ul");
+			myList.setAttribute("id", "currentBindings");
+
+	        for (var i=0; i<bindingVector.getSize(); i++)
+			{
+				var binding = bindingVector.getElementAt(i);
+
+				var myLI = document.createElement("li");
+				myLI.setAttribute("itemID", i);
+
+				addImageLink(myLI, "#", "script/xloadtree/images/xp/file.png");
+
+				var bindingText = document.createTextNode(binding.getDisplayName());
+				myLI.appendChild(bindingText);
+				addDividerImage(myLI, 5, 16);
+
+				myList.appendChild(myLI);
+			}
+
+			bindingTD.appendChild(myList);
+
+			myTR.appendChild(bindingTD);
+			myTR.appendChild(actionTD);
+
+			mytablebody.appendChild(myTR);
+
+	        mytable.appendChild(mytablebody);
+	        parent.appendChild(mytable);
+		}
+
+		/**
+		 * This method removes a binding from the vector.
+		 */
+
+		function deleteBinding(index)
+		{
+			bindingVector.removeElementAt(index);
+			drawList();
+		}
+
+		/**
+		 * This method moves a binding 1 step up in the vector.
+		 */
+
+		function moveBindingUp(index)
+		{
+			if(index > 0)
+			{
+				var binding 		= bindingVector.getElementAt(index);
+				var previousBinding = bindingVector.getElementAt(index - 1);
+
+				entityId 	= binding.getEntityId();
+				displayName = binding.getDisplayName();
+
+				binding.setEntityId(previousBinding.getEntityId());
+				binding.setDisplayName(previousBinding.getDisplayName());
+
+				previousBinding.setEntityId(entityId);
+				previousBinding.setDisplayName(displayName);
+
+				drawList();
+			}
+		}
+
+		/**
+		 * This method moves a binding 1 step up in the vector.
+		 */
+		 
+		function moveBindingDown(index)
+		{
+			if(index < bindingVector.getSize() - 1)
+			{
+				var binding 		= bindingVector.getElementAt(index);
+				var previousBinding = bindingVector.getElementAt(index + 1);
+
+				entityId 	= binding.getEntityId();
+				displayName = binding.getDisplayName();
+
+				binding.setEntityId(previousBinding.getEntityId());
+				binding.setDisplayName(previousBinding.getDisplayName());
+
+				previousBinding.setEntityId(entityId);
+				previousBinding.setDisplayName(displayName);
+
+				drawList();
+			}
+		}
+
+		/**
+		 * This function initializes the vector of previous bindings.
+		 */
+		function init()
+		{
+			#foreach($binding in $externalBindings)
+				binding = new Binding("$binding.entityId", "$!binding.displayName");
+				bindingVector.addElement(binding);
+			#end
+
+			drawList();
+		}
+
+		function changeOrder(item) 
+		{
+			var group = item.toolManDragGroup;
+			var list = group.element.parentNode;
+			var id = list.getAttribute("id");
+			var id2 = parseInt(item.getAttribute("itemID"));
+
+			if (id == null) 
+				return;
+	
+			group.register('dragend', function() 
+			{
+				var targetId = -1;
+				if(item.previousSibling)
+					targetId = parseInt(item.previousSibling.getAttribute("itemID"));
+
+				if(targetId > id2)
+					dragBindingDown(id2, targetId);
+				else	
+					dragBindingUp(id2, targetId + 1);
+			})
+		}
+
+		var bindingVector = new Vector(0);
+
+      	function treeItemDblClick(id, label)
+      	{
+      		//alert("Adding " + id + ":" + label);
+      		addQualifyer();
+      	}
+	
+		$(document).ready(function() {
+			init();
+		});
+	-->
+	</script>
+#end
+
+#beginLightCommonToolV3Impl("tool.structuretool.chooseContentsLabel" "" "" false true $!disableCloseButton $headerMarkup false "")
+	
+	#lightMenuToolbar("" $buttons $rightButtons) 
+
+	<div style="clear: both;"></div>
+		
+	<div style="margin: 5px;">
+		<table cellpadding="0" cellspacing="0" border="0">
+		<tr>
+			<td valign="top">
+				
+				<table cellpadding="0" cellspacing="0" border="0">
+				<tr>
+					<td class="smalllabel">$ui.getString("tool.structuretool.chooseContentsForBindingLabel")</td>
+				</tr>
+				<tr>
+					<td class="menu" style="border: 1px solid #C7D1B3;">
+						HERE WE SEARCH!
+					</td>
+				</tr>	
+				<tr>
+					<td>&nbsp;</td>
+				</tr>
+				<tr>
+					<td>
+						<form name="inputForm" action="CreateServiceBinding.action">
+							<input type="hidden" name="draggedComponentId" value="">
+							<input type="hidden" name="entityId" value="">
+							<input type="hidden" name="repositoryId" value="">
+							<input type="hidden" name="path" value="">
+							<input type="hidden" name="qualifyerXML" value="">
+						</form>
+					</td>
+				</tr>
+				</table>
+			</td>
+
+			<td><a href="javascript:addQualifyer();"><img src="css/images/arrowRightBig.gif" border="0"></a></td>
+
+			<td valign="top">
+				<table cellpadding="0" cellspacing="0" border="0" width="100%">
+				<tr>
+					<td class="smalllabel">$ui.getString("tool.structuretool.choosenContentsForBindingLabel")</td>
+				</tr>
+				<tr>
+					<td height="1"><img src="css/images/trans.gif" width="1" height="2"></td>
+				</tr>
+
+				<tr>
+					<td style="height: 32px;">
+						$ui.getString("tool.structuretool.chooseContentsForBindingInstructions")
+					</td>
+				</tr>
+				<tr>
+					<td style="border: 1px solid #C7D1B3; background-color: white; height: 430px;">
+						<div style="height: 430px; float: left; overflow: auto; width: 100%;">
+						<table id="bindings" border="1">
+
+					  	</table>
+					  	</div>
+					</td>
+				</tr>
+
+				</table>
+
+			</td>
+		</tr>
+		</table>
+
+		<form name="submitForm" method="POST" action="ViewSiteNodePageComponents!addExternalBindingWithQualifyer.action" TARGET="">
+			<input type="hidden" name="siteNodeId" value="$siteNodeId">
+			<input type="hidden" name="languageId" value="$languageId">
+			<input type="hidden" name="contentId" value="$contentId">
+			<input type="hidden" name="componentId" value="$componentId">
+			<input type="hidden" name="propertyName" value="$propertyName">
+			<input type="hidden" name="showSimple" value="$showSimple">
+			<input type="hidden" name="showDecorated" value="$!showDecorated">
+			<input type="hidden" name="path" value="">
+			<input type="hidden" name="qualifyerXML" value="">
+		</form>
+	</div>
+		
+	#lightFooterToolbar($footerButtons)
+
+#endLightCommonToolV3()

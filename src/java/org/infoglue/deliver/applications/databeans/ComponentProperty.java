@@ -47,6 +47,7 @@ public class ComponentProperty
 	public static final String CHECKBOXFIELD					= "checkbox";
 	public static final String DATEFIELD						= "datefield";
 	public static final String CUSTOMFIELD						= "customfield";
+	public static final String EXTERNALBINDING					= "externalbinding";
 	public static final String TABFIELD							= "tab";
 	
 	private Integer id;
@@ -73,12 +74,14 @@ public class ComponentProperty
 	private String dataProvider 			= null;
 	private String dataProviderParameters 	= null;
 	private String customMarkup				= "";
+	//private String externalBindingConfig	= "";
 	private boolean allowMultipleSelections = false;
 	
 	private List options = new ArrayList();
 	
 	private List contentBindings = new ArrayList();
 	private List siteNodeBindings = new ArrayList();
+	private List<String> externalBindings = new ArrayList<String>();
 	private List<ComponentBinding> bindings = new ArrayList<ComponentBinding>();
 		
 		
@@ -449,6 +452,16 @@ public class ComponentProperty
 	public void setCustomMarkup(String customMarkup)
 	{
 		this.customMarkup = customMarkup;
+	}
+	
+	public List<String> getExternalBinding()
+	{
+		return externalBindings;
+	}
+	
+	public void setExternalBinding(List<String> externalBindings)
+	{
+		this.externalBindings = externalBindings;
 	}
 
 	public boolean getAllowMultipleSelections()

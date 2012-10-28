@@ -1359,6 +1359,47 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 					if(hasAccessToProperty)
 					    accessablePropertyIndex++;
 				}
+				else if(componentProperty.getType().equalsIgnoreCase(ComponentProperty.EXTERNALBINDING))
+				{
+					String dividerClass = "igpropertyDivider";
+					sb.append("	<tr class=\"igtr\">");
+
+					sb.append("		<td class=\"igpropertylabel igpropertyDivider\" valign=\"top\" align=\"left\">" + componentProperty.getDisplayName() + "</td>");
+
+//					if(hasAccessToProperty)
+//						sb.append(" 	<td class=\"igpropertyvalue igpropertyDivider\" align=\"left\"><input type=\"hidden\" name=\"" + propertyIndex + "_propertyName\" value=\"" + componentProperty.getName() + "\"/><input type=\"text\" class=\"propertytextfield\" name=\"" + componentProperty.getName() + "\" value=\"" + componentProperty.getValue() + "\" onkeydown=\"setDirty();\"/></td>");
+//					else
+//						sb.append("			<td class=\"igpropertyvalue igpropertyDivider\" align=\"left\">" + componentProperty.getValue() + "</td>");
+
+					sb.append("			<td class=\"igpropertyvalue " + dividerClass + "\" align=\"left\">");
+					if(hasAccessToProperty)
+					{
+						String warningText = getLocalizedString(locale, "deliver.editOnSight.dirtyWarning");
+						String assignUrl = componentEditorUrl + "ViewSiteNodePageComponents!showExternalBinding.action?repositoryId=" + repositoryId + "&siteNodeId=" + siteNodeId + "&languageId=" + languageId + "&contentId=" + contentId + "&componentId=" + componentId + "&propertyName=" + componentProperty.getName() + "&showSimple=" + getTemplateController().getDeliveryContext().getShowSimple();
+						sb.append("<a title=\"" + title + "\" class=\"componentEditorLink\" href=\"#\" onclick=\"if(checkDirty('" + warningText + "')){openInlineDivImpl('" + assignUrl + "', 900, 850, true, true);} return false;\">");
+					}
+
+					sb.append("" + (componentProperty.getValue() == null || componentProperty.getValue().equalsIgnoreCase("") ? "Undefined" : componentProperty.getValue()) + (componentProperty.getIsAssetBinding() ? " (" + componentProperty.getAssetKey() + ")" : ""));
+
+					if(hasAccessToProperty)
+						sb.append("</a>");
+
+					sb.append("</td>");
+
+					if(hasAccessToProperty)
+						sb.append("			<td class=\"igtd igpropertyDivider\" width=\"16\"><a class=\"componentEditorLink\" href=\"" + componentEditorUrl + "ViewSiteNodePageComponents!deleteComponentPropertyValue.action?siteNodeId=" + siteNodeId + "&languageId=" + languageId + "&contentId=" + contentId + "&componentId=" + componentId + "&propertyName=" + componentProperty.getName() + "&showSimple=" + this.getTemplateController().getDeliveryContext().getShowSimple() + "\"><img src=\"" + componentEditorUrl + "/css/images/delete.gif\" border=\"0\" style='padding-top: 2px;' alt=\"delete\"/></a></td>");
+					else
+						sb.append("			<td class=\"igtd igpropertyDivider\" width=\"16\"></td>");
+
+					sb.append("			<td class=\"igtd igpropertyDivider\" width=\"16\"><img class=\"questionMark\" src=\"" + componentEditorUrl + "/css/images/questionMarkGrad.gif\" onmouseover=\"showDiv('helpLayer" + componentProperty.getComponentId() + "_" + formatter.replaceNonAscii(componentProperty.getName(), "_") + "');\" onmouseout=\"javascript:hideDiv('helpLayer" + componentProperty.getComponentId() + "_" + formatter.replaceNonAscii(componentProperty.getName(), "_") + "');\" alt=\"question\"/>" + helpSB + "</td>");
+					sb.append("	</tr>");
+
+					if(hasAccessToProperty)
+					{
+					    //propertyIndex++;
+					    accessablePropertyIndex++;
+					}
+				}
 				else if(componentProperty.getType().equalsIgnoreCase(ComponentProperty.TEXTFIELD))
 				{
 					if(isAdvancedProperties)
