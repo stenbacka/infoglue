@@ -39,6 +39,7 @@
 	    	100% {background-color: rgba(255,255,69,0.5);}
 		}
 		tr.selected td {-webkit-animation: fadePulse 0.7s infinite alternate;}
+		.nameColumn {max-width:175px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 	</style>
 #end
 
@@ -94,8 +95,8 @@
 	#set( $contentRepositoryId = $contentVO.repositoryId ) 
 	#set( $path = $contentVO.name ) ##$this.getContentPath($contentVO.contentId)
 	<script type="text/javascript">var path_${contentVO.contentId} = "$path";</script>	
-	<tr onclick="select(this, $contentVO.contentId, $contentRepositoryId, path_${contentVO.contentId});" ondblclick="add(this, $contentVO.contentId, $contentRepositoryId, path_${contentVO.contentId})">
-		<td>$contentVO.name</td>
+	<tr title="$ui.getLocalizedString($locale, "tool.contenttool.contentSearch.resultTable.dblClickHelp", $contentVO.name)" onclick="select(this, $contentVO.contentId, $contentRepositoryId, path_${contentVO.contentId});" ondblclick="add(this, $contentVO.contentId, $contentRepositoryId, path_${contentVO.contentId})">
+		<td class="nameColumn">$contentVO.name</td>
 		<td>$formatter.formatDate($contentVO.publishDateTime, "yyyy-MM-dd")</td>
 	</tr>
 #end
@@ -113,6 +114,7 @@ tool.contenttool.contentSearch.binding.button.reset=Reset
 tool.contenttool.contentSearch.binding.button.search=Search
 tool.contenttool.contentSearch.resultTable.header.name=Name
 tool.contenttool.contentSearch.resultTable.header.date=Date
+tool.contenttool.contentSearch.resultTable.dblClickHelp=Double click to add ''{0}''.
 tool.contenttool.contentSearch.search.label=Search
 tool.contenttool.contentSearch.date.description=Define the date range when the content was created.
 
