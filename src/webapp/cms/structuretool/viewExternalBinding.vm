@@ -31,19 +31,19 @@
 		 	document.inputForm.path.value = path;	
 		}
 	    
-	    function addQualifyer()
+	    function addQualifyer(entityId, path)
 		{
-			entityId = document.inputForm.entityId.value;
+			//entityId = document.inputForm.entityId.value;
 			if(entityId == '' || entityId == '${select}')
 			{
 				alert("You must choose a content to add");
 			}
 			else
 			{
-				path     = document.inputForm.path.value;
-				bindingTypeId = 1; //0 = Content, 1 = SiteNode
+				//path     = document.inputForm.path.value;
+				//bindingTypeId = 1; //0 = Content, 1 = SiteNode
 				
-			    var binding = new Binding("Content", entityId, path);
+			    var binding = new Binding("External", entityId, path);
 				bindingVector.addElement(binding);
 				drawList();
 			}
@@ -84,7 +84,7 @@
 			    document.submitForm.submit();
 			}
 		}
-
+#*
 		/**
 		 * Binding object
 		 */
@@ -117,6 +117,53 @@
 		function setDisplayName(displayName)
 		{
 		  	this.displayName = displayName;
+		}*#
+				/**
+		 * Binding object
+		 */
+
+		function Binding(entityName, entityId, path)
+		{
+			this.entityName = entityName;
+			this.entityId 	= entityId;
+			this.path 		= path;
+		  
+		  	this.getPath 		= getPath;
+		  	this.getEntityName 	= getEntityName;
+		  	this.getEntityId 	= getEntityId;
+		  	this.setPath 		= setPath;
+		  	this.setEntityName 	= setEntityName;
+		  	this.setEntityId 	= setEntityId;
+		}
+		  
+		function getPath()
+		{
+		  	return this.path;
+		}
+
+		function getEntityName()
+		{
+		  	return this.entityName;
+		}
+
+		function getEntityId()
+		{
+		  	return this.entityId;
+		}
+
+		function setPath(path)
+		{
+		  	this.path = path;
+		}
+
+		function setEntityName(entityName)
+		{
+		  	this.entityName = entityName;
+		}
+
+		function setEntityId(entityId)
+		{
+			this.entityId = entityId;
 		}
 
 	  	/**
@@ -195,9 +242,9 @@
 			myActionList = document.createElement("ul");
 			myActionList.setAttribute("id", "actions");
 
-	        for (var i=0; i<bindingVector.getSize(); i++)
+	        for (var i=0; i<siteNodesVector.getSize(); i++)
 			{
-				var binding = bindingVector.getElementAt(i);
+				var binding = siteNodesVector.getElementAt(i);
 
 				var myLI = document.createElement("li");
 				myLI.setAttribute("itemID", i);
@@ -206,37 +253,39 @@
 				addImageLink(myLI, "javascript:moveBindingUp(" + i + ");", "css/images/upArrow.gif");
 				addImageLink(myLI, "javascript:deleteBinding(" + i + ");", "css/images/delete.gif");
 				addDividerImage(myLI, 1, 16);
-
+								
 				myActionList.appendChild(myLI);
 			}
 			actionTD.appendChild(myActionList);
-
+			
 			myList = document.createElement("ul");
 			myList.setAttribute("id", "currentBindings");
-
-	        for (var i=0; i<bindingVector.getSize(); i++)
+			
+	        for (var i=0; i<siteNodesVector.getSize(); i++)
 			{
-				var binding = bindingVector.getElementAt(i);
+				var binding = siteNodesVector.getElementAt(i);
 
 				var myLI = document.createElement("li");
 				myLI.setAttribute("itemID", i);
-
+	
 				addImageLink(myLI, "#", "script/xloadtree/images/xp/file.png");
-
-				var bindingText = document.createTextNode(binding.getDisplayName());
+				
+				var bindingText = document.createTextNode(binding.getPath());
 				myLI.appendChild(bindingText);
 				addDividerImage(myLI, 5, 16);
-
+				
 				myList.appendChild(myLI);
 			}
-
+			
 			bindingTD.appendChild(myList);
+			 
+	        //alert("childNodes" + parent.childNodes.length);
 
 			myTR.appendChild(bindingTD);
 			myTR.appendChild(actionTD);
 
 			mytablebody.appendChild(myTR);
-
+			 
 	        mytable.appendChild(mytablebody);
 	        parent.appendChild(mytable);
 		}
@@ -254,25 +303,28 @@
 		/**
 		 * This method moves a binding 1 step up in the vector.
 		 */
-
+		 
 		function moveBindingUp(index)
 		{
 			if(index > 0)
 			{
-				var binding 		= bindingVector.getElementAt(index);
-				var previousBinding = bindingVector.getElementAt(index - 1);
-
+				var binding 		= siteNodesVector.getElementAt(index);
+				var previousBinding = siteNodesVector.getElementAt(index - 1);
+				
+				path 		= binding.getPath();
+				entityName 	= binding.getEntityName();
 				entityId 	= binding.getEntityId();
-				displayName = binding.getDisplayName();
-
-				binding.setEntityId(previousBinding.getEntityId());
-				binding.setDisplayName(previousBinding.getDisplayName());
-
-				previousBinding.setEntityId(entityId);
-				previousBinding.setDisplayName(displayName);
-
+				
+				binding.setPath(previousBinding.getPath())
+				binding.setEntityName(previousBinding.getEntityName())
+				binding.setEntityId(previousBinding.getEntityId())
+			
+				previousBinding.setPath(path)
+				previousBinding.setEntityName(entityName)
+				previousBinding.setEntityId(entityId)
+				
 				drawList();
-			}
+			}			
 		}
 
 		/**
@@ -281,20 +333,23 @@
 		 
 		function moveBindingDown(index)
 		{
-			if(index < bindingVector.getSize() - 1)
+			if(index < siteNodesVector.getSize() - 1)
 			{
-				var binding 		= bindingVector.getElementAt(index);
-				var previousBinding = bindingVector.getElementAt(index + 1);
-
+				var binding 		= siteNodesVector.getElementAt(index);
+				var previousBinding = siteNodesVector.getElementAt(index + 1);
+				
+				path 		= binding.getPath();
+				entityName 	= binding.getEntityName();
 				entityId 	= binding.getEntityId();
-				displayName = binding.getDisplayName();
-
-				binding.setEntityId(previousBinding.getEntityId());
-				binding.setDisplayName(previousBinding.getDisplayName());
-
-				previousBinding.setEntityId(entityId);
-				previousBinding.setDisplayName(displayName);
-
+				
+				binding.setPath(previousBinding.getPath())
+				binding.setEntityName(previousBinding.getEntityName())
+				binding.setEntityId(previousBinding.getEntityId())
+			
+				previousBinding.setPath(path)
+				previousBinding.setEntityName(entityName)
+				previousBinding.setEntityId(entityId)
+			
 				drawList();
 			}
 		}
@@ -304,12 +359,13 @@
 		 */
 		function init()
 		{
-			#foreach($binding in $externalBindings)
-				binding = new Binding("$binding.entityId", "$!binding.displayName");
-				bindingVector.addElement(binding);
+			#foreach($binding in $componentBindings)
+				binding = new Binding("External", "$binding.entityId", "$formatter.cleanForJavascriptStrings($binding.path)");
+				siteNodesVector.addElement(binding);
 			#end
-
-			drawList();
+	
+			//alert("siteNodesVector:" + siteNodesVector.getSize());
+			drawList();		
 		}
 
 		function changeOrder(item) 
@@ -336,12 +392,12 @@
 		}
 
 		var bindingVector = new Vector(0);
-
+#*
       	function treeItemDblClick(id, label)
       	{
       		//alert("Adding " + id + ":" + label);
       		addQualifyer();
-      	}
+      	}*#
 	
 		$(document).ready(function() {
 			init();
@@ -367,7 +423,12 @@
 				</tr>
 				<tr>
 					<td class="menu" style="border: 1px solid #C7D1B3;">
-						HERE WE SEARCH!
+						debug: $externalBindingView
+						#if( "$!externalBindingView" == "" )
+							You have to provide an externalBindingView (TODO label)
+						#else
+							<iframe src="ViewSiteNodePageComponents!showExternalSearch.action?searchView=${externalBindingView}&externalBindingConfig=${externalBindingConfig}"></iframe>
+						#end
 					</td>
 				</tr>	
 				<tr>

@@ -40,6 +40,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.httpclient.util.URIUtil;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.Element;
@@ -1366,16 +1368,11 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 
 					sb.append("		<td class=\"igpropertylabel igpropertyDivider\" valign=\"top\" align=\"left\">" + componentProperty.getDisplayName() + "</td>");
 
-//					if(hasAccessToProperty)
-//						sb.append(" 	<td class=\"igpropertyvalue igpropertyDivider\" align=\"left\"><input type=\"hidden\" name=\"" + propertyIndex + "_propertyName\" value=\"" + componentProperty.getName() + "\"/><input type=\"text\" class=\"propertytextfield\" name=\"" + componentProperty.getName() + "\" value=\"" + componentProperty.getValue() + "\" onkeydown=\"setDirty();\"/></td>");
-//					else
-//						sb.append("			<td class=\"igpropertyvalue igpropertyDivider\" align=\"left\">" + componentProperty.getValue() + "</td>");
-
 					sb.append("			<td class=\"igpropertyvalue " + dividerClass + "\" align=\"left\">");
 					if(hasAccessToProperty)
 					{
 						String warningText = getLocalizedString(locale, "deliver.editOnSight.dirtyWarning");
-						String assignUrl = componentEditorUrl + "ViewSiteNodePageComponents!showExternalBinding.action?repositoryId=" + repositoryId + "&siteNodeId=" + siteNodeId + "&languageId=" + languageId + "&contentId=" + contentId + "&componentId=" + componentId + "&propertyName=" + componentProperty.getName() + "&showSimple=" + getTemplateController().getDeliveryContext().getShowSimple();
+						String assignUrl = componentEditorUrl + "ViewSiteNodePageComponents!showExternalBinding.action?repositoryId=" + repositoryId + "&siteNodeId=" + siteNodeId + "&languageId=" + languageId + "&contentId=" + contentId + "&componentId=" + componentId + "&propertyName=" + componentProperty.getName() + "&showSimple=" + getTemplateController().getDeliveryContext().getShowSimple() + "&externalBindingConfig=" + URIUtil.encodeWithinQuery(componentProperty.getExternalBindingConfig());
 						sb.append("<a title=\"" + title + "\" class=\"componentEditorLink\" href=\"#\" onclick=\"if(checkDirty('" + warningText + "')){openInlineDivImpl('" + assignUrl + "', 900, 850, true, true);} return false;\">");
 					}
 
@@ -2707,6 +2704,17 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 							if(detailSiteNodeId != null && !detailSiteNodeId.equals("") && !detailSiteNodeId.equals("Undefined"))
 								property.setDetailSiteNodeId(new Integer(detailSiteNodeId));
 						}
+					}
+					else if(type.equalsIgnoreCase(ComponentProperty.EXTERNALBINDING))	
+					{
+						String entity 	= binding.attributeValue("entity");
+						property.setEntityClass(entity);
+						String externalBindingConfig = binding.attributeValue("externalBindingConfig");
+						property.setExternalBindingConfig(externalBindingConfig);
+						String value = getComponentPropertyValue(componentId, name, false);
+						property.setValue(value);
+						List<ComponentBinding> bindings = getComponentPropertyBindings(componentId, name, this.getTemplateController());
+						property.setBindings(bindings);
 					}
 					else if(type.equalsIgnoreCase(ComponentProperty.TEXTFIELD))	
 					{		

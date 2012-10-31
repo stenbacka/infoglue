@@ -1370,6 +1370,7 @@
 		<view name="showCategoryTree">/cms/structuretool/viewCategoryTreeForComponentBinding.vm</view>
 		<view name="showCategoryTreeForMultipleBinding">/cms/structuretool/viewCategoryTreeForMultipleComponentBinding.vm</view>
 		<view name="showExternalBinding">/cms/structuretool/viewExternalBinding.vm</view>
+		<view name="searchCalendar">/cms/structuretool/searchCalendar.vm</view>
 		<view name="componentAdded">${url}</view>
 		<view name="componentDeleted">${url}</view>
 		<view name="error">/cms/structuretool/error.vm</view>

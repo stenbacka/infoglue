@@ -74,14 +74,14 @@ public class ComponentProperty
 	private String dataProvider 			= null;
 	private String dataProviderParameters 	= null;
 	private String customMarkup				= "";
-	//private String externalBindingConfig	= "";
+	private String externalBindingConfig	= "";
 	private boolean allowMultipleSelections = false;
 	
 	private List options = new ArrayList();
 	
 	private List contentBindings = new ArrayList();
 	private List siteNodeBindings = new ArrayList();
-	private List<String> externalBindings = new ArrayList<String>();
+	//private List<String> externalBindings = new ArrayList<String>();
 	private List<ComponentBinding> bindings = new ArrayList<ComponentBinding>();
 		
 		
@@ -454,15 +454,15 @@ public class ComponentProperty
 		this.customMarkup = customMarkup;
 	}
 	
-	public List<String> getExternalBinding()
-	{
-		return externalBindings;
-	}
+//	public List<String> getExternalBinding()
+//	{
+//		return externalBindings;
+//	}
 	
-	public void setExternalBinding(List<String> externalBindings)
-	{
-		this.externalBindings = externalBindings;
-	}
+//	public void setExternalBinding(List<String> externalBindings)
+//	{
+//		this.externalBindings = externalBindings;
+//	}
 
 	public boolean getAllowMultipleSelections()
 	{
@@ -472,5 +472,15 @@ public class ComponentProperty
 	public void setAllowMultipleSelections(boolean allowMultipleSelections)
 	{
 		this.allowMultipleSelections = allowMultipleSelections;
+	}
+
+	public String getExternalBindingConfig()
+	{
+		return this.externalBindingConfig;
+	}
+	
+	public void setExternalBindingConfig(String externalBindingConfig)
+	{
+		this.externalBindingConfig = externalBindingConfig;
 	}
 }

@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<script type="text/javascript" src="script/jquery-latest/jquery.min.js"></script>
+	</head>
+	<body>
+		<select id="test">
+		
+		</select>
+		<script type="text/javascript">
+			console.log("start");
+			function parseXml(data) {
+				console.log("done",  data);
+				console.log("done2",  jQuery.parseXML(data));
+				var result = jQuery(data);
+				var x = jQuery("#test");
+				jQuery(data.getElementsByTagName("property")).each(function() {
+					var name = $(this).attr('name');
+					var value = $(this).attr('value');
+					if (name !== "All")
+					{
+						x.append('<option value="' + value + '">' + name + '</option>');
+					}
+				});
+				//jQuery("#test").html(data.text());
+			}
+			$.ajax({
+			    type: "GET",
+			    url: "ViewSiteNodePageComponents!proxyRequest.action?serviceUrl=http://localhost:8088/infoglueCalendar/CalendarRESTServlet/",
+			    dataType: "xml",
+			    success: parseXml
+			});
+		</script>
+	</body>
+</html>

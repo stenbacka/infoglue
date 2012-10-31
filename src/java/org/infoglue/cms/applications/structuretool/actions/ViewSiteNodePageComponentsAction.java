@@ -24,15 +24,27 @@
 package org.infoglue.cms.applications.structuretool.actions;
 
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import javax.xml.transform.TransformerException;
+
+import org.apache.commons.codec.StringEncoderComparator;
+import org.apache.commons.codec.net.URLCodec;
+import org.apache.commons.collections.MapUtils;
+import org.apache.commons.httpclient.util.URIUtil;
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.infoglue.cms.applications.common.VisualFormatter;
 import org.infoglue.cms.applications.common.actions.InfoGlueAbstractAction;
@@ -65,11 +77,14 @@ import org.infoglue.deliver.applications.databeans.DeliveryContext;
 import org.infoglue.deliver.applications.databeans.Slot;
 import org.infoglue.deliver.controllers.kernel.impl.simple.NodeDeliveryController;
 import org.infoglue.deliver.controllers.kernel.impl.simple.PageEditorHelper;
+import org.infoglue.deliver.util.HttpHelper;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+
+import webwork.action.ActionContext;
 
 import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.module.propertyset.PropertySetManager;
@@ -106,6 +121,7 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 	private String slotPositionComponentId = null;
 	private Integer pagePartContentId = null;
 	private boolean hideComponentPropertiesOnLoad = false;
+	private String externalBindingConfig;
 	
 	LanguageVO masterLanguageVO = null;
 	
@@ -1935,40 +1951,40 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 		return bindings;
 	}
 
-	public List<Map<String,String>> getExternalBindings() throws Exception
-	{
-		List<Map<String,String>> bindings = new LinkedList<Map<String,String>>();
-
-//		bindings.add(new HashMap<String, String>() {{put("entityId", "123");put("displayName", "apa");}});
-//		bindings.add(new HashMap<String, String>() {{put("entityId", "456");put("displayName", "bepa");}});
-//		bindings.add(new HashMap<String, String>() {{put("entityId", "789");put("displayName", "crepa");}});
-		
-		Integer siteNodeId = new Integer(this.getRequest().getParameter("siteNodeId"));
-//		Integer languageId = new Integer(this.getRequest().getParameter("languageId"));
-//		Integer contentId  = new Integer(this.getRequest().getParameter("contentId"));
-		String propertyName = this.getRequest().getParameter("propertyName");
-
-		String componentXML   = getPageComponentsString(siteNodeId, this.masterLanguageVO.getId());
-
-		Document document = XMLHelper.readDocumentFromByteArray(componentXML.getBytes("UTF-8"));
-		String componentXPath = "//component[@id=" + this.componentId + "]/properties/property[@name='" + propertyName + "']/external-binding";
-
-		NodeList anl = org.apache.xpath.XPathAPI.selectNodeList(document.getDocumentElement(), componentXPath);
-		for(int i=0; i<anl.getLength(); i++)
-		{
-			Element component = (Element)anl.item(i);
-			String entityId    = component.getAttribute("entityId");
-			// TODO language support?
-			String displayName = component.getAttribute("displayName");
-
-			Map<String, String> binding = new HashMap<String, String>();
-			binding.put("entityId", entityId);
-			binding.put("displayName", displayName);
-			bindings.add(binding);
-		}
-
-		return bindings;
-	}
+//	public List<Map<String,String>> getExternalBindings() throws Exception
+//	{
+//		List<Map<String,String>> bindings = new LinkedList<Map<String,String>>();
+//
+////		bindings.add(new HashMap<String, String>() {{put("entityId", "123");put("displayName", "apa");}});
+////		bindings.add(new HashMap<String, String>() {{put("entityId", "456");put("displayName", "bepa");}});
+////		bindings.add(new HashMap<String, String>() {{put("entityId", "789");put("displayName", "crepa");}});
+//		
+//		Integer siteNodeId = new Integer(this.getRequest().getParameter("siteNodeId"));
+////		Integer languageId = new Integer(this.getRequest().getParameter("languageId"));
+////		Integer contentId  = new Integer(this.getRequest().getParameter("contentId"));
+//		String propertyName = this.getRequest().getParameter("propertyName");
+//
+//		String componentXML   = getPageComponentsString(siteNodeId, this.masterLanguageVO.getId());
+//
+//		Document document = XMLHelper.readDocumentFromByteArray(componentXML.getBytes("UTF-8"));
+//		String componentXPath = "//component[@id=" + this.componentId + "]/properties/property[@name='" + propertyName + "']/external-binding";
+//
+//		NodeList anl = org.apache.xpath.XPathAPI.selectNodeList(document.getDocumentElement(), componentXPath);
+//		for(int i=0; i<anl.getLength(); i++)
+//		{
+//			Element component = (Element)anl.item(i);
+//			String entityId    = component.getAttribute("entityId");
+//			// TODO language support?
+//			String displayName = component.getAttribute("displayName");
+//
+//			Map<String, String> binding = new HashMap<String, String>();
+//			binding.put("entityId", entityId);
+//			binding.put("displayName", displayName);
+//			bindings.add(binding);
+//		}
+//
+//		return bindings;
+//	}
 
 	//Nice code
 	
@@ -2043,14 +2059,61 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 		this.getResponse().sendRedirect(url);
 	    return NONE; 
 	}
-
-	public String doShowExternalBinding()
+	
+	public String doSearchExternalBinding()
 	{
-		
-		
 		return "showExternalBinding";
 	}
 	
+	public String doProxyRequest() throws IOException
+	{
+		String serviceUrl = this.getRequest().getParameter("serviceUrl");
+		logger.debug("Addr: " + this.getRequest().getRemoteAddr());
+		logger.debug("Host: " + this.getRequest().getRemoteHost());
+		logger.info("ServiceUrl for proxy request is: " + serviceUrl);
+		if (serviceUrl != null)
+		{
+			try
+			{
+				this.getResponse().getWriter().write(new HttpHelper().getUrlContent(serviceUrl));
+			}
+			catch (Exception ex)
+			{
+				logger.warn("Got exception when proxying request " + ex.getMessage());
+				this.getResponse().setStatus(502);
+				this.getResponse().getWriter().println("Got exception. Message: " + ex.getMessage());
+			}
+		}
+		else
+		{
+			this.getResponse().setStatus(400);
+			this.getResponse().getWriter().println("serviceUrl must be provided as a parameter");
+		}
+		
+		return NONE;
+	}
+
+	public String doShowExternalBinding() throws Exception
+	{
+		initialize(false);
+
+		getHttpSession().setAttribute("" + siteNodeId + "_hideComponentPropertiesOnLoad", new Boolean(hideComponentPropertiesOnLoad));
+
+		return "showExternalBinding";
+	}
+
+	public String doShowExternalSearch()
+	{
+		String view = this.getRequest().getParameter("searchView");
+
+		if (view != null)
+		{
+			return view;
+		}
+
+		return NONE;
+	}
+
 	/**
 	 * This method creates a parameter for the given input type.
 	 * This is to support form steering information later.
@@ -2592,7 +2655,7 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 	            sb.append("allowedComponentGroupNames=" + URLEncoder.encode(allowedComponentGroupNames[i], "UTF-8"));
 	        }
         }
-        
+
         return sb.toString();
     }
 
@@ -2604,6 +2667,75 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 	public void setAssetKey(String assetKey)
 	{
 		this.assetKey = assetKey;
+	}
+
+	public String getExternalBindingView()
+	{
+		String result = null;
+
+		if (externalBindingConfig == null)
+		{
+			externalBindingConfig = getRequest().getParameter("externalBindingConfig");
+		}
+
+		if (externalBindingConfig != null)
+		{
+			int startIndex = externalBindingConfig.indexOf("searchView=");
+			int length = "searchView=".length();
+			if (startIndex != -1)
+			{
+				int endIndex = externalBindingConfig.indexOf(";", startIndex);
+				if (endIndex == -1)
+				{
+					result = externalBindingConfig.substring(startIndex + length);
+				}
+				else
+				{
+					result = externalBindingConfig.substring(startIndex + length, endIndex);
+				}
+			}
+			else
+			{
+				logger.warn("Did not find a searchView for external binding view. SiteNode: " + siteNodeId + ", Property name: " + propertyName);
+			}
+		}
+
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	public Map<String, String> getExternalBindingConfigMap()
+	{
+		Map<String, String> result = null;
+
+		if (externalBindingConfig == null)
+		{
+			externalBindingConfig = getRequest().getParameter("externalBindingConfig");
+		}
+
+		if (externalBindingConfig != null)
+		{
+			try
+			{
+				result = new HttpHelper().toMap(externalBindingConfig, "UTF-8", ";");
+			}
+			catch (Exception ex)
+			{
+				logger.warn("Error when preparing externa binding config map", ex);
+			}
+		}
+
+		return result;
+	}
+
+	public String getExternalBindingConfig()
+	{
+		return getRequest().getParameter("externalBindingConfig");
+	}
+
+	public void setExternalBindingConfig(String externalBindingConfig)
+	{
+		this.externalBindingConfig = externalBindingConfig;
 	}
 
 	public void setNewComponentContentId(Integer newComponentContentId)
