@@ -1899,7 +1899,7 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 				String entityName = component.getAttribute("entity");
 				String entityId = component.getAttribute("entityId");
 				String assetKey = component.getAttribute("assetKey");
-				NodeList supplementingEntities = component.getElementsByTagName("binding");
+				NodeList supplementingEntities = component.getElementsByTagName("supplementing-binding");
 
 				try
 				{
@@ -1932,7 +1932,6 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 							if (supplementingEntity instanceof Element)
 							{
 								Element supplementingElement = (Element)supplementingEntity;
-								supplementingBinding.put("entityName", supplementingElement.getAttribute("entity"));
 								supplementingBinding.put("entityId", supplementingElement.getAttribute("entityId"));
 								supplementingBinding.put("assetKey", supplementingElement.getAttribute("assetKey"));
 							}
@@ -2136,14 +2135,25 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 			//logger.info("qualifyerElement:" + qualifyerElement);
 			String entityName = qualifyerElement.getNodeName();
 			String assetKey = qualifyerElement.getAttribute("assetKey");
+			String supplementingEntityId = qualifyerElement.getAttribute("supplementingEntityId");
+			String supplementingAssetKey = qualifyerElement.getAttribute("supplementingAssetKey");
 			String entityId = qualifyerElement.getFirstChild().getNodeValue();
 			//logger.info("entityName:" + entityName);
 			//logger.info("entityId:" + entityId);
-			
+
 			Element element = parent.getOwnerDocument().createElement("binding");
 			element.setAttribute("entityId", entityId);
 			element.setAttribute("entity", entityName);
 			element.setAttribute("assetKey", assetKey);
+
+			if (supplementingEntityId != null && !"".equals(supplementingEntityId))
+			{
+				Element supplementingElement = parent.getOwnerDocument().createElement("supplementing-binding");
+				supplementingElement.setAttribute("entityId", supplementingEntityId);
+				supplementingElement.setAttribute("assetKey", supplementingAssetKey);
+				element.appendChild(supplementingElement);
+			}
+
 			parent.appendChild(element);
 		}
 	}

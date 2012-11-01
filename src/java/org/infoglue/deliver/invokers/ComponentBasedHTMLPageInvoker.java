@@ -60,6 +60,7 @@ import org.infoglue.deliver.applications.databeans.ComponentBinding;
 import org.infoglue.deliver.applications.databeans.ComponentRestriction;
 import org.infoglue.deliver.applications.databeans.DeliveryContext;
 import org.infoglue.deliver.applications.databeans.Slot;
+import org.infoglue.deliver.applications.databeans.SupplementedComponentBinding;
 import org.infoglue.deliver.controllers.kernel.impl.simple.ComponentLogic;
 import org.infoglue.deliver.controllers.kernel.impl.simple.ContentDeliveryController;
 import org.infoglue.deliver.controllers.kernel.impl.simple.LanguageDeliveryController;
@@ -2856,23 +2857,36 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 								String entity = bindingElement.getAttributeValue(bindingElement.getNamespaceName(), "entity");
 								String entityId = bindingElement.getAttributeValue(bindingElement.getNamespaceName(), "entityId");
 								String assetKey = bindingElement.getAttributeValue(bindingElement.getNamespaceName(), "assetKey");
-								XmlElement supplementingBindingElement = bindingElement.element(bindingElement.getNamespace(), "binding");
+								XmlElement supplementingBindingElement = bindingElement.element(bindingElement.getNamespace(), "supplementing-binding");
 
-								ComponentBinding componentBinding = new ComponentBinding();
-								//componentBinding.setId(new Integer(id));
-								//componentBinding.setComponentId(componentId);
+								ComponentBinding componentBinding;
+								if (supplementingBindingElement == null)
+								{
+									componentBinding = new ComponentBinding();
+								}
+								else
+								{
+									Integer supplementingEntityId = null;
+									try
+									{
+										String supplementingEntityIdString = supplementingBindingElement.getAttributeValue(supplementingBindingElement.getNamespaceName(), "entityId");
+										if (supplementingEntityIdString != null && !supplementingEntityIdString.equals(""))
+										{
+											supplementingEntityId = new Integer(supplementingEntityIdString);
+										}
+										String supplementingAssetKey = supplementingBindingElement.getAttributeValue(supplementingBindingElement.getNamespaceName(), "assetKey");
+										componentBinding = new SupplementedComponentBinding(supplementingEntityId, supplementingAssetKey);
+									}
+									catch (NumberFormatException ex)
+									{
+										logger.error("Could not make Integer from supplementing entity id [id: " + supplementingEntityId + "]. Will ignore it!. Property name: " + propertyName);
+										componentBinding = new ComponentBinding();
+									}
+								}
 								componentBinding.setEntityClass(entity);
 								componentBinding.setEntityId(new Integer(entityId));
 								componentBinding.setAssetKey(assetKey);
 								componentBinding.setBindingPath(path);
-								if (supplementingBindingElement != null)
-								{
-									ComponentBinding supplementingComponentBinding = new ComponentBinding();
-									supplementingComponentBinding.setEntityClass(supplementingBindingElement.getAttributeValue(supplementingBindingElement.getNamespaceName(), "entity"));
-									supplementingComponentBinding.setEntityId(new Integer(supplementingBindingElement.getAttributeValue(supplementingBindingElement.getNamespaceName(), "entityId")));
-									supplementingComponentBinding.setAssetKey(supplementingBindingElement.getAttributeValue(supplementingBindingElement.getNamespaceName(), "assetKey"));
-									componentBinding.setSupplementingBinding(supplementingComponentBinding);
-								}
 								bindings.add(componentBinding);
 							}
 			

@@ -70,6 +70,7 @@ import org.infoglue.deliver.applications.databeans.ComponentPropertyOption;
 import org.infoglue.deliver.applications.databeans.ComponentTask;
 import org.infoglue.deliver.applications.databeans.DeliveryContext;
 import org.infoglue.deliver.applications.databeans.Slot;
+import org.infoglue.deliver.applications.databeans.SupplementedComponentBinding;
 import org.infoglue.deliver.controllers.kernel.impl.simple.BasicTemplateController;
 import org.infoglue.deliver.controllers.kernel.impl.simple.ContentDeliveryController;
 import org.infoglue.deliver.controllers.kernel.impl.simple.DecoratedComponentLogic;
@@ -1291,7 +1292,7 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 					{
 						additionalInformation += " (" + componentProperty.getAssetKey() + ")";
 					}
-					if(componentProperty.getHasSupplementingEntity())
+					if(componentProperty.getIsSupplementingEntity())
 					{
 						additionalInformation += " (" + "*" + ")";
 					}
@@ -2655,7 +2656,7 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 					if(type.equalsIgnoreCase(ComponentProperty.BINDING))
 					{
 						String entity 					= binding.attributeValue("entity");
-						String supplementingEntityType	= binding.attributeValue("supplementingEntity");
+						String supplementingEntityType	= binding.attributeValue("supplementingEntityType");
 						boolean isMultipleBinding 		= new Boolean(binding.attributeValue("multiple")).booleanValue();
 						boolean isAssetBinding 	  		= new Boolean(binding.attributeValue("assetBinding")).booleanValue();
 						String assetMask				= binding.attributeValue("assetMask");
@@ -3265,23 +3266,35 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 			String entity   = property.attributeValue("entity");
 			String entityId = property.attributeValue("entityId");
 			String assetKey = property.attributeValue("assetKey");
-			Element supplementingBinding = property.element("binding");
+			Element supplementingBinding = property.element("supplementing-binding");
 			
-			ComponentBinding componentBinding = new ComponentBinding();
+			ComponentBinding componentBinding;
+			if (supplementingBinding == null)
+			{
+				componentBinding = new ComponentBinding();
+			}
+			else
+			{
+				Integer supplementingEntityId = null;
+				try
+				{
+					String supplementingEntityIdString = supplementingBinding.attributeValue("entityId");
+					if (supplementingEntityIdString != null && !supplementingEntityIdString.equals(""))
+					{
+						supplementingEntityId = new Integer(supplementingEntityIdString);
+					}
+					String supplementingAssetKey = supplementingBinding.attributeValue("assetKey");
+					componentBinding = new SupplementedComponentBinding(supplementingEntityId, supplementingAssetKey);
+				}
+				catch (NumberFormatException ex)
+				{
+					logger.error("Could not make Integer from supplementing entity id [id: " + supplementingEntityId + "]. Will ignore it!. Property name: " + name);
+					componentBinding = new ComponentBinding();
+				}
+			}
 			componentBinding.setEntityClass(entity);
 			componentBinding.setEntityId(new Integer(entityId));
 			componentBinding.setAssetKey(assetKey);
-			if (supplementingBinding != null)
-			{
-				String supplementingEntity   = supplementingBinding.attributeValue("entity");
-				String supplementingEntityId = supplementingBinding.attributeValue("entityId");
-				String supplementingAssetKey = supplementingBinding.attributeValue("assetKey");
-				ComponentBinding supplementingComponentBinding = new ComponentBinding();
-				supplementingComponentBinding.setEntityClass(supplementingEntity);
-				supplementingComponentBinding.setEntityId(new Integer(supplementingEntityId));
-				supplementingComponentBinding.setAssetKey(supplementingAssetKey);
-				componentBinding.setSupplementingBinding(supplementingComponentBinding);
-			}
 
 			componentBindings.add(componentBinding);
 		}

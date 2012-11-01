@@ -74,6 +74,7 @@ import org.infoglue.deliver.applications.databeans.ComponentRestriction;
 import org.infoglue.deliver.applications.databeans.ComponentTask;
 import org.infoglue.deliver.applications.databeans.DeliveryContext;
 import org.infoglue.deliver.applications.databeans.Slot;
+import org.infoglue.deliver.applications.databeans.SupplementedComponentBinding;
 import org.infoglue.deliver.integration.dataproviders.PropertyOptionsDataProvider;
 import org.infoglue.deliver.util.CacheController;
 import org.infoglue.deliver.util.HttpHelper;
@@ -2259,21 +2260,23 @@ public class PageEditorHelper extends BaseDeliveryController
 								String assetKey = bindingElement.attributeValue("assetKey");
 								Element supplementingBindingElement = bindingElement.element("supplementingBinding");
 
-								ComponentBinding componentBinding = new ComponentBinding();
+								ComponentBinding componentBinding;
+								if (supplementingBindingElement == null)
+								{
+									componentBinding = new ComponentBinding();
+								}
+								else
+								{
+									Integer supplementingEntityId = new Integer(supplementingBindingElement.attributeValue("entityId"));
+									String supplementingAssetKey = supplementingBindingElement.attributeValue("assetKey");
+									componentBinding = new SupplementedComponentBinding(supplementingEntityId, supplementingAssetKey);
+								}
 								//componentBinding.setId(new Integer(id));
 								//componentBinding.setComponentId(componentId);
 								componentBinding.setEntityClass(entity);
 								componentBinding.setEntityId(new Integer(entityId));
 								componentBinding.setAssetKey(assetKey);
 								componentBinding.setBindingPath(path);
-								if (supplementingBindingElement != null)
-								{
-									ComponentBinding supplementingComponentBinding = new ComponentBinding();
-									supplementingComponentBinding.setEntityClass(supplementingBindingElement.attributeValue("entity"));
-									supplementingComponentBinding.setEntityId(new Integer(supplementingBindingElement.attributeValue("entityId")));
-									supplementingComponentBinding.setAssetKey(supplementingBindingElement.attributeValue("assetKey"));
-									componentBinding.setSupplementingBinding(supplementingComponentBinding);
-								}
 								bindings.add(componentBinding);
 							}
 

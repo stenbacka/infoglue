@@ -59,6 +59,7 @@ import org.infoglue.deliver.applications.actions.InfoGlueComponent;
 import org.infoglue.deliver.applications.databeans.ComponentBinding;
 import org.infoglue.deliver.applications.databeans.ComponentDeliveryContext;
 import org.infoglue.deliver.applications.databeans.Slot;
+import org.infoglue.deliver.applications.databeans.SupplementedComponentBinding;
 import org.infoglue.deliver.applications.databeans.WebPage;
 import org.infoglue.deliver.util.CacheController;
 import org.infoglue.deliver.util.NullObject;
@@ -958,55 +959,40 @@ public class ComponentLogic
 
 		return contents;
 	}
-	
-	public List getBoundContents(String propertyName, boolean useInheritance, boolean useRepositoryInheritance, boolean useStructureInheritance, Map<Integer, ComponentBinding> supplementingEntities)
+
+	public List getBoundContentsWithSupplementingAsset(String propertyName, boolean useInheritance, boolean useRepositoryInheritance, boolean useStructureInheritance)
 	{
-		List contents = new ArrayList();
-		
+		List result = new ArrayList();
+
 		Map property = getInheritedComponentProperty(this.infoGlueComponent, propertyName, useInheritance, useRepositoryInheritance, useStructureInheritance);
-		contents = getBoundContents(property);
-		if (property != null && supplementingEntities != null)
-		{
-			@SuppressWarnings("unchecked")
-			List<ComponentBinding> bindings = (List<ComponentBinding>)property.get("bindings");
+
+		//List<ContentVO> contents = new ArrayList<ContentVO>();
+
+	    if(property != null)
+		{	
+	    	List<ComponentBinding> bindings = (List<ComponentBinding>)property.get("bindings");
 			Iterator<ComponentBinding> bindingsIterator = bindings.iterator();
 			while(bindingsIterator.hasNext())
 			{
+				Map<String,Object> entity = new HashMap<String, Object>();
 				ComponentBinding componentBinding = bindingsIterator.next();
-				ComponentBinding supplementingEntity = componentBinding.getSupplementingBinding();
-				if (supplementingEntity != null)
+				Integer contentId = componentBinding.getEntityId();
+				entity.put("content", this.templateController.getContent(contentId));
+				if (componentBinding instanceof SupplementedComponentBinding)
 				{
-//					BaseEntityVO entity = null;
-//					try
-//					{
-//						if ("Content".equalsIgnoreCase(supplementingEntity.getEntityClass()))
-//						{
-//							if ("".equals(supplementingEntity.getAssetKey()))
-//							{
-//								entity = ContentController.getContentController().getContentVOWithId(supplementingEntity.getEntityId());
-//							}
-//							else
-//							{
-//								entity = DigitalAssetController.getDigitalAssetVOWithId(supplementingEntity.getEntityId());
-//							}
-//						}
-//						else if ("SiteNode".equalsIgnoreCase(supplementingEntity.getEntityClass()))
-//						{
-//							entity = SiteNodeController.getController().getSiteNodeVOWithId(supplementingEntity.getEntityId());
-//						}
-//					}
-//					catch (Exception ex)
-//					{
-//						logger.warn("Error getting an object for the given supplementingEntity. Id: " + supplementingEntity.getEntityId() + ", Entity class: " + supplementingEntity.getEntityClass() + ", Asset key: " + supplementingEntity.getAssetKey());
-//					}
-					supplementingEntities.put(componentBinding.getEntityId(), supplementingEntity);
+					final SupplementedComponentBinding supplementedComponentBinding = (SupplementedComponentBinding)componentBinding;
+					Map<String, Object> assetMap = new HashMap<String, Object>();
+					assetMap.put("contentId", supplementedComponentBinding.getSupplementingEntityId());
+					assetMap.put("assetKey", supplementedComponentBinding.getSupplementingAssetKey());
+					entity.put("asset", assetMap);
 				}
+				result.add(entity);
 			}
 		}
-		
-		return contents;
+
+		return result;
 	}
-	
+
 	/**
 	 * This method returns a list of childContents using inheritence as default.
 	 */
@@ -3820,11 +3806,11 @@ public class ComponentLogic
 					String autoCreatContentMethod 	= element.attributeValue("autoCreatContentMethod");
 					String autoCreatContentPath		= element.attributeValue("autoCreatContentPath");
 					String customMarkup 			= element.attributeValue("customMarkup");
-					String supplementingEntity		= element.attributeValue("supplementingEntity");
+					String supplementingEntityType	= element.attributeValue("supplementingEntityType");
 					if(allowLanguageVariations == null || allowLanguageVariations.equals(""))
 						allowLanguageVariations = "true";
 					
-					propertyDefinition = new ComponentPropertyDefinition(name, displayName, type, entity, new Boolean(multiple), new Boolean(assetBinding), assetMask, new Boolean(isPuffContentForPage), allowedContTypeDefNames, description, defaultValue, new Boolean(allowLanguageVariations), new Boolean(WYSIWYGEnabled), WYSIWYGToolbar, dataProvider, dataProviderParameters, new Boolean(autoCreatContent), autoCreatContentMethod, autoCreatContentPath, customMarkup, new Boolean(allowMultipleSelections), supplementingEntity);
+					propertyDefinition = new ComponentPropertyDefinition(name, displayName, type, entity, new Boolean(multiple), new Boolean(assetBinding), assetMask, new Boolean(isPuffContentForPage), allowedContTypeDefNames, description, defaultValue, new Boolean(allowLanguageVariations), new Boolean(WYSIWYGEnabled), WYSIWYGToolbar, dataProvider, dataProviderParameters, new Boolean(autoCreatContent), autoCreatContentMethod, autoCreatContentPath, customMarkup, new Boolean(allowMultipleSelections), supplementingEntityType);
 				}
 			}
 		}

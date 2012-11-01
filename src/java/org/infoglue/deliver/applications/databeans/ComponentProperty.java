@@ -473,24 +473,25 @@ public class ComponentProperty
 		return this.supplementingEntityType;
 	}
 	
-	public ComponentBinding getSupplementingEntity()
+	public SupplementedComponentBinding getSupplementingEntity()
 	{
-		if (getBindings() != null && getBindings().size() > 0)
+		if (getBindings().size() > 0)
 		{
-			return getBindings().get(0).getSupplementingBinding();
+			ComponentBinding binding = getBindings().get(0);
+			if (binding instanceof SupplementedComponentBinding)
+			{
+				return ((SupplementedComponentBinding)binding);
+			}
 		}
 		return null;
 	}
 	
-	public boolean getHasSupplementingEntity()
+	public boolean getIsSupplementingEntity()
 	{
-		try
+		if (getBindings().size() > 0)
 		{
-			return getBindings().size() > 0 && getBindings().get(0).getSupplementingBinding() != null;
+			return getBindings().get(0) instanceof SupplementedComponentBinding;
 		}
-		catch (NullPointerException ex)
-		{
-			return false;
-		}
+		return false;
 	}
 }

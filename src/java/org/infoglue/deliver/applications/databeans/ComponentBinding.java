@@ -35,7 +35,6 @@ public class ComponentBinding
 	private Integer entityId;
 	private String assetKey;
 	private String bindingPath;
-	private ComponentBinding supplementingComponentBinding;
 
 	public Integer getId()
 	{
@@ -95,14 +94,5 @@ public class ComponentBinding
 	public void setAssetKey(String assetKey)
 	{
 		this.assetKey = assetKey;
-	}
-
-	public ComponentBinding getSupplementingBinding()
-	{
-		return this.supplementingComponentBinding;
-	}
-	public void setSupplementingBinding(ComponentBinding supplementingComponentBinding)
-	{
-		this.supplementingComponentBinding = supplementingComponentBinding;
 	}
 }
