@@ -3850,4 +3850,35 @@ public class ComponentLogic
 
     	return resultComponentXML;
     }
+	
+	protected List<Map<String,Object>> getExternalBindings(Map property)
+	{
+	    List<Map<String,Object>> bindingList = new ArrayList<Map<String,Object>>();
+
+	    if(property != null)
+		{	
+	    	List<ComponentBinding> bindings = (List<ComponentBinding>)property.get("bindings");
+			Iterator<ComponentBinding> bindingsIterator = bindings.iterator();
+			while(bindingsIterator.hasNext())
+			{
+				ComponentBinding componentBinding = bindingsIterator.next();
+				Map<String, Object> entity = new HashMap<String, Object>();
+				entity.put("id", componentBinding.getEntityId());
+				entity.put("name", componentBinding.getEntityId());
+				bindingList.add(entity);
+			}
+		}
+
+		return bindingList;
+	}
+
+	public List<Map<String,Object>> getExternalBindings(String propertyName, boolean useInheritance2, boolean useRepositoryInheritance2, boolean useStructureInheritance2)
+	{
+		List<Map<String,Object>> contents = null;
+
+		Map property = getInheritedComponentProperty(this.infoGlueComponent, propertyName, useInheritance, useRepositoryInheritance, useStructureInheritance);
+		contents = getExternalBindings(property);
+
+		return contents;
+	}
 }

@@ -30,33 +30,47 @@
 		 	document.inputForm.repositoryId.value = repositoryId;
 		 	document.inputForm.path.value = path;	
 		}
-	    
+		var markedQualifyer = {};
+	    function markQualifyer(entityId, path)
+	    {
+	    	markedQualifyer.entityId = entityId;
+	    	markedQualifyer.path = path;
+	    }
+
 	    function addQualifyer(entityId, path)
 		{
-			//entityId = document.inputForm.entityId.value;
+			if(!entityId && markedQualifyer.entityId)
+			{
+				entityId = markedQualifyer.entityId;
+	    		path = markedQualifyer.path;
+			}
+
+
 			if(entityId == '' || entityId == '${select}')
 			{
 				alert("You must choose a content to add");
 			}
 			else
 			{
-				//path     = document.inputForm.path.value;
-				//bindingTypeId = 1; //0 = Content, 1 = SiteNode
-				
 			    var binding = new Binding("External", entityId, path);
-				bindingVector.addElement(binding);
+				siteNodesVector.addElement(binding);
 				drawList();
 			}
 		}
-		
+
+		function save()
+		{
+			submitBinding();
+		}
+
 		function submitBinding()
 		{
 		    qualifyerXML = "<?xml version='1.0' encoding='UTF-8'?>";
 			qualifyerXML += "<qualifyer>";
 			var path = "";
-			for (var i=0; i<bindingVector.getSize(); i++)
+			for (var i=0; i<siteNodesVector.getSize(); i++)
 			{
-				var binding = bindingVector.getElementAt(i);
+				var binding = siteNodesVector.getElementAt(i);
 				if(i > 0) 
 					path = path + ", ";
 				path 		= path + binding.getPath();
@@ -296,7 +310,7 @@
 
 		function deleteBinding(index)
 		{
-			bindingVector.removeElementAt(index);
+			siteNodesVector.removeElementAt(index);
 			drawList();
 		}
 
@@ -363,9 +377,9 @@
 				binding = new Binding("External", "$binding.entityId", "$formatter.cleanForJavascriptStrings($binding.path)");
 				siteNodesVector.addElement(binding);
 			#end
-	
+
 			//alert("siteNodesVector:" + siteNodesVector.getSize());
-			drawList();		
+			drawList();
 		}
 
 		function changeOrder(item) 
@@ -377,7 +391,7 @@
 
 			if (id == null) 
 				return;
-	
+
 			group.register('dragend', function() 
 			{
 				var targetId = -1;
@@ -391,14 +405,8 @@
 			})
 		}
 
-		var bindingVector = new Vector(0);
-#*
-      	function treeItemDblClick(id, label)
-      	{
-      		//alert("Adding " + id + ":" + label);
-      		addQualifyer();
-      	}*#
-	
+		var siteNodesVector = new Vector(0);
+
 		$(document).ready(function() {
 			init();
 		});
@@ -423,11 +431,10 @@
 				</tr>
 				<tr>
 					<td class="menu" style="border: 1px solid #C7D1B3;">
-						debug: $externalBindingView
-						#if( "$!externalBindingView" == "" )
-							You have to provide an externalBindingView (TODO label)
+						#if( "$!externalBindingAction" == "" )
+							You have to provide an externalBindingAvtion (TODO label)
 						#else
-							<iframe src="ViewSiteNodePageComponents!showExternalSearch.action?searchView=${externalBindingView}&externalBindingConfig=${externalBindingConfig}"></iframe>
+							<iframe src="$!externalBindingAction" width="340" height="400"></iframe>
 						#end
 					</td>
 				</tr>	
@@ -480,7 +487,7 @@
 		</tr>
 		</table>
 
-		<form name="submitForm" method="POST" action="ViewSiteNodePageComponents!addExternalBindingWithQualifyer.action" TARGET="">
+		<form name="submitForm" method="POST" action="ViewSiteNodePageComponents!addComponentPropertyBindingWithQualifyer.action" TARGET="">
 			<input type="hidden" name="siteNodeId" value="$siteNodeId">
 			<input type="hidden" name="languageId" value="$languageId">
 			<input type="hidden" name="contentId" value="$contentId">

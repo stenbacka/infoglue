@@ -121,7 +121,7 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 	private String slotPositionComponentId = null;
 	private Integer pagePartContentId = null;
 	private boolean hideComponentPropertiesOnLoad = false;
-	private String externalBindingConfig;
+	private String externalBindingAction;
 	
 	LanguageVO masterLanguageVO = null;
 	
@@ -2059,39 +2059,6 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 		this.getResponse().sendRedirect(url);
 	    return NONE; 
 	}
-	
-	public String doSearchExternalBinding()
-	{
-		return "showExternalBinding";
-	}
-	
-	public String doProxyRequest() throws IOException
-	{
-		String serviceUrl = this.getRequest().getParameter("serviceUrl");
-		logger.debug("Addr: " + this.getRequest().getRemoteAddr());
-		logger.debug("Host: " + this.getRequest().getRemoteHost());
-		logger.info("ServiceUrl for proxy request is: " + serviceUrl);
-		if (serviceUrl != null)
-		{
-			try
-			{
-				this.getResponse().getWriter().write(new HttpHelper().getUrlContent(serviceUrl));
-			}
-			catch (Exception ex)
-			{
-				logger.warn("Got exception when proxying request " + ex.getMessage());
-				this.getResponse().setStatus(502);
-				this.getResponse().getWriter().println("Got exception. Message: " + ex.getMessage());
-			}
-		}
-		else
-		{
-			this.getResponse().setStatus(400);
-			this.getResponse().getWriter().println("serviceUrl must be provided as a parameter");
-		}
-		
-		return NONE;
-	}
 
 	public String doShowExternalBinding() throws Exception
 	{
@@ -2100,18 +2067,6 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 		getHttpSession().setAttribute("" + siteNodeId + "_hideComponentPropertiesOnLoad", new Boolean(hideComponentPropertiesOnLoad));
 
 		return "showExternalBinding";
-	}
-
-	public String doShowExternalSearch()
-	{
-		String view = this.getRequest().getParameter("searchView");
-
-		if (view != null)
-		{
-			return view;
-		}
-
-		return NONE;
 	}
 
 	/**
@@ -2669,73 +2624,19 @@ public class ViewSiteNodePageComponentsAction extends InfoGlueAbstractAction
 		this.assetKey = assetKey;
 	}
 
-	public String getExternalBindingView()
+	public String getExternalBindingAction()
 	{
-		String result = null;
-
-		if (externalBindingConfig == null)
+		if (externalBindingAction == null)
 		{
-			externalBindingConfig = getRequest().getParameter("externalBindingConfig");
+			logger.warn("Why isn't the setter working!? :'(");
+			return getRequest().getParameter("externalBindingAction");
 		}
-
-		if (externalBindingConfig != null)
-		{
-			int startIndex = externalBindingConfig.indexOf("searchView=");
-			int length = "searchView=".length();
-			if (startIndex != -1)
-			{
-				int endIndex = externalBindingConfig.indexOf(";", startIndex);
-				if (endIndex == -1)
-				{
-					result = externalBindingConfig.substring(startIndex + length);
-				}
-				else
-				{
-					result = externalBindingConfig.substring(startIndex + length, endIndex);
-				}
-			}
-			else
-			{
-				logger.warn("Did not find a searchView for external binding view. SiteNode: " + siteNodeId + ", Property name: " + propertyName);
-			}
-		}
-
-		return result;
+		return externalBindingAction;
 	}
 
-	@SuppressWarnings("unchecked")
-	public Map<String, String> getExternalBindingConfigMap()
+	public void setExternalBindingAction(String externalBindingAction)
 	{
-		Map<String, String> result = null;
-
-		if (externalBindingConfig == null)
-		{
-			externalBindingConfig = getRequest().getParameter("externalBindingConfig");
-		}
-
-		if (externalBindingConfig != null)
-		{
-			try
-			{
-				result = new HttpHelper().toMap(externalBindingConfig, "UTF-8", ";");
-			}
-			catch (Exception ex)
-			{
-				logger.warn("Error when preparing externa binding config map", ex);
-			}
-		}
-
-		return result;
-	}
-
-	public String getExternalBindingConfig()
-	{
-		return getRequest().getParameter("externalBindingConfig");
-	}
-
-	public void setExternalBindingConfig(String externalBindingConfig)
-	{
-		this.externalBindingConfig = externalBindingConfig;
+		this.externalBindingAction = externalBindingAction;
 	}
 
 	public void setNewComponentContentId(Integer newComponentContentId)
