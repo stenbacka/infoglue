@@ -89,6 +89,61 @@ public class ComponentLogic
 	private boolean threatFoldersAsContents = false;
 	private ComponentDeliveryContext componentDeliveryContext;
 	
+	public Map<String, Map<String, String>> decorationInfo = new HashMap<String, Map<String,String>>();
+	
+	protected Map<String, String> getPropertyDecoratinInfo(String propertyName)
+	{
+		Map<String, String> propertyInfo = decorationInfo.get(propertyName);
+		if (propertyInfo == null)
+		{
+			propertyInfo = new HashMap<String, String>();
+			decorationInfo.put(propertyName, propertyInfo);
+		}
+		return propertyInfo;
+	}
+	
+	protected void initPropertyDecorationInfo(Map<String, Object> property)
+	{
+		Object propertyNameObject = property.get("name");
+		if (propertyNameObject == null)
+		{
+			logger.warn("Found a property without a name. That is weird. Lets pretend it is not here, maybe it will go away. Propert: " + property);
+		}
+		else
+		{
+			String propertyName = (String)propertyNameObject;
+			@SuppressWarnings("unchecked")
+			Map<String, String> originMap = (Map<String, String>)property.get("origin");
+			decorationInfo.put(propertyName, originMap);
+		}
+	}
+	
+	protected void addPropertyDecorationInfo(Map<String, Object> property, String key, String value)
+	{
+		addAllPropertyDecorationInfo(property, Collections.singletonMap(key, value));
+	}
+
+	protected void addAllPropertyDecorationInfo(Map<String, Object> property, Map<String, String> map)
+	{
+		Object propertyNameObject = property.get("name");
+		if (propertyNameObject == null)
+		{
+			logger.warn("Found a property without a name. That is weird. Lets pretend it is not here, maybe it will go away. Propert: " + property);
+		}
+		else
+		{
+			String propertyName = (String)propertyNameObject;
+			@SuppressWarnings("unchecked")
+			Map<String, String> originMap = (Map<String, String>)property.get("origin");
+			if (originMap == null)
+			{
+				originMap = getPropertyDecoratinInfo(propertyName);
+				property.put("origin", originMap);
+			}
+			originMap.putAll(map);
+		}
+	}
+	
  	public ComponentLogic(TemplateController templateController, InfoGlueComponent infoGlueComponent)
  	{
  		this.templateController = templateController;
@@ -679,7 +734,11 @@ public class ComponentLogic
 	
 				ComponentPropertyDefinition propertyDefinition = getComponentPropertyDefinition(this.infoGlueComponent.getContentId(), propertyName, templateController.getSiteNodeId(), masterLanguage.getId(), templateController.getContentId(), templateController.getDatabase(), templateController.getPrincipal());
 				if(propertyDefinition != null && propertyDefinition.getDefaultValue() != null)
+				{
 					propertyValue = propertyDefinition.getDefaultValue();
+					Map<String, String> dec = getPropertyDecoratinInfo(propertyName);
+					dec.put("valueOrigin", "default");
+				}
 			}
 			catch (Exception e) 
 			{
@@ -1472,7 +1531,7 @@ public class ComponentLogic
 	{
 		return getInheritedComponentProperty(component, propertyName, useInheritance, useRepositoryInheritance, useStructureInheritance, true);
 	}
-	
+
 	/**
 	 * This method gets a property from the component and if not found there checks in parent components.
 	 */
@@ -1501,7 +1560,10 @@ public class ComponentLogic
 				if(propertyCandidate instanceof NullObject)
 					property = null;				
 				else
+				{
 					property = (Map)propertyCandidate;
+					initPropertyDecorationInfo(property);
+				}
 					
 				if(propertyCandidateVersions != null)
 					contentVersionIdList.addAll(propertyCandidateVersions);				
@@ -1512,6 +1574,7 @@ public class ComponentLogic
 			{
 				property = getComponentProperty(propertyName, useInheritance, useStructureInheritance, contentVersionIdList, usedContentEntities, useRepositoryInheritance, useComponentInheritance);
 				templateController.getDeliveryContext().addDebugInformation("DEBUG property 2:" + property);
+
 				if(property == null)
 				{	
 					property = (Map)component.getProperties().get(propertyName);
@@ -1930,6 +1993,15 @@ public class ComponentLogic
 		}
     	//Map property = getInheritedComponentProperty(this.templateController, templateController.getSiteNodeId(), this.templateController.getLanguageId(), this.templateController.getContentId(), this.infoGlueComponent.getId(), propertyName, contentVersionIdList);
 		
+		if (property != null)
+		{
+			Map<String, String> dec = new HashMap<String, String>();
+			dec.put("componentName", this.infoGlueComponent.getName());
+			dec.put("slotName", this.infoGlueComponent.getSlotName());
+			dec.put("slotPosition", this.infoGlueComponent.getPositionInSlot().toString());
+			addAllPropertyDecorationInfo(property, dec);
+		}
+
 		if(useInheritance)
 		{
 			if(property == null && useComponentInheritance)
@@ -1941,6 +2013,22 @@ public class ComponentLogic
 				{
 					property = (Map)parentComponent.getProperties().get(propertyName);
 					//logger.info("Checking property on parentComponent:" + parentComponent.getName() + "=" + property);
+					if (property != null)
+					{
+						if (property.containsKey("origin"))
+						{
+							initPropertyDecorationInfo(property);
+						}
+						else
+						{
+							Map<String, String> dec = new HashMap<String, String>();
+							dec.put("valueOrigin", "component");
+							dec.put("componentName", parentComponent.getName());
+							dec.put("slotName", parentComponent.getSlotName());
+							dec.put("slotPosition", parentComponent.getPositionInSlot().toString());
+							addAllPropertyDecorationInfo(property, dec);
+						}
+					}
 					if(property == null)
 						parentComponent = parentComponent.getParentComponent();
 				}
@@ -1972,6 +2060,14 @@ public class ComponentLogic
 				    	if(propertyName.equalsIgnoreCase("MiniArticleShortcuts") || propertyName.equalsIgnoreCase("GUFlashImages"))
 				    		this.templateController.getDeliveryContext().addDebugInformation("property:" + property + " taken from " + parentSiteNodeVO.getId());
 				    	
+				    	if (property != null)
+				    	{
+				    		Map<String, String> dec = new HashMap<String, String>();
+				    		dec.put("valueOrigin", "page");
+				    		dec.put("siteNodeId", parentSiteNodeVO.getId().toString());
+				    		dec.put("repositoryId", parentSiteNodeVO.getRepositoryId().toString());
+				    		addAllPropertyDecorationInfo(property, dec);
+				    	}
 				    	if(!useStructureInheritance)
 				    		break;
 				    	
@@ -2075,7 +2171,7 @@ public class ComponentLogic
 	/**
 	 * This method gets a component property from the parent to the current recursively until found.
 	 */
-	 
+
 	private Map getInheritedComponentProperty(TemplateController templateController, Integer siteNodeId, Integer languageId, Integer contentId, Integer componentId, String propertyName, Set contentVersionIdList, Set<String> usedContentEntities) throws Exception
 	{
 	    StringBuilder key = new StringBuilder("inherited_").append(siteNodeId).append("_").append(languageId).append("_").append(componentId).append("_").append(propertyName);
@@ -2099,7 +2195,7 @@ public class ComponentLogic
 				property = null;				
 			else
 				property = (Map)propertyCandidate;
-				
+			
 			if(propertyName.equalsIgnoreCase("MiniArticleShortcuts") || propertyName.equalsIgnoreCase("GUFlashImages"))
 				this.templateController.getDeliveryContext().addDebugInformation("propertyCandidateVersions:" + propertyCandidateVersions);
 			if(propertyCandidateVersions != null)
@@ -2674,6 +2770,17 @@ public class ComponentLogic
 			if(propertyName.equals("GUFlashImages") || propertyName.equals("MiniArticleShortcuts"))
 				this.templateController.getDeliveryContext().addDebugInformation("DEBUG INFO bindings: " + bindings.size() + " (Thread" + Thread.currentThread().getId() + ").\n");
 			
+			try
+			{
+				XmlElement component = (XmlElement) ((XmlElement) infosetItem.getParent()).getParent();
+				addPropertyDecorationInfo(property, "contentId", component.getAttributeValue(component.getNamespaceName(), "contentId"));
+				addPropertyDecorationInfo(property, "id", component.getAttributeValue(component.getNamespaceName(), "id"));
+				addPropertyDecorationInfo(property, "slotName", component.getAttributeValue(component.getNamespaceName(), "name"));
+			}
+			catch (NullPointerException ex)
+			{
+				logger.warn("Failed to gather information for value origin detection");
+			}
 			property.put("bindings", bindings);
 		}
 		

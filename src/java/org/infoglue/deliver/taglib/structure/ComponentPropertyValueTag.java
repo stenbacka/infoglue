@@ -23,6 +23,8 @@
 
 package org.infoglue.deliver.taglib.structure;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -62,6 +64,8 @@ public class ComponentPropertyValueTag extends ComponentLogicTag
 	        		propertyValue = getComponentLogic().getPropertyValue(propertyName, useLanguageFallback, false, false, false, false, component);
 	        	else
 	        		propertyValue = getComponentLogic().getPropertyValue(propertyName, useLanguageFallback, useInheritance, useRepositoryInheritance, useStructureInheritance);
+	        	
+	        	System.out.println(getComponentLogic().decorationInfo);
 	        }
 	        else
 	        {
@@ -95,6 +99,9 @@ public class ComponentPropertyValueTag extends ComponentLogicTag
 	        }
 	        else
 	        {
+	        	InfoGlueComponent c = getComponentLogic().getInfoGlueComponent();
+	        	
+	        	propertyValue = "$$tag_" + propertyName + "$$" + propertyValue + "$$tag_end_" + propertyName + "$$";
 	        	setResultAttribute(propertyValue);
 	        }
 	    }

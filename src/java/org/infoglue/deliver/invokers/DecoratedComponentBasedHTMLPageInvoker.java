@@ -585,6 +585,36 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 			PrintWriter cachedStream = new PrintWriter(cacheString);
 			new VelocityTemplateProcessor().renderTemplate(context, cachedStream, componentString, false, component);
 			componentString = cacheString.toString();
+			
+			System.out.println("Oh yeah!: " + templateController.getComponentLogic().decorationInfo);
+			
+			Map m = templateController.getComponentLogic().decorationInfo;
+			if (m != null)
+			{
+				int start = 0, end = 0;
+
+				do
+				{
+					start = componentString.indexOf("$$tag_", end);
+					if (start != -1)
+					{
+						end = componentString.indexOf("$$", start + 1);
+						if (end != -1)
+						{
+							String propertyName = componentString.substring(start + "$$tag_".length(), end);
+							String id = component.getSlotName() + "_" + component.getPositionInSlot() + "_" + propertyName;
+							String infoBoxId = "originInfoBox_" + id;
+							String div = "<span id=\"propertyOrigin_" + id + "\" onmouseover=\"document.getElementById('" + infoBoxId + "').style.display='block'\" " +
+									"onmouseout=\"document.getElementById('" + infoBoxId + "').style.display='none'\">";
+							componentString = componentString.replaceFirst("\\$\\$tag_" + propertyName + "\\$\\$", div);
+							String originInfoDiv = "<div id=\"" + infoBoxId + "\" style=\"display:none;width:300;background-color:pink;border:1px solid black;\">" + templateController.getComponentLogic().decorationInfo.get(propertyName) + "</div>";
+							
+							componentString = componentString.replaceFirst("\\$\\$tag_end_" + propertyName + "\\$\\$", "</span>" + originInfoDiv);
+						}
+					}
+				}
+				while (start != -1 && end != -1);
+			}
 	
 			int bodyIndex = componentString.indexOf("<body");
 			if(bodyIndex == -1)
@@ -1368,8 +1398,26 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 					
 					sb.append("			<td class=\"igpropertylabel igpropertyDivider\" valign=\"top\" align=\"left\">" + componentProperty.getDisplayName() + "</td>");
 					
+					Map<String, String> decorationInfo = templateController.getComponentLogic().decorationInfo.get(componentProperty.getName());
+					
+					String infoBoxId = "infoBox_" + propertyIndex + "_" + componentId;
+					String infoBoxBoxId = "infoBoxBox_" + propertyIndex + "_" + componentId;
+					String functionid = propertyIndex + "_" + componentId;
+					String foo = "<div id=\"" + infoBoxId + "\" style=\"width:300px;background-color:pink;border:1px solid black;display:none;position:absolute;\">" + decorationInfo + "</div>\n";
+					foo += "<script type=\"text/javascript\">" +
+							"function showInfoBox" + functionid + "() {" +
+							"  document.getElementById('" + infoBoxId + "').style.left = (document.getElementById('" + infoBoxBoxId + "').offsetLeft + 20) + 'px';\n" +
+							"  document.getElementById('" + infoBoxId + "').style.top = (document.getElementById('" + infoBoxBoxId + "').offsetTop + 20) + 'px';\n" +
+							"  document.getElementById('" + infoBoxId + "').style.display = 'block';\n" +
+							"}\n" +
+							"function hideInfoBox" + functionid + "() {" +
+							"  document.getElementById('" + infoBoxId + "').style.display = 'none';" +
+							"}" +
+							"</script>\n";
+					foo += "<div id=\"" + infoBoxBoxId + "\" style=\"background-color:green;width:20px;z-index:100;\" onmouseover=\"showInfoBox" + functionid + "()\" onmouseout=\"hideInfoBox" + functionid + "()\">X</div>";
+					
 					if(hasAccessToProperty)
-						sb.append("			<td class=\"igpropertyvalue igpropertyDivider\" align=\"left\"><input type=\"hidden\" name=\"" + propertyIndex + "_propertyName\" value=\"" + componentProperty.getName() + "\"/><input type=\"text\" class=\"propertytextfield\" name=\"" + componentProperty.getName() + "\" value=\"" + componentProperty.getValue() + "\" onkeydown=\"setDirty();\"/></td>");
+						sb.append("			<td class=\"igpropertyvalue igpropertyDivider\" align=\"left\">" + foo + "<input type=\"hidden\" name=\"" + propertyIndex + "_propertyName\" value=\"" + componentProperty.getName() + "\"/><input type=\"text\" class=\"propertytextfield\" name=\"" + componentProperty.getName() + "\" value=\"" + componentProperty.getValue() + "\" onkeydown=\"setDirty();\"/></td>");
 					else
 						sb.append("			<td class=\"igpropertyvalue igpropertyDivider\" align=\"left\">" + componentProperty.getValue() + "</td>");
 		
