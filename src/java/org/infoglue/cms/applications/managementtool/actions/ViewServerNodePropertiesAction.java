@@ -263,6 +263,8 @@ public class ViewServerNodePropertiesAction extends InfoGluePropertiesAbstractAc
 	    populate(ps, "onlyAllowFolderType");
 	    populate(ps, "skipResultDialogIfPossible");
 
+	    populate(ps, "useFilterableRepositoryList");
+
 	    populate(ps, "maxRows");
 	    populate(ps, "maxNumberOfAssetInSearches");
 	    populate(ps, "gaCode");

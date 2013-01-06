@@ -1771,6 +1771,11 @@ public class CmsPropertyHandler
 	    return getServerNodeProperty("allowOverrideModifyer", true, "true");
 	}
 
+	public static String getUseFilterableRepositoryList()
+	{
+		return getServerNodeProperty("useFilterableRepositoryList", true, "true");
+	}
+
 	public static String getSetDerivedLastModifiedInLive()
 	{
 		return getSetDerivedLastModifiedInLive(false);

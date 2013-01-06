@@ -6,6 +6,19 @@
 	<link rel="stylesheet" type="text/css" href="css/skins/${theme}/main.css" />
 
 	<script type="text/javascript" src="script/embla/admin.js"></script>
+
+	#if($!this.useFilterableRepositoryList != "false")
+	<script type="text/javascript" src="script/jqueryplugins-latest/chosen/chosen.jquery.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="script/jqueryplugins-latest/chosen/chosen.css" media="screen" />
+	<style type="text/css">
+		.chzn-container {
+			float: left;
+			margin-left: 4px;
+			margin-top: 2px;
+		}
+	</style>
+	#end
+
 	<script type="text/javascript">
 		
 		/* Proxy functions */
@@ -81,8 +94,9 @@
 								$("#repositorySelect").append("<option value='" + item.id + "' selected='selected'>" + item.name + "</option>");
 							else
 								$("#repositorySelect").append("<option value='" + item.id + "'>" + item.name + "</option>");
-						}	
+						}
 					});
+					$("#repositorySelect").trigger("liszt:updated");
 				}
 			});
 			
@@ -200,6 +214,14 @@
 	    		<option value="$repository.id" #if($repository.id == $repositoryId)selected="selected"#end>$repository.name</option>
 	    		#end
 	    	</select>
+	    	#if($!this.useFilterableRepositoryList != "false")
+	    	<script type="text/javascript">
+				if ($.fn.chosen)
+				{
+					$('#repositorySelect').chosen();
+				}
+	    	</script>
+	    	#end
 	    	<img src="css/images/v3/reload.png" onclick="refreshRepositoryList(); $('#treeIframe').get(0).contentWindow.reload();" style="display: block; float: left; width: 16px; height:16; margin-left: 4px; margin-top: 6px;" alt="reload"/>
 	    	<img src="css/images/v3/doubleBackArrows.png" onclick="minimizeToolColumn(); return false;" style="display: block; float: left; width: 16px; height:16; margin-left: 4px; margin-top: 8px;" alt="reload"/>
 	    	<img src="css/images/v3/update_img.gif" onclick="toggleToolColumn(); return false;" style="display: block; float: left; width: 16px; height:16; margin-left: 4px; margin-top: 8px;" alt="toggle"/>
