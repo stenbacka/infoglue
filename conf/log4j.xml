@@ -72,6 +72,17 @@
 		</filter>
 	</appender>
 
+	<appender name="INFOGLUE-COMPONENT" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="${catalina.base}/logs/infoglue-components.log"/>
+		<param name="Append" value="true"/>
+ 		<param name="MaxFileSize" value="10MB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<param name="Threshold" value="DEBUG"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{ISO8601} - %p%n[%t] [%c] [SiteNodeId: %X{siteNodeId}] [Principal: %X{principalName}]%n%nMessage: %m%n%X{timerValue}%n%n"/>
+		</layout>
+   	</appender>
+ 
 	<!-- Appender Chainsaw GUI Log viewer
 	<appender name="CHAINSAW" class="org.apache.log4j.net.SocketAppender">
 		<param name="remoteHost" value="localhost"/>
@@ -180,6 +191,11 @@
 	<category name="org.infoglue.debug-dummy">
 		<priority value="ERROR"/>
 		<appender-ref ref="INFOGLUE-DEBUG"/>
+	</category>
+
+	<category name="org.infoglue.components">
+		<priority value="WARN"/>
+		<appender-ref ref="INFOGLUE-COMPONENT"/>
 	</category>
 
 	<!-- Anyhing not caught by the above categories will be caught here -->

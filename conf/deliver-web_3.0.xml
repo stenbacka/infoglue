@@ -330,5 +330,9 @@
 			<taglib-uri>infoglue-workflow</taglib-uri>
 			<taglib-location>/WEB-INF/tld/infoglue-workflow.tld</taglib-location>
 		</taglib>
+		<taglib>
+			<taglib-uri>infoglue-log</taglib-uri>
+			<taglib-location>/WEB-INF/tld/infoglue-log.tld</taglib-location>
+		</taglib>
 	</jsp-config>
 </web-app>
