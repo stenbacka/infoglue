@@ -235,6 +235,7 @@
 				#editPropertyFieldCSS("ServerNode.property.componentRendererAction" "componentRendererAction" "$this.getPropertyValue('componentRendererAction')" "51" "$!serverNodeId" "$!cmsPH.componentRendererAction")
 				#editPropertyFieldCSS("ServerNode.property.editOnSiteUrl" "editOnSiteUrl" "$this.getPropertyValue('editOnSiteUrl')" "51" "$!serverNodeId" "$!cmsPH.editOnSiteUrl")
 				#editPropertyFieldCSS("ServerNode.property.webServicesBaseUrl" "webServicesBaseUrl" "$this.getPropertyValue('webServicesBaseUrl')" "51" "$!serverNodeId" "$!cmsPH.webServicesBaseUrl")
+				#editPropertyTextAreaCSS("ServerNode.property.externalSearchServiceConfigs" "externalSearchServiceConfigs" "$this.getDataPropertyValue('externalSearchServiceConfigs')" "40" "16" "righttextarea" "$!serverNodeId" "$!cmsPH.externalSearchServiceConfigs")
 			</div>
 		
 			<div class="inlineTabDiv" id="webSpecifics">

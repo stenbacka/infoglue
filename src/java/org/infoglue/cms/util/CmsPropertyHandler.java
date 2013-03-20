@@ -2518,4 +2518,9 @@ public class CmsPropertyHandler
 	{
 		return CmsPropertyHandler.isValidSetup;
 	}
+
+	public static String getExternalSearchServiceConfigs()
+	{
+		return getServerNodeProperty("externalSearchServiceConfigs", true, null);
+	}
 }
