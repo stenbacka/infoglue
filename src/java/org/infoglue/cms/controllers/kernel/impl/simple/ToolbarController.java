@@ -1752,11 +1752,22 @@ public class ToolbarController implements ToolbarProvider
 	{
 		List<ToolbarButton> buttons = new ArrayList<ToolbarButton>();
 
-		String siteNodeId = request.getParameter("siteNodeId");
+//		String siteNodeId = request.getParameter("siteNodeId");
+		String siteNodeIdString = request.getParameter("siteNodeId");
+		if(siteNodeIdString == null || siteNodeIdString.equals(""))
+			siteNodeIdString = (String)request.getAttribute("siteNodeId");
+
+		if(siteNodeIdString == null || siteNodeIdString.equals(""))
+		{
+			logger.error("No siteNodeId was sent in to getSiteNodeButtons so we cannot continue. Check why. Original url: " + request.getRequestURI() + "?" + request.getQueryString());
+			return buttons;
+		}
+
+		Integer siteNodeId = new Integer(siteNodeIdString);
 		//String repositoryId = request.getParameter("repositoryId");
-		SiteNodeVO siteNodeVO = SiteNodeController.getController().getSiteNodeVOWithId(new Integer(siteNodeId));
-		
-		SiteNodeVersionVO siteNodeVersionVO = SiteNodeVersionController.getController().getLatestActiveSiteNodeVersionVO(new Integer(siteNodeId));
+		SiteNodeVO siteNodeVO = SiteNodeController.getController().getSiteNodeVOWithId(siteNodeId);
+
+		SiteNodeVersionVO siteNodeVersionVO = SiteNodeVersionController.getController().getLatestActiveSiteNodeVersionVO(siteNodeId);
 
 		buttons.add(new ToolbarButton("createSiteNode",
 				  getLocalizedString(locale, "tool.structuretool.toolbarV3.createPageLabel"), 
@@ -1764,11 +1775,11 @@ public class ToolbarController implements ToolbarProvider
 				  "CreateSiteNode!inputV3.action?isBranch=true&repositoryId=" + siteNodeVO.getRepositoryId() + "&parentSiteNodeId=" + siteNodeId + "&returnAddress=ViewInlineOperationMessages.action&originalAddress=refreshParent",
 				  "",
 				  "create"));
-		
+
 		ToolbarButton copyPageButton = new ToolbarButton("",
 				  getLocalizedString(locale, "tool.structuretool.toolbarV3.copyPageLabel"), 
 				  getLocalizedString(locale, "tool.structuretool.toolbarV3.copyPageLabel"),
-				  "CopyMultipleSiteNodes!input.action?siteNodeId=" + new Integer(siteNodeId) + "&repositoryId=" + siteNodeVO.getRepositoryId() + "&returnAddress=ViewInlineOperationMessages.action&originalAddress=refreshParent",
+				  "CopyMultipleSiteNodes!input.action?siteNodeId=" + siteNodeId + "&repositoryId=" + siteNodeVO.getRepositoryId() + "&returnAddress=ViewInlineOperationMessages.action&originalAddress=refreshParent",
 				  "",
 				  "copy");
 		buttons.add(copyPageButton);
@@ -1787,25 +1798,39 @@ public class ToolbarController implements ToolbarProvider
 				  "MoveMultipleSiteNodes!input.action?repositoryId=" + siteNodeVO.getRepositoryId() + "&siteNodeId=" + siteNodeId + "&returnAddress=ViewInlineOperationMessages.action&originalAddress=refreshParent",
 				  "",
 				  "movePage");
-		
+
 		moveSiteNodeButton.getSubButtons().add(moveMultipleSiteNodeButton);
 
 		buttons.add(moveSiteNodeButton);
-				
-		//if(!hasPublishedVersion())
-		//{
-			buttons.add(new ToolbarButton("deleteSiteNode",
+
+		ToolbarButton deleteButton = new ToolbarButton("deleteSiteNode",
+				  getLocalizedString(locale, "tool.structuretool.toolbarV3.deletePageLabel"),
+				  getLocalizedString(locale, "tool.structuretool.toolbarV3.deletePageTitle"),
+				  "DeleteSiteNode!V3.action?siteNodeId=" + siteNodeId + "&repositoryId=" + siteNodeVO.getRepositoryId() + "&changeTypeId=4&returnAddress=ViewInlineOperationMessages.action&originalAddress=refreshParent",
+				  "",
+				  "",
+				  "delete",
+				  true,
+				  true,
+				  getLocalizedString(locale, "tool.structuretool.toolbarV3.deletePageLabel"),
+				  getLocalizedString(locale, "tool.structuretool.toolbarV3.deletePageConfirmationLabel", new String[]{siteNodeVO.getName()}),
+				  "inlineDiv");
+
+		if(SiteNodeController.getController().hasPublishedVersion(siteNodeId))
+		{
+			deleteButton = new ToolbarButton("",
 					  getLocalizedString(locale, "tool.structuretool.toolbarV3.deletePageLabel"), 
 					  getLocalizedString(locale, "tool.structuretool.toolbarV3.deletePageTitle"),
-					  "DeleteSiteNode!V3.action?siteNodeId=" + siteNodeId + "&repositoryId=" + siteNodeVO.getRepositoryId() + "&changeTypeId=4&returnAddress=ViewInlineOperationMessages.action&originalAddress=refreshParent",
+					  "javascript:alert('" + formatter.escapeForJavascripts(getLocalizedErrorMessage(locale, "3400")) + "');",
 					  "",
-					  "",
-					  "delete",
-					  true,
-					  true,
-					  getLocalizedString(locale, "tool.structuretool.toolbarV3.deletePageLabel"), 
-					  getLocalizedString(locale, "tool.structuretool.toolbarV3.deletePageConfirmationLabel", new String[]{siteNodeVO.getName()}),
-					  "inlineDiv"));
+					  "delete");
+		}
+
+		buttons.add(deleteButton);
+
+		//if(!hasPublishedVersion())
+		//{
+//			buttons.add(deleteButton);
 			//}
 		/*
 		else
@@ -1832,20 +1857,20 @@ public class ToolbarController implements ToolbarProvider
 			"",
 			"properties");
 
-		ToolbarButton pageDetailButton = StructureToolbarController.getPageDetailButtons(siteNodeVO.getRepositoryId(), new Integer(siteNodeId), locale, principal);
+		ToolbarButton pageDetailButton = StructureToolbarController.getPageDetailButtons(siteNodeVO.getRepositoryId(), siteNodeId, locale, principal);
 		pageMetaDataButton.getSubButtons().add(pageDetailButton);
-		ToolbarButton pageDetailSimpleButton = StructureToolbarController.getPageDetailSimpleButtons(siteNodeVO.getRepositoryId(), new Integer(siteNodeId), locale, principal);
+		ToolbarButton pageDetailSimpleButton = StructureToolbarController.getPageDetailSimpleButtons(siteNodeVO.getRepositoryId(), siteNodeId, locale, principal);
 		pageMetaDataButton.getSubButtons().add(pageDetailSimpleButton);
 		buttons.add(pageMetaDataButton);
 		
-		buttons.add(StructureToolbarController.getPreviewButtons(siteNodeVO.getRepositoryId(), new Integer(siteNodeId), locale));
+		buttons.add(StructureToolbarController.getPreviewButtons(siteNodeVO.getRepositoryId(), siteNodeId, locale));
 
-		ToolbarButton publishButton = StructureToolbarController.getPublishCurrentNodeButton(siteNodeVO.getRepositoryId(), new Integer(siteNodeId), locale);
-		ToolbarButton publishStructureButton = StructureToolbarController.getPublishButtons(siteNodeVO.getRepositoryId(), new Integer(siteNodeId), locale);
+		ToolbarButton publishButton = StructureToolbarController.getPublishCurrentNodeButton(siteNodeVO.getRepositoryId(), siteNodeId, locale);
+		ToolbarButton publishStructureButton = StructureToolbarController.getPublishButtons(siteNodeVO.getRepositoryId(), siteNodeId, locale);
 		publishButton.getSubButtons().add(publishStructureButton);
 		buttons.add(publishButton);
 		
-		ToolbarButton unpublishButton = StructureToolbarController.getUnpublishButton(siteNodeVO.getRepositoryId(), new Integer(siteNodeId), locale, true);
+		ToolbarButton unpublishButton = StructureToolbarController.getUnpublishButton(siteNodeVO.getRepositoryId(), siteNodeId, locale, true);
 		//ToolbarButton unpublishStructureButton = StructureToolbarController.getUnpublishButton(siteNodeVO.getRepositoryId(), new Integer(siteNodeId), locale, true);
 
 		publishButton.getSubButtons().add(unpublishButton);
