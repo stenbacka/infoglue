@@ -1889,4 +1889,10 @@
 		<view name="error">/cms/common/error.vm</view>
 	</action>
 
+	<!--  Performance test view -->
+	<action name="org.infoglue.cms.applications.managementtool.actions.PerformanceTestAction" alias="PerformanceTest">
+		<view name="success">/cms/managementtool/viewPerformanceTest.vm</view>
+		<view name="error">/cms/common/error.vm</view>
+	</action>
+
 </actions>
