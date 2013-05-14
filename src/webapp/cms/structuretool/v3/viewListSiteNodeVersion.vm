@@ -131,6 +131,12 @@
 			}
 		}
 
+		function diffSiteNodeVersion(siteNodeId)
+		{
+			var url = "ViewSiteNodeVersionHistoryAction!compare.action?siteNodeId=" + siteNodeId + "&returnUrl=" + encodeURIComponent(window.location.href);
+			window.location.href = url;
+		}
+
 		$(document).ready(function(){
 			setTimeout("resizeInlineTabDivs()", 100);
 		});
@@ -211,7 +217,7 @@
 	#set($typeHeader = $ui.getString("tool.common.publishing.typeLabel"))
 	#set($changedHeader = $ui.getString("tool.common.publishing.changedLabel"))
 	#set($modifyerHeader = $ui.getString("tool.common.publishing.modifyerLabel"))
-	#lvHeadV3(["$nameHeader", "$typeHeader", "$changedHeader", "$modifyerHeader"] "Publish items" "" "" "", true)
+	#lvHeadV3(["$nameHeader", "$typeHeader", "$changedHeader", "$modifyerHeader", ""] "Publish items" "" "" "", true)
 	
 	#hiddenField("siteNodeId" $siteNodeId)
 	#hiddenField("languageId" $languageId)
@@ -234,7 +240,7 @@
 			#set($displayName = "$snv.versionModifier")
 		#end
 				
-		#set( $row = ["<img src='css/images/v3/pageIcon.gif'> $this.getSiteNodePath($snv.siteNodeId) ($snv.getId())", $ui.getString("tool.common.publishing.typePageLabel"), "$formatter.formatDate($snv.modifiedDateTime, 'yyyy-MM-dd')", "$displayName"] )
+		#set( $row = ["<img src='css/images/v3/pageIcon.gif'> $this.getSiteNodePath($snv.siteNodeId) ($snv.getId())", $ui.getString("tool.common.publishing.typePageLabel"), "$formatter.formatDate($snv.modifiedDateTime, 'yyyy-MM-dd')", "$displayName", "<a href='javascript:void(0)' onclick='diffSiteNodeVersion($snv.siteNodeId);return false;'>Diff!</a>"] )
 		#set($cnt = $cnt + 1)
 		
 		#lvAddRowV3($row $cnt $snv.id false)

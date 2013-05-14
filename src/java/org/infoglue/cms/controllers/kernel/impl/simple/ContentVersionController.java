@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -46,6 +47,7 @@ import org.apache.log4j.Logger;
 import org.apache.xerces.parsers.DOMParser;
 import org.exolab.castor.jdo.Database;
 import org.exolab.castor.jdo.OQLQuery;
+import org.exolab.castor.jdo.PersistenceException;
 import org.exolab.castor.jdo.QueryResults;
 import org.infoglue.cms.applications.common.VisualFormatter;
 import org.infoglue.cms.applications.databeans.OptimizationBeanList;
@@ -454,8 +456,54 @@ public class ContentVersionController extends BaseController
 		
 		return resultList;
 	}
-   
+
+	public ContentVersionVO getLatestActiveContentVersionVOWithState(Integer contentId, Integer stateId) throws SystemException, Bug
+    {
+    	Database db = CastorDatabaseService.getDatabase();
+    	ContentVersionVO resultList = null;
+
+        beginTransaction(db);
+
+        try
+        {
+        	ContentVO contentVO = ContentController.getContentController().getContentVOWithId(contentId, db);
+        	LanguageVO languageVO = LanguageController.getController().getMasterLanguage(contentVO.getRepositoryId(), db);
+        	resultList = getLatestActiveContentVersionVOWithState(contentId, stateId, languageVO.getLanguageId(), db);
+
+            rollbackTransaction(db);
+        }
+        catch(Exception e)
+        {
+            logger.error("An error occurred so we should not complete the transaction:" + e);
+            logger.warn("An error occurred so we should not complete the transaction:" + e, e);
+            rollbackTransaction(db);
+            throw new SystemException(e.getMessage());
+        }
+    	
+		return resultList;
+    }
 	
+	public ContentVersionVO getLatestActiveContentVersionVOWithState(Integer contentId, Integer stateId, Integer languageId, Database db) throws Exception
+	{
+		ContentVersionVO contentVersionVO = null;
+
+		OQLQuery oql = db.getOQLQuery( "SELECT cv FROM org.infoglue.cms.entities.content.impl.simple.SmallContentVersionImpl cv WHERE cv.contentId = $1 AND cv.languageId = $2 AND cv.stateId >= $3 AND cv.isActive = $4 ORDER BY cv.contentVersionId desc");
+    	oql.bind(contentId);
+    	oql.bind(languageId);
+    	oql.bind(stateId);
+    	oql.bind(true);
+
+    	QueryResults results = oql.execute(Database.ReadOnly);
+
+		if (results.hasMore()) 
+        {
+			ContentVersion contentVersion = (ContentVersion)results.next();
+        	contentVersionVO = contentVersion.getValueObject();
+        }
+
+		return contentVersionVO;
+	}
+
 	/**
 	 * This method returns the latest contentVersion there is for the given content if it is active and is the latest made.
 	 */

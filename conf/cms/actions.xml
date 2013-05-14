@@ -1892,4 +1892,11 @@
 		<view name="error">/cms/common/error.vm</view>
 	</action>
 
+	<!--  InfoGlue version information -->
+	<action name="org.infoglue.cms.applications.structuretool.actions.ViewSiteNodeVersionHistoryAction" alias="ViewSiteNodeVersionHistoryAction">
+		<view name="success">/cms/common/viewVersionInfo.vm</view>
+		<view name="compare">/cms/structuretool/viewCompareSiteNodeVersions.vm</view>
+		<view name="error">/cms/common/error.vm</view>
+	</action>
+
 </actions>

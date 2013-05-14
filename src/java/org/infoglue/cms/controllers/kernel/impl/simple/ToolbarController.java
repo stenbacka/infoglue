@@ -1976,6 +1976,14 @@ public class ToolbarController implements ToolbarProvider
 		buttons.addAll(getCommonFooterSaveOrSaveAndExitOrCancelButton(toolbarKey, principal, locale, request, disableCloseButton, "UpdateSiteNode!saveAndExitV3Inline.action"));
 		
 		buttons.add(getCompareButton(toolbarKey, principal, locale, request, disableCloseButton));
+		buttons.add(new ToolbarButton("",
+				  getLocalizedString(locale, "tool.common.addButton.label"), 
+				  getLocalizedString(locale, "tool.common.addButton.label"),
+				  "compareSiteNodeVersions();",
+				  "css/images/v3/addIcon.png",
+				  "left",
+				  "add",
+				  true));
 
 		return buttons;
 	}
@@ -1984,7 +1992,15 @@ public class ToolbarController implements ToolbarProvider
 	{
 		List<ToolbarButton> buttons = new ArrayList<ToolbarButton>();
 
-		buttons.add(getCompareButton(toolbarKey, principal, locale, request, disableCloseButton));
+//		buttons.add(getCompareButton(toolbarKey, principal, locale, request, disableCloseButton));
+		buttons.add(new ToolbarButton("",
+				  getLocalizedString(locale, "tool.common.addButton.label"), 
+				  getLocalizedString(locale, "tool.common.addButton.label"),
+				  "goBack();",
+				  "",
+				  "left",
+				  "close",
+				  true));
 				
 		return buttons;
 	}

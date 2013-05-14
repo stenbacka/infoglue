@@ -1,0 +1,65 @@
+#macro(drawDiffTree $df)
+	#if( $df.state.name() == "NEW" )
+		#set( $stateClass = "new" )
+	#elseif( $df.state.name() == "CURRENT" )
+		#set( $stateClass = "current" )
+	#else
+		#set( $stateClass = "same" )
+	#end
+	<li class="$stateClass">
+		<span class="component">$df.nodeName ($df.state)</span>
+		<ul>
+			#foreach( $property in $df.properties )
+				#if( $property.state.name() != "SAME" )
+				<li>$property.propertyName ($property.state) #if( $property.state.name() == "CHANGED" )[ $property.baseValue --> $property.newValue ]#end</li>
+				#end
+			#end
+		</ul>
+		<ul>
+			#foreach( $child in $df.children )
+				#drawDiffTree( $child )
+			#end
+		</ul>
+	</li>
+#end
+
+#define( $headerMarkup )
+<script type="text/javascript">
+<!--
+function goBack()
+{
+	window.history.back();
+}
+-->
+</script>
+#end
+
+#beginLightCommonToolV3Impl("tool.structuretool.siteNodeHistory.header" "$!siteNodeId" "" false true false $headerMarkup true "")
+
+#lightMenuToolbar("" $buttons $rightButtons) 
+
+<div id="igEditArea" class="igScrollArea" onfocus="this.blur();">
+
+<h3>SiteNode diff</h3>
+
+<style type="text/css">
+#diffTree * {list-style-type: none;}
+#diffTree ul {padding-left:20px;margin:0}
+#diffTree li {padding-bottom:10px;padding-top:4px;}
+#diffTree li.new {color:green}
+#diffTree li.same {color:gray}
+#diffTree li.current {color:red}
+.component {font-size:16px;}
+</style>
+
+<ul id="diffTree">
+	#drawDiffTree( $diffTree )
+</ul>
+
+</div>
+
+#if(!$inline)
+	#lightFooterToolbar($footerButtons)
+#end
+
+#endCommonToolV3()
