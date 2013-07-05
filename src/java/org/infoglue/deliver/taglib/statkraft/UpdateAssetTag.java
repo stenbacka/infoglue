@@ -55,7 +55,8 @@ public class UpdateAssetTag extends ComponentLogicTag
 			sb.append("{");
 			sb.append("\"assetName\":").append("\"").append(asset.getNewSource()).append("\",");
 			sb.append("\"assetDescription\":").append("\"").append(asset.getNewDescription()).append("\",");
-			sb.append("\"assetPath\":").append("\"").append(asset.getNewPath()).append("\"");
+			sb.append("\"assetPath\":").append("\"").append(asset.getNewPath()).append("\",");
+			sb.append("\"modified\":").append("\"").append(asset.getIsModified()).append("\"");
 			sb.append("}");
 			produceResult(sb.toString());
 		}

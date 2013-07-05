@@ -454,6 +454,10 @@ public class StatkraftAssetController extends BaseController
 			if (!ArrayUtils.contains(types, type))
 			{
 				types = (String[]) ArrayUtils.add(types, type);
+				if (type.equalsIgnoreCase("image"))
+				{
+					this.supportsDescription = true;
+				}
 				assetElement.addAttribute(TYPES, StringUtils.join(types, ","));
 			}
 		}

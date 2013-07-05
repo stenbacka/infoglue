@@ -337,4 +337,8 @@
 		<taglib-uri>infoglue-workflow</taglib-uri>
 		<taglib-location>/WEB-INF/tld/infoglue-workflow.tld</taglib-location>
 	</taglib>
+	<taglib>
+		<taglib-uri>statkraft-asset</taglib-uri>
+		<taglib-location>/WEB-INF/tld/statkraft-asset.tld</taglib-location>
+	</taglib>
 </web-app>
