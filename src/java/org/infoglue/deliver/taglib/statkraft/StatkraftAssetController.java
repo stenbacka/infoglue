@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -84,12 +85,17 @@ public class StatkraftAssetController extends BaseController
 
 	private Document getDocument(String path) throws DocumentException
 	{
-		SAXReader reader = new SAXReader();
 		File file = new File(path);
 		if (!file.isFile())
 		{
 			throw new IllegalArgumentException("The given path was not a valid file. Path: " + path);
 		}
+		return getDocument(file);
+	}
+	
+	private Document getDocument(File file) throws DocumentException
+	{
+		SAXReader reader = new SAXReader();
 		Document document = reader.read(file);
 		return document;
 	}
@@ -128,9 +134,19 @@ public class StatkraftAssetController extends BaseController
 		return choice;
 	}
 	
-	private void initFromOutput(File file)
+	@SuppressWarnings("unchecked")
+	private void initFromOutput(File file) throws DocumentException
 	{
-		
+		Document doc = getDocument(file);
+		this.assetDocument = doc;
+		Element assetsElement = assetDocument.getRootElement();
+		List<Element> assetList = assetsElement.elements("asset");
+		assetMap = new HashMap<String, Asset>();
+		for (Element assetElement : assetList)
+		{
+			Asset asset = getAssetFromAssetElement(assetElement);
+			assetMap.put(asset.getAssetIdentifier(), asset);
+		}
 	}
 
 	private void initAssetDomObject() throws DocumentException
@@ -138,16 +154,18 @@ public class StatkraftAssetController extends BaseController
 		File file = getLatestOutputFile();
 		if (file != null)
 		{
+			System.out.println("Initing from output file. File: " + file.getAbsolutePath());
 			initFromOutput(file);
 		}
 		else
 		{
+			System.out.println("Initing from input file. File: " + assetXmlPath);
 			Document doc = getDocument(assetXmlPath);
 			this.assetDocument = DocumentHelper.createDocument();
 			Element assetsElement = assetDocument.addElement("assets");
 			Element inputRootElement = doc.getRootElement();
 			setupLinkCleaner(inputRootElement);
-	
+
 			@SuppressWarnings("unchecked")
 			List<Element> assets = doc.selectNodes("//img | //href");
 			Map<String, Asset> assetCache = new HashMap<String, Asset>();
@@ -321,6 +339,22 @@ public class StatkraftAssetController extends BaseController
 		asset.addPageReference(path, page);
 	}
 
+	public Asset getAssetFromAssetElement(Element assetElement)
+	{
+		Asset asset = new Asset();
+		asset.assetElement = assetElement;
+		String src = assetElement.attributeValue("src");
+		if (src != null)
+		{
+			asset.supportsDescription = true;
+		}
+		else
+		{
+			asset.supportsDescription = false;
+		}
+		return asset;
+	}
+
 	public class Asset
 	{
 		public static final String SRC = "source";
@@ -333,7 +367,7 @@ public class StatkraftAssetController extends BaseController
 		public static final String TYPES = "types";
 
 		private Element assetElement;
-		private Map<String, Element> pages;
+		private Set<String> pages;
 		private boolean supportsDescription;
 
 		public String getPreviewURL()
@@ -435,11 +469,18 @@ public class StatkraftAssetController extends BaseController
 			return supportsDescription;
 		}
 
+		
+
+		private Asset()
+		{
+			this.pages = new HashSet<String>();
+		}
+
 		public Asset(Element assetElement)
 		{
 			// It is very important to set the assetElement property first since its value will be used in construction
 			this.assetElement = assetElement;
-			this.pages = new HashMap<String, Element>();
+			this.pages = new HashSet<String>();
 			
 			normalizeElement();
 			setNewSource(getSource());
@@ -521,12 +562,24 @@ public class StatkraftAssetController extends BaseController
 			{
 				path = "http://" + path;
 			}
-			pages.put(path, page);
+			if (!pages.contains(path))
+			{
+				Element pageElement = assetElement.addElement("page");
+				pageElement.addAttribute("path", path);
+				pages.add(path);
+			}
 		}
 
+		@SuppressWarnings("unchecked")
 		public Set<String> getPageNames()
 		{
-			return pages.keySet();
+			Set<String> result = new HashSet<String>();
+			List<Element> children = assetElement.elements("page");
+			for (Element child : children)
+			{
+				result.add(child.attributeValue("path"));
+			}
+			return result;
 		}
 
 		public boolean getIsModified()
