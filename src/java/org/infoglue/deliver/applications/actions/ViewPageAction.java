@@ -25,6 +25,7 @@ package org.infoglue.deliver.applications.actions;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.URLEncoder;
 import java.security.Principal;
@@ -284,8 +285,23 @@ public class ViewPageAction extends InfoGlueAbstractAction
 				
 				if(CmsPropertyHandler.getAllowInternalCallsBasedOnIP())
 				{
-					if(getRequest().getRemoteAddr().equals("127.0.0.1") || getRequest().getRemoteAddr().equals("192.168.0.1") || getRequest().getRemoteAddr().equals("0:0:0:0:0:0:0:1%0"))
-						protectDeliver = false;
+					String forwardedFor = getRequest().getHeader("X-Forwarded-For");
+					if (logger.isInfoEnabled())
+					{
+						logger.info("X-Forwarded-For:" + forwardedFor + " (Request-query: " + getRequest().getQueryString() + ")");
+					}
+					if (forwardedFor == null)
+					{
+						InetAddress remoteAddress = InetAddress.getByName(getRequest().getRemoteAddr());
+						if (logger.isInfoEnabled())
+						{
+							logger.info("Is-loopback:" + remoteAddress.isLoopbackAddress() + " (Request-query: " + getRequest().getQueryString() + ")");
+						}
+						if (remoteAddress.isLoopbackAddress())
+						{
+							protectDeliver = false;
+						}
+					}
 				}
 				
 				boolean isAnonymousAuthorized = true;
