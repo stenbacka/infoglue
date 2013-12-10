@@ -23,21 +23,30 @@
 
 package org.infoglue.deliver.taglib.statkraft;
 
+import java.util.Collection;
+
 import javax.servlet.jsp.JspException;
 
 import org.infoglue.deliver.taglib.component.ComponentLogicTag;
+import org.infoglue.deliver.taglib.statkraft.StatkraftAssetController.Asset;
 
 public class ViewAssetsTag extends ComponentLogicTag
 {
-	private static final long serialVersionUID = 3546080250652931383L;
+	private static final long serialVersionUID = -7557457576052970148L;
 
 	private String configPath;
+	private int startIndex;
+	private int endIndex;
+	private String assetCount;
 
 	public int doEndTag() throws JspException
 	{
 		if (configPath != null && !configPath.equals(""))
 		{
-			setResultAttribute(StatkraftAssetController.getInstance(configPath).getAssets());
+			Integer[] assetCountVar = new Integer[1];
+			Collection<Asset> assets = StatkraftAssetController.getInstance(configPath).getAssets(startIndex, endIndex, assetCountVar);
+			pageContext.setAttribute(assetCount, assetCountVar[0]);
+			setResultAttribute(assets);
 		}
 		return EVAL_PAGE;
 	}
@@ -45,5 +54,20 @@ public class ViewAssetsTag extends ComponentLogicTag
 	public void setConfigPath(String configPath) throws JspException
 	{
 		this.configPath = evaluateString("viewAssets", "configPath", configPath);
+	}
+
+	public void setAssetCount(String assetCount) throws JspException
+	{
+		this.assetCount = assetCount;
+	}
+
+	public void setStartIndex(String startIndex) throws JspException
+	{
+		this.startIndex = evaluateInteger("viewAssets", "startIndex", startIndex);
+	}
+
+	public void setEndIndex(String endIndex) throws JspException
+	{
+		this.endIndex = evaluateInteger("viewAssets", "endIndex", endIndex);
 	}
 }

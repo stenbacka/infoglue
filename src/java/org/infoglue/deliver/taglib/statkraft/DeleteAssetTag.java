@@ -28,14 +28,12 @@ import javax.servlet.jsp.JspException;
 import org.infoglue.deliver.taglib.component.ComponentLogicTag;
 import org.infoglue.deliver.taglib.statkraft.StatkraftAssetController.Asset;
 
-public class UpdateAssetTag extends ComponentLogicTag
+public class DeleteAssetTag extends ComponentLogicTag
 {
 	private static final long serialVersionUID = 3546080250652931383L;
-	
+
 	private String configPath;
 	private String assetId;
-	private String assetDescription;
-	private String assetPath;
 
 	@SuppressWarnings("unchecked")
 	public int doEndTag() throws JspException
@@ -48,22 +46,17 @@ public class UpdateAssetTag extends ComponentLogicTag
 		}
 		else
 		{
-			Asset asset = controller.updateAsset(assetId, assetDescription, assetPath);
+			boolean success = controller.deleteAsset(assetId);
 			getController().getDeliveryContext().getHttpHeaders().put("Content-Type", "application/json");
 			StringBuilder sb = new StringBuilder();
 			sb.append("{");
-			sb.append("\"assetName\":").append("\"").append(asset.getNewSource()).append("\",");
-			sb.append("\"assetDescription\":").append("\"").append(asset.getNewDescription()).append("\",");
-			sb.append("\"assetPath\":").append("\"").append(asset.getNewPath()).append("\",");
-			sb.append("\"modified\":").append("\"").append(asset.getIsModified()).append("\"");
+			sb.append("\"success\":").append("\"").append("" + success).append("\"");
 			sb.append("}");
 			produceResult(sb.toString());
 		}
 		configPath = null;
 		assetId = null;
-		assetDescription = null;
-		assetPath = null;
-		
+
 		return EVAL_PAGE;
 	}
 
@@ -74,13 +67,5 @@ public class UpdateAssetTag extends ComponentLogicTag
 	public void setAssetId(String assetId) throws JspException
 	{
 		this.assetId = evaluateString("updateAsset", "assetId", assetId);
-	}
-	public void setAssetDescription(String assetDescription) throws JspException
-	{
-		this.assetDescription = evaluateString("updateAsset", "assetDescription", assetDescription);
-	}
-	public void setAssetPath(String assetPath) throws JspException
-	{
-		this.assetPath = evaluateString("updateAsset", "assetPath", assetPath);
 	}
 }

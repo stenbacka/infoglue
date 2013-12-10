@@ -8,7 +8,10 @@ import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +33,7 @@ import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.infoglue.cms.controllers.kernel.impl.simple.BaseController;
 import org.infoglue.cms.entities.kernel.BaseEntityVO;
+import org.infoglue.cms.util.CmsPropertyHandler;
 
 /**
  * @author Erik Stenbäcka
@@ -314,9 +318,39 @@ public class StatkraftAssetController extends BaseController
 		return asset;
 	}
 
-	public Collection<Asset> getAssets()
+	public boolean deleteAsset(String identifier)
 	{
-		return assetMap.values();
+		Asset asset = assetMap.get(identifier);
+		if (asset == null)
+		{
+			return false;
+		}
+		asset.delete();
+		assetMap.remove(asset);
+		this.modified = true;
+		return true;
+	}
+
+	public Collection<Asset> getAssets(int startIndex, int endIndex, Integer[] assetCount)
+	{
+		List<Asset> result = new ArrayList<StatkraftAssetController.Asset>();
+		result.addAll(assetMap.values());
+		Collections.sort(result, new Comparator<Asset>()
+		{
+			@Override
+			public int compare(Asset a1, Asset a2)
+			{
+				String value1 = a1.getNewSource();
+				String value2 = a2.getNewSource();
+				value1 = value1 == null ? "" : value1;
+				value2 = value2 == null ? "" : value2;
+				return value1.replace("images/", "").compareTo(value2.replace("images/", ""));
+			}
+		});
+		assetCount[0] = result.size();
+		result = endIndex == -1 ? result.subList(startIndex, result.size()) : result.subList(startIndex, endIndex);
+
+		return result;
 	}
 
 	@Override
@@ -350,7 +384,7 @@ public class StatkraftAssetController extends BaseController
 		}
 		else
 		{
-			asset.supportsDescription = false;
+			asset.supportsDescription = true;
 		}
 		return asset;
 	}
@@ -473,8 +507,6 @@ public class StatkraftAssetController extends BaseController
 			return supportsDescription;
 		}
 
-		
-
 		private Asset()
 		{
 			this.pages = new HashSet<String>();
@@ -513,7 +545,7 @@ public class StatkraftAssetController extends BaseController
 			}
 			else
 			{
-				this.supportsDescription = false;
+				this.supportsDescription = true;
 				String href = this.assetElement.attributeValue("href");
 				if (href != null)
 				{
@@ -618,6 +650,16 @@ public class StatkraftAssetController extends BaseController
 			return assetElement;
 		}
 
+		public boolean delete()
+		{
+			Boolean success = deleteFileOnDisk();
+			if (success == null || success.booleanValue())
+			{
+				assetElement.detach();
+			}
+			return success == null || success.booleanValue();
+		}
+
 		public void update(String description, String path)
 		{
 			String name = description.replaceAll("\\W+", "-").toLowerCase();
@@ -626,6 +668,23 @@ public class StatkraftAssetController extends BaseController
 			setNewDescription(description);
 			setNewPath(path, name);
 			setIsModified();
+		}
+
+		private Boolean deleteFileOnDisk()
+		{
+			File filePath = new File(CmsPropertyHandler.getContextDiskPath());
+			filePath = new File(filePath, "..");
+			filePath = new File(filePath, assetBasePath);
+			filePath = new File(filePath, getSource());
+			if (!filePath.exists())
+			{
+				System.out.println("No file found at: " + filePath.getAbsolutePath());
+				return null;
+			}
+			else
+			{
+				return filePath.delete();
+			}
 		}
 	}
 }
