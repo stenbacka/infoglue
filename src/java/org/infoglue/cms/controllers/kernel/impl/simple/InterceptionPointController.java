@@ -163,6 +163,8 @@ public class InterceptionPointController extends BaseController
 		
 		systemInterceptionPoints.put("Common.LightContentEditor", new InterceptionPointVO("Common", "Common.LightContentEditor", "Gives a user access to some special content screens", false));
 
+		systemInterceptionPoints.put("Common.ManageProcessBeans", new InterceptionPointVO("Common", "Common.ManageProcessBeans", "Gives a user access to manage (other peoples) process beans", false));
+
 	    systemInterceptionPoints.put("ManagementToolMenu.Repositories", new InterceptionPointVO("ManagementToolMenu", "ManagementToolMenu.Repositories", "Intercepts access to the menu item 'Repositories' in management tool", false));
 	    systemInterceptionPoints.put("ManagementToolMenu.SystemUsers", new InterceptionPointVO("ManagementToolMenu", "ManagementToolMenu.SystemUsers", "Intercepts access to the menu item 'SystemUsers' in management tool", false));
 	    systemInterceptionPoints.put("ManagementToolMenu.Roles", new InterceptionPointVO("ManagementToolMenu", "ManagementToolMenu.Roles", "Intercepts access to the menu item 'Roles' in management tool", false));

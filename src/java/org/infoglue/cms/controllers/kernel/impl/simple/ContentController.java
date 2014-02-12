@@ -2956,7 +2956,7 @@ public class ContentController extends BaseController
 		if (resultList.size() % 10 == 0)
 		{
 			if(resultList.size() > 10)
-				processBean.updateLastDescription("Found " + resultList.size() + " so far...");
+				processBean.updateCurrentEvent("Found " + resultList.size() + " so far...");
 			else
 				processBean.updateProcess("Found " + resultList.size() + " so far...");
 		}

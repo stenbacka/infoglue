@@ -76,16 +76,6 @@
 			margin-bottom: 0;
 		}
 
-		.activate::before {
-			content: " ";
-			background: transparent url("css/images/workinganim.gif") no-repeat center center;
-			width: 12px;
-			height: 12px;
-			display: block;
-			background-size: 10px 10px;
-			margin: 1px 0 0;
-		}
-
 		.template {display: none;}
 	</style>
 </head>
