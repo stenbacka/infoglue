@@ -1,68 +1,80 @@
 package org.infoglue.cms.controllers.kernel.impl.simple;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.*;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import mockit.Mocked;
-import mockit.NonStrictExpectations;
-import mockit.Verifications;
-
 import org.infoglue.cms.entities.content.Content;
 import org.infoglue.cms.entities.content.ContentVO;
-import org.infoglue.cms.entities.content.impl.simple.ContentImpl;
-import org.infoglue.cms.util.CmsPropertyHandler;
+import org.infoglue.cms.entities.content.impl.simple.SmallContentImpl;
 import org.infoglue.deliver.util.CacheController;
-import org.infoglue.test.MockDatabase;
+import org.infoglue.test.InfoglueControllerTestCase;
+import org.infoglue.test.InfoglueMocks;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
-public class ContentControllerTest
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({CastorDatabaseService.class})
+public class ContentControllerTest extends InfoglueControllerTestCase
 {
-	@Mocked final CmsPropertyHandler cph = null;
-	
 	@Test
-	public void testGetContentVOWithId(@Mocked final CacheController cc) throws Exception
+	public void testGetContentVOWithId_FromCache() throws Throwable
+	{
+		final String cacheName = "contentCache";
+		final Integer contentId = 159;
+		final ContentVO cVO = mock(ContentVO.class);
+		when(cVO.getContentId()).thenReturn(contentId);
+
+		TestCaseSettings testCaseSettings = new TestCaseSettings();
+		testCaseSettings.setEntityContaniner(new EntityContainer(null, null));
+		testCaseSettings.addCacheEntity(cacheName, "" + contentId, cVO);
+
+		executeEntityTestcase(testCaseSettings, new TestCase()
+		{
+			@Override
+			public void execute() throws Exception
+			{
+				ContentVO result = ContentController.getContentController().getContentVOWithId(contentId);
+
+				assertTrue("Got the wrong contentId back from contentVOWithId", cVO == result);
+				PowerMockito.verifyStatic();
+				CacheController.getCachedObjectFromAdvancedCache(eq(cacheName), eq("" + contentId));
+			}
+		});
+	}
+
+	@Test
+	public void testGetContentVOWithId() throws Throwable
 	{
 		final Integer contentId = 123;
-		final Integer contentId2 = 456;
-		Content c1 = new ContentImpl();
-		final ContentVO c1VO = new ContentVO();
-		final ContentVO c2VO = new ContentVO();
-		c1VO.setContentId(contentId);
-		c1.setValueObject(c1VO);
-		c2VO.setContentId(contentId2);
-		Map<Object, Content> contents = new HashMap<Object, Content>();
-		contents.put(c1.getContentId(), c1);
-		final Map<String, String> valueMap = new HashMap<String, String>();
-		valueMap.put("defaultNumberOfYearsBeforeExpire", "50");
-		MockDatabase.initMockDatabase(contents);
+		final Content c = InfoglueMocks.mockContent(SmallContentImpl.class, contentId);
 
-		new NonStrictExpectations()
-		{{
-			CmsPropertyHandler.initializeProperties();
-			CmsPropertyHandler.getServerNodeProperty(anyString, anyString, anyBoolean, anyString, anyBoolean); result = new mockit.Delegate<String>() {
-				String getServerNodeProperty(String prefix, String key, boolean inherit, String defaultValue, boolean skipCaches)
-				{
-					System.out.println("Gets here");
-					return valueMap.get((prefix == null ? "" : prefix) + key);
-				}
-			};
+		Map<Integer, Content> contents = new HashMap<Integer, Content>();
+		contents.put(contentId, c);
+		EntityContainer entities =  new EntityContainer(contents, null);
 
-			CacheController.getCachedObjectFromAdvancedCache("contentCache", "" + contentId2); result = c2VO;
-		}};
-		
-		ContentController.getContentController().getContentVOWithId(contentId);
-		ContentVO result2 = ContentController.getContentController().getContentVOWithId(contentId2);
-		
-		new Verifications()
+		TestCaseSettings testCaseSettings = new TestCaseSettings();
+		testCaseSettings.setEntityContaniner(entities);
+		testCaseSettings.setVerifyReadOnly(true);
+
+		executeEntityTestcase(testCaseSettings, new TestCase()
 		{
+			@Override
+			public void execute() throws Exception
 			{
-				CacheController.cacheObjectInAdvancedCache("contentCache", "123", (ContentVO)any, (String[])any, true);// times = 1;
-				CacheController.cacheObjectInAdvancedCache("contentCache", "456", (ContentVO)any, (String[])any, true); times = 0;
-			}
-		};
+				ContentVO result = ContentController.getContentController().getContentVOWithId(contentId);
 
-		assertEquals("", result2.getContentId(), contentId2);
+				assertTrue("Got the wrong contentId back from contentVOWithId", c.getVO() == result);
+				PowerMockito.verifyStatic();
+				CacheController.cacheObjectInAdvancedCache(eq("contentCache"), anyString(), eq(c.getVO()), (String[])any(), anyBoolean());
+			}
+		});
 	}
 }
