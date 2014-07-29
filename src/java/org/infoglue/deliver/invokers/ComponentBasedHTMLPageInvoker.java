@@ -224,13 +224,12 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		
 		InfoGlueComponent baseComponent = null;
 		
-   		if(componentXML != null && componentXML.length() != 0)
+		if(componentXML != null && componentXML.length() != 0)
 		{
-   			Timer t = new Timer();
-			
-   			List unsortedPageComponents = new ArrayList();
-			
-   			
+			//Timer t = new Timer();
+
+			List<InfoGlueComponent> unsortedPageComponents = new ArrayList<InfoGlueComponent>();
+
    			try
    			{
 	   			//DOM4J
@@ -247,7 +246,7 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		        XmlDocument doc = builder.parseReader(new StringReader( componentXML ) );
 				//RequestAnalyser.getRequestAnalyser().registerComponentStatistics("document with XPP3", t.getElapsedTime());
 	
-				List pageComponents = getPageComponentsWithXPP3(getDatabase(), componentXML, doc.getDocumentElement(), "base", this.getTemplateController(), null, unsortedPageComponents);
+				List<InfoGlueComponent> pageComponents = getPageComponentsWithXPP3(getDatabase(), componentXML, doc.getDocumentElement(), "base", this.getTemplateController(), null, unsortedPageComponents);
 				//RequestAnalyser.getRequestAnalyser().registerComponentStatistics("getPageComponentsWithXPP3", t.getElapsedTime());
 				
 				//logger.info("pageComponents:" + pageComponents.size());
@@ -255,7 +254,7 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 				
 				if(pageComponents.size() > 0)
 				{
-					baseComponent = (InfoGlueComponent)pageComponents.get(0);
+					baseComponent = pageComponents.get(0);
 				}
 			
 				if(baseComponent != null)
@@ -294,7 +293,7 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		{
 			try
 			{
-				Map context = getDefaultContext();
+				Map<String, Object> context = getDefaultContext();
 				StringWriter cacheString = new StringWriter();
 				PrintWriter cachedStream = new PrintWriter(cacheString);
 				new VelocityTemplateProcessor().renderTemplate(context, cachedStream, pageContent, false, baseComponent);
@@ -316,19 +315,19 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		this.setPageString(pageString);
 	}
 
-	protected void preProcessComponents(NodeDeliveryController nodeDeliveryController, Integer repositoryId, List unsortedPageComponents, List pageComponents) throws SystemException, Exception
+	protected void preProcessComponents(NodeDeliveryController nodeDeliveryController, Integer repositoryId, List<InfoGlueComponent> unsortedPageComponents, List pageComponents) throws SystemException, Exception
 	{
-		List sortedPageComponents = new ArrayList();
-		Iterator unsortedPageComponentsIterator = unsortedPageComponents.iterator();
+		List<InfoGlueComponent> sortedPageComponents = new ArrayList<InfoGlueComponent>();
+		Iterator<InfoGlueComponent> unsortedPageComponentsIterator = unsortedPageComponents.iterator();
 		while(unsortedPageComponentsIterator.hasNext())
 		{
-			InfoGlueComponent component = (InfoGlueComponent)unsortedPageComponentsIterator.next();
+			InfoGlueComponent component = unsortedPageComponentsIterator.next();
 
 			//this.getTemplateController().setComponentLogic(new ComponentLogic(this.getTemplateController(), component));
 			//this.getTemplateController().getDeliveryContext().getUsageListeners().add(this.getTemplateController().getComponentLogic().getComponentDeliveryContext());
 			
 			int index = 0;
-			Iterator sortedPageComponentsIterator = sortedPageComponents.iterator();
+			Iterator<InfoGlueComponent> sortedPageComponentsIterator = sortedPageComponents.iterator();
 			while(sortedPageComponentsIterator.hasNext())
 			{
 				InfoGlueComponent sortedComponent = (InfoGlueComponent)sortedPageComponentsIterator.next();
@@ -345,10 +344,10 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 			sortedPageComponents.add(index, component);
 		}
 
-		Iterator sortedPageComponentsIterator = sortedPageComponents.iterator();
+		Iterator<InfoGlueComponent> sortedPageComponentsIterator = sortedPageComponents.iterator();
 		while(sortedPageComponentsIterator.hasNext())
 		{
-			InfoGlueComponent component = (InfoGlueComponent)sortedPageComponentsIterator.next();
+			InfoGlueComponent component = sortedPageComponentsIterator.next();
 			this.getTemplateController().setComponentLogic(new ComponentLogic(this.getTemplateController(), component));
 			//this.getTemplateController().getDeliveryContext().getUsageListeners().add(this.getTemplateController().getComponentLogic().getComponentDeliveryContext());
 			
@@ -442,6 +441,7 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 	 * This method fetches the pageComponent structure from the metainfo content.
 	 */
 	    
+	@SuppressWarnings("unchecked")
 	protected String getPageComponentsString(Database db, TemplateController templateController, Integer siteNodeId, Integer languageId, Integer contentId) throws SystemException, Exception
 	{ 
 	    SiteNodeVO siteNodeVO = templateController.getSiteNode(siteNodeId);
@@ -467,27 +467,27 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		//String versionKey 	= attributeKey + "_contentVersionId";
 
 	    String cachedPageComponentsString = (String)CacheController.getCachedObjectFromAdvancedCache(cacheName, cacheKey);
-	    Set contentVersionId = (Set)CacheController.getCachedObjectFromAdvancedCache("componentEditorVersionIdCache", versionKey);
-	    
+		Set<Integer> contentVersionId = (Set<Integer>)CacheController.getCachedObjectFromAdvancedCache("componentEditorVersionIdCache", versionKey);
+
 	    if(templateController.getOperatingMode() == 0 && templateController.getHttpServletRequest().getParameter("siteNodeVersionId") != null && !templateController.getHttpServletRequest().getParameter("siteNodeVersionId").equals(""))
 	    {
 	    	cachedPageComponentsString = null;
 	    }
-	    
-	    if(cachedPageComponentsString != null)
+
+		if(cachedPageComponentsString != null)
 		{
 			if(contentVersionId != null)
-			{    
-				Iterator contentVersionIdIterator = contentVersionId.iterator();
+			{
+				Iterator<Integer> contentVersionIdIterator = contentVersionId.iterator();
 				while(contentVersionIdIterator.hasNext())
 				{
-					Integer currentContentVersionId = (Integer)contentVersionIdIterator.next();
+					Integer currentContentVersionId = contentVersionIdIterator.next();
 					if(currentContentVersionId != null)
 					{
 						templateController.getDeliveryContext().addUsedContentVersion(CacheController.getPooledString(2, currentContentVersionId));
 				    	//logger.info("\nThere was a cached page string and the meta info content version was " + contentVersionId);
-				    	templateController.getDeliveryContext().getUsedPageMetaInfoContentVersionIdSet().add(currentContentVersionId);
-				    	templateController.getDeliveryContext().getUsedPageComponentsMetaInfoContentVersionIdSet().add(currentContentVersionId);
+						templateController.getDeliveryContext().getUsedPageMetaInfoContentVersionIdSet().add(currentContentVersionId);
+						templateController.getDeliveryContext().getUsedPageComponentsMetaInfoContentVersionIdSet().add(currentContentVersionId);
 					}
 				}
 			}
@@ -500,7 +500,7 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		//logger.info("contentVO in getPageComponentsString: " + contentVO.getContentId());
 		Integer masterLanguageId = LanguageDeliveryController.getLanguageDeliveryController().getMasterLanguageForSiteNode(db, siteNodeId).getId();
 		pageComponentsString = templateController.getMetaInfoContentAttribute(contentVO.getContentId(), masterLanguageId, "ComponentStructure", true);
-		
+
 		String siteNodeVersionId = templateController.getHttpServletRequest().getParameter("siteNodeVersionId");
 		if(siteNodeVersionId != null)
 		{
@@ -515,26 +515,26 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 				}
 			}
 		}
-		
+
 		if(pageComponentsString == null)
 			throw new SystemException("There was no Meta Information bound to this page which makes it impossible to render.");	
-	
+
 		if(templateController.getHttpServletRequest().getParameter("siteNodeVersionId") == null || templateController.getHttpServletRequest().getParameter("siteNodeVersionId").equals(""))
 		{
 			CacheController.cacheObjectInAdvancedCache(cacheName, cacheKey, pageComponentsString);
 
 			Set contentVersionIds = new HashSet();
-		    //TODO - m�ste fixa s� att inte nulls sl�ngs in i getUsedPageMetaInfoContentVersionIdSet... hur det kan h�nda
-		    contentVersionIds.addAll(templateController.getDeliveryContext().getUsedPageMetaInfoContentVersionIdSet());
-	    	
-			Set groups = new HashSet();
+			//TODO - maste fixa sa att inte nulls langs in i getUsedPageMetaInfoContentVersionIdSet ... hur det kan handa
+			contentVersionIds.addAll(templateController.getDeliveryContext().getUsedPageMetaInfoContentVersionIdSet());
+
+			Set<String> groups = new HashSet<String>();
 			if(templateController.getDeliveryContext().getUsedPageMetaInfoContentVersionIdSet().size() > 0)
 			{
 				ContentVersionVO contentVersionVO = ContentVersionController.getContentVersionController().getSmallContentVersionVOWithId((Integer)templateController.getDeliveryContext().getUsedPageMetaInfoContentVersionIdSet().toArray()[0], templateController.getDatabase());
 				groups.add(CacheController.getPooledString(2, contentVersionVO.getId()));
 				groups.add(CacheController.getPooledString(1, contentVersionVO.getContentId()));
 			}
-			
+
 			if(groups.size() > 0)
 			{
 				CacheController.cacheObjectInAdvancedCacheWithGroupsAsSet("componentEditorVersionIdCache", versionKey, contentVersionIds, groups, true);
@@ -1634,19 +1634,19 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		    
 			try
 			{
-			    String componentString = getComponentString(templateController, component.getContentId(), component); 
+				String componentString = getComponentString(templateController, component.getContentId(), component);
 				//System.out.println("\n\n" + componentString);
-			    if(logger.isDebugEnabled())
+				if(logger.isDebugEnabled())
 					logger.debug("componentString:" + componentString);
-			    
+
 				//String componentModelClassName
-				Map context = getDefaultContext();
-		    	context.put("templateLogic", templateController);
-		    	context.put("model", component.getModel());
-		    	StringWriter cacheString = new StringWriter();
+				Map<String, Object> context = getDefaultContext();
+				context.put("templateLogic", templateController);
+				context.put("model", component.getModel());
+				StringWriter cacheString = new StringWriter();
 				PrintWriter cachedStream = new PrintWriter(cacheString);
 				//Timer t = new Timer();
-				new VelocityTemplateProcessor().renderTemplate(context, cachedStream, componentString, false, component);
+				new VelocityTemplateProcessor().renderTemplate(context, cachedStream, componentString, false, component, null, "ComponentTemplate");
 				//t.printElapsedTime("Rendering of " + component.getName() + " took ");
 				componentString = cacheString.toString();
 
@@ -1679,17 +1679,17 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 					boolean inherit = true;
 					int inheritIndex = slot.indexOf("inherit");
 					if(inheritIndex > -1)
-					{    
-					    String inheritString = slot.substring(inheritIndex + 9, slot.indexOf("\"", inheritIndex + 9));
-					    inherit = Boolean.parseBoolean(inheritString);
+					{
+						String inheritString = slot.substring(inheritIndex + 9, slot.indexOf("\"", inheritIndex + 9));
+						inherit = Boolean.parseBoolean(inheritString);
 					}
 
-					List subComponents = getInheritedComponents(templateController.getDatabase(), templateController, component, templateController.getSiteNodeId(), id, inherit);
+					List<InfoGlueComponent> subComponents = getInheritedComponents(templateController.getDatabase(), templateController, component, templateController.getSiteNodeId(), id, inherit);
 					List<Integer> handledComponents = new ArrayList<Integer>();
-					Iterator subComponentsIterator = subComponents.iterator();
+					Iterator<InfoGlueComponent> subComponentsIterator = subComponents.iterator();
 					while(subComponentsIterator.hasNext())
 					{
-						InfoGlueComponent subComponent = (InfoGlueComponent)subComponentsIterator.next();
+						InfoGlueComponent subComponent = subComponentsIterator.next();
 						if(handledComponents.contains(subComponent.getId()))
 							continue;
 
@@ -1720,21 +1720,26 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 					decoratedComponent.append(componentString.substring(offset));
 				}
 
-		        if(cacheComponent)
-		        {
-		            if(this.getTemplateController().getOperatingMode().intValue() == 3 && !CmsPropertyHandler.getLivePublicationThreadClass().equalsIgnoreCase("org.infoglue.deliver.util.SelectiveLivePublicationThread"))
-		        	    CacheController.cacheObjectInAdvancedCache("componentCache", componentCacheKey, decoratedComponent.toString(), templateController.getComponentLogic().getComponentDeliveryContext().getAllUsedEntities(), false);
-		        	else
-		                CacheController.cacheObjectInAdvancedCache("componentCache", componentCacheKey, decoratedComponent.toString(), templateController.getComponentLogic().getComponentDeliveryContext().getAllUsedEntities(), true);
-		        }	    
+				if(cacheComponent)
+				{
+					if(this.getTemplateController().getOperatingMode().intValue() == 3 && !CmsPropertyHandler.getLivePublicationThreadClass().equalsIgnoreCase("org.infoglue.deliver.util.SelectiveLivePublicationThread"))
+					{
+						CacheController.cacheObjectInAdvancedCache("componentCache", componentCacheKey, decoratedComponent.toString(), templateController.getComponentLogic().getComponentDeliveryContext().getAllUsedEntities(), false);
+					}
+					else
+					{
+						CacheController.cacheObjectInAdvancedCache("componentCache", componentCacheKey, decoratedComponent.toString(), templateController.getComponentLogic().getComponentDeliveryContext().getAllUsedEntities(), true);
+					}
+				}
 
 			}
-			catch(Exception e)
-			{		
+			catch(Exception ex)
+			{
+				String componentNameForLogger = component == null ? null : component.getName();
 				templateController.getDeliveryContext().setDisablePageCache(true);
-				logger.error("The component rendering threw an exception. Lets not cache the page. Please fix your template (contentID: " + component.getContentId() + " (" + component.getName() + "). \nReason" + e.getMessage() + "\nSource URL:" + templateController.getOriginalFullURL());
-				logger.warn("The component rendering threw an exception. Lets not cache the page. Please fix your template (contentID: " + component.getContentId() + " (" + component.getName() + "). \nReason" + e.getMessage() + "\nSource URL:" + templateController.getOriginalFullURL(), e);	
-			}    	
+				logger.error("The component rendering threw an exception. Lets not cache the page. See the warning log for more information. Component name: <" + componentNameForLogger + ">");//Please fix your template (contentID: " + component.getContentId() + " (" + component.getName() + "). \nReason" + e.getMessage() + "\nSource URL:" + templateController.getOriginalFullURL());
+				logger.warn("The component rendering threw an exception. Lets not cache the page. Please fix your template (contentID: " + component.getContentId() + " (" + component.getName() + "). \nReason" + ex.getMessage() + "\nSource URL:" + templateController.getOriginalFullURL(), ex);
+			}
 
 		}
 		
@@ -1841,7 +1846,7 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		    	StringWriter cacheString = new StringWriter();
 				PrintWriter cachedStream = new PrintWriter(cacheString);
 				//Timer t = new Timer();
-				new VelocityTemplateProcessor().renderTemplate(context, cachedStream, componentString, false, component, " - PreTemplate");
+				new VelocityTemplateProcessor().renderTemplate(context, cachedStream, componentString, false, component, " - PreTemplate", "PreComponentTemplate");
 				//t.printElapsedTime("Rendering of " + component.getName() + " took ");
 				componentString = cacheString.toString();
 				
@@ -2015,27 +2020,29 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 	 * This method fetches a subcomponent from either the current page or from a parent node if it's not defined.
 	 */
    
-	protected List getInheritedComponents(Database db, TemplateController templateController, InfoGlueComponent component, Integer siteNodeId, String id, boolean inherit) throws Exception
+	protected List<InfoGlueComponent> getInheritedComponents(Database db, TemplateController templateController, InfoGlueComponent component, Integer siteNodeId, String id, boolean inherit) throws Exception
 	{
 		//logger.info("slotId:" + id);
 		//logger.info("component:" + component);
 		//logger.info("getInheritedComponents with " + component.getName() + ":" + component.getSlotName() + ":" + component.getId());
-		List inheritedComponents = new ArrayList();
+		List<InfoGlueComponent> inheritedComponents = new ArrayList<InfoGlueComponent>();
 		
 		NodeDeliveryController nodeDeliveryController = NodeDeliveryController.getNodeDeliveryController(templateController.getSiteNodeId(), templateController.getLanguageId(), templateController.getContentId());
 		
-		Iterator slotIterator = component.getSlotList().iterator();
+		@SuppressWarnings("unchecked")
+		Iterator<Slot> slotIterator = component.getSlotList().iterator();
 		while(slotIterator.hasNext())
 		{
-			Slot slot = (Slot)slotIterator.next();
+			Slot slot = slotIterator.next();
 			//logger.info("Slot for component " + component.getName() + ":" + slot.getId());
 			//logger.info("Slot for component " + id + ":" + slot.getId() + ":" + slot.getName());
 			if(slot.getId().equalsIgnoreCase(id))
 			{
-				Iterator subComponentIterator = slot.getComponents().iterator();
+				@SuppressWarnings("unchecked")
+				Iterator<InfoGlueComponent> subComponentIterator = slot.getComponents().iterator();
 				while(subComponentIterator.hasNext())
 				{
-					InfoGlueComponent infoGlueComponent = (InfoGlueComponent)subComponentIterator.next();
+					InfoGlueComponent infoGlueComponent = subComponentIterator.next();
 					//logger.info("Adding not inherited component " + infoGlueComponent.getName() + " to list...");
 					inheritedComponents.add(infoGlueComponent);
 				}
@@ -2045,10 +2052,11 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		SiteNodeVO parentSiteNodeVO = nodeDeliveryController.getParentSiteNode(db, siteNodeId);
 		
 		boolean restrictAll = false;
-		Iterator restrictionsIterator = component.getRestrictions().iterator();
+		@SuppressWarnings("unchecked")
+		Iterator<ComponentRestriction> restrictionsIterator = component.getRestrictions().iterator();
 		while(restrictionsIterator.hasNext())
 		{
-		    ComponentRestriction restriction = (ComponentRestriction)restrictionsIterator.next();
+		    ComponentRestriction restriction = restrictionsIterator.next();
 		    if(restriction.getType().equalsIgnoreCase("blockComponents"))
 		    {
 		        if(restriction.getSlotId().equalsIgnoreCase(id) && restriction.getArguments().equalsIgnoreCase("*"))
@@ -2064,11 +2072,12 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 			//logger.info("componentXML:" + componentXML);
 			//logger.info("id:" + id);
 			
-			String key = "" + parentSiteNodeVO.getId() + "_" + componentXML.hashCode();
+			//String key = "" + parentSiteNodeVO.getId() + "_" + componentXML.hashCode();
 			//String mapKey = "" + parentSiteNodeVO.getId() + "_" + componentXML.hashCode() + "_" + id + "_components"; //
 			String mapKey = "" + parentSiteNodeVO.getId() + "_" + componentXML.hashCode() + "_" + id + "_"  + siteNodeId + "_" + component.getId() + "_components";
 			
-			Map components = (Map)CacheController.getCachedObjectFromAdvancedCache("componentPropertyCache", mapKey);
+			@SuppressWarnings("unchecked")
+			Map<String, List<InfoGlueComponent>> components = (Map<String, List<InfoGlueComponent>>)CacheController.getCachedObjectFromAdvancedCache("componentPropertyCache", mapKey);
 			if(components == null)
 			{
 				Timer t = new Timer();
@@ -2097,24 +2106,22 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 				if(components != null)
 					CacheController.cacheObjectInAdvancedCache("componentPropertyCache", mapKey, components, null, false);
 			}
-			
+
 			//logger.info("components:" + components.size());
 			//logger.info("id:" + id);
 			if(components.containsKey(id))
 			{
-				inheritedComponents = (List)components.get(id);
+				inheritedComponents = (List<InfoGlueComponent>)components.get(id);
 				//logger.info("inheritedComponents:" + inheritedComponents);
-				Iterator inheritedComponentIterator = inheritedComponents.iterator();
+				Iterator<InfoGlueComponent> inheritedComponentIterator = inheritedComponents.iterator();
 				while(inheritedComponentIterator.hasNext())
 				{
-					InfoGlueComponent infoGlueComponent = (InfoGlueComponent)inheritedComponentIterator.next();
-				    infoGlueComponent.setIsInherited(true);
+					InfoGlueComponent infoGlueComponent = inheritedComponentIterator.next();
+					infoGlueComponent.setIsInherited(true);
 				}
 			}
-						
 			parentSiteNodeVO = nodeDeliveryController.getParentSiteNode(db, parentSiteNodeVO.getId());
 		}
-			
 		return inheritedComponents;
 	}
 	
@@ -2733,7 +2740,7 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 		return components;
 	}
 	*/
-	protected List getPageComponentsWithXPP3(Database db, String componentXML, XmlElement element, String slotName, TemplateController templateController, InfoGlueComponent parentComponent, List sortedPageComponents) throws Exception
+	protected List<InfoGlueComponent> getPageComponentsWithXPP3(Database db, String componentXML, XmlElement element, String slotName, TemplateController templateController, InfoGlueComponent parentComponent, List sortedPageComponents) throws Exception
 	{
 		Locale locale = LanguageDeliveryController.getLanguageDeliveryController().getLocaleWithId(db, templateController.getLanguageId());
 

@@ -3,10 +3,10 @@
 
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
 
+	<!-- Core appenders -->
 	<!--
 	By default error level messages are logged here.
-	On a normal Tomcat installation events logged to the console will be piped
-	to catalina.out. -->
+	On a normal Tomcat installation events logged to the console will be piped to catalina.out. -->
 	<appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
 		<param name="Target" value="System.out"/>
 		<param name="Threshold" value="ERROR"/>
@@ -16,11 +16,9 @@
 	</appender>
 
 	<!--
-	Used to log warning level messages from Infoglue.
-	OBS: This has to be a subclass of the FileAppender class since Infoglue
-	  will set the file path to the log file dynamically. Also the name of the appender
-	  have to be 'INFOGLUE-FILE' and nothing else. -->
-	<appender name="INFOGLUE-FILE" class="org.apache.log4j.RollingFileAppender">
+	Used to log warning level messages from Infoglue. -->
+	<appender name="INFOGLUE-WARNING" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="@deployDirectory@/logs/@warningLogName@.log"/>
 		<param name="Append" value="true"/>
 		<param name="MaxFileSize" value="10MB"/>
 		<param name="MaxBackupIndex" value="5"/>
@@ -35,12 +33,32 @@
 	</appender>
 
 	<!--
+	@deprecated Old warning log appender. Used a Java-based solution for setting the file path (to get the log in the right webapp).
+	This has been replaced with a build-time solution (@deployDirectory@). See the appender INFOGLUE-WARNING in the default log4j config.
+	<appender name="INFOGLUE-FILE" class="org.apache.log4j.RollingFileAppender">
+		<param name="Append" value="true"/>
+		<param name="MaxFileSize" value="10MB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<param name="Threshold" value="WARNING"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{dd MMM yyyy HH:mm:ss.SSS} [%-5p] [%t] [%c] - %m%n"/>
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMin" value="WARN" />
+			<param name="LevelMax" value="WARN" />
+		</filter>
+	</appender>-->
+
+	<!--
 	This appender is used to log events from categories whose level has been changed using
 	Infoglue's debug logging feature. See the Infoglue documentation for more information about this.
 	The appender type may be changed but the name has to be 'INFOGLUE-DEBUG' for the debug logging
 	feature to work. -->
-	<appender name="INFOGLUE-DEBUG" class="org.apache.log4j.ConsoleAppender">
-		<param name="Target" value="System.out"/>
+	<appender name="INFOGLUE-DEBUG" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="@deployDirectory@/logs/infoglue-debug.log"/>
+		<param name="Append" value="true"/>
+		<param name="MaxFileSize" value="10MB"/>
+		<param name="MaxBackupIndex" value="5"/>
 		<param name="Threshold" value="TRACE"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{dd MMM yyyy HH:mm:ss.SSS} [%-5p] [%t] [%c] - %m%n"/>
@@ -58,7 +76,7 @@
 
 	<!-- Not used anymore. Included for compatibility. -->
 	<appender name="INFOGLUE-FILE-DEBUG" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="${catalina.base}/logs/infoglue-debug.log"/>
+		<param name="File" value="@deployDirectory@/logs/infoglue-debug.log"/>
 		<param name="Append" value="true"/>
  		<param name="MaxFileSize" value="10MB"/>
 		<param name="MaxBackupIndex" value="5"/>
@@ -72,46 +90,48 @@
 		</filter>
 	</appender>
 
+	<!-- Component log appenders -->
 	<appender name="INFOGLUE-COMPONENT" class="org.apache.log4j.RollingFileAppender">
-		<param name="File" value="${catalina.base}/logs/infoglue-components.log"/>
+		<param name="File" value="@deployDirectory@/logs/infoglue-components.log"/>
 		<param name="Append" value="true"/>
- 		<param name="MaxFileSize" value="10MB"/>
+		<param name="MaxFileSize" value="10MB"/>
 		<param name="MaxBackupIndex" value="5"/>
-		<param name="Threshold" value="DEBUG"/>
+		<param name="Threshold" value="TRACE"/>
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d{ISO8601} - %p%n[%t] [%c] [SiteNodeId: %X{siteNodeId}] [Principal: %X{principalName}]%n%nMessage: %m%n%X{timerValue}%n%n"/>
+			<param name="ConversionPattern" value="%d{ISO8601} - %p%n[%t] [%c] [SiteNodeId: %X{siteNodeId}] [Principal: %X{principalName}] [Language: %X{languageId}] [ComponentId: %X{componentId}]%nMessage: %m%n%X{timerValue}%n%n"/>
 		</layout>
-   	</appender>
- 
-	<!-- Appender Chainsaw GUI Log viewer
-	<appender name="CHAINSAW" class="org.apache.log4j.net.SocketAppender">
-		<param name="remoteHost" value="localhost"/>
-		<param name="port" value="4445"/>
-		<param name="locationInfo" value="true"/>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMin" value="ERROR" />
+			<param name="LevelMax" value="ERROR" />
+		</filter>
 	</appender>
-	-->
 
-	<!--                          -->
-    <!-- Declare the SMTPAppender -->
-    <!--                          -->
-    <!--
-    <appender name="EMAIL"  class="org.apache.log4j.net.SMTPAppender">
-        <param name="BufferSize" value="512" />
-        <param name="SMTPHost" value="smtp.foobar.com" />
-        <param name="From" value="log4j@server5" />
-        <param name="To" value="neo@foobar.com" />
-        <param name="Subject" value="[SMTPAppender] Application message" />
-        <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern"
-              value="[%d{ISO8601}]%n%n%-5p%n%n%c%n%n%m%n%n" />
-        </layout>
-        <filter class="org.apache.log4j.varia.LevelRangeFilter">
-            <param name="LevelMin" value="ERROR"/>
-            <param name="LevelMax" value="FATAL"/>
-        </filter>
-    </appender>
-    -->
-    
+	<appender name="INFOGLUE-COMPONENT-WARNING" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="@deployDirectory@/logs/infoglue-components-warning.log"/>
+		<param name="Append" value="true"/>
+		<param name="MaxFileSize" value="10MB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<param name="Threshold" value="TRACE"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{ISO8601} - %p%n[%t] [%c] [SiteNodeId: %X{siteNodeId}] [Principal: %X{principalName}] [Language: %X{languageId}] [ComponentId: %X{componentId}]%nMessage: %m%n%X{timerValue}%n%n"/>
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMin" value="WARN" />
+			<param name="LevelMax" value="WARN" />
+		</filter>
+	</appender>
+
+	<appender name="INFOGLUE-COMPONENT-DEBUG" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="@deployDirectory@/logs/infoglue-components-debug.log"/>
+		<param name="Append" value="true"/>
+		<param name="MaxFileSize" value="10MB"/>
+		<param name="MaxBackupIndex" value="5"/>
+		<param name="Threshold" value="TRACE"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{ISO8601} - %p%n[%t] [%c] [SiteNodeId: %X{siteNodeId}] [Principal: %X{principalName}] [Language: %X{languageId}] [ComponentId: %X{componentId}]%nMessage: %m%n%X{timerValue}%n%n"/>
+		</layout>
+	</appender>
+
 	<!-- ==================================	-->
 	<!-- Use categories to control logging  -->
 	<!-- down to the package or class level	-->
@@ -119,12 +139,12 @@
 
 	<category name="org.infoglue.cms">
 		<priority value="WARN"/>
-		<appender-ref ref="INFOGLUE-FILE"/>		
+		<appender-ref ref="INFOGLUE-WARNING"/>
 	</category>
 
 	<category name="org.infoglue.deliver">
 		<priority value="WARN"/>
-		<appender-ref ref="INFOGLUE-FILE"/>		
+		<appender-ref ref="INFOGLUE-WARNING"/>
 	</category>
 
 	<category name="org.exolab.castor">
@@ -132,8 +152,8 @@
 	</category>
 
 	<category name="org.exolab.castor.jdo">
-      <priority value="WARN" />
-    </category>
+		<priority value="WARN" />
+	</category>
 
 	<category name="webwork">
 		<priority value="WARN"/>
@@ -147,62 +167,47 @@
 		<priority value="ERROR"/>
 		<appender-ref ref="CONSOLE-DEBUG"/>
 	</category>
-	
-	<category name="org.infoglue.file-debug-dummy">
-		<priority value="ERROR"/>
-		<appender-ref ref="INFOGLUE-FILE-DEBUG"/>
-	</category>
 
-	<!--
-	<category name="org.infoglue.deliver.portal">
-		<priority value="DEBUG"/>
-		<appender-ref ref="INFOGLUE-FILE-DEBUG"/>	
-	</category>
-	<category name="org.apache.pluto">
-		<priority value="DEBUG"/>
-		<appender-ref ref="CONSOLE-DEBUG"/>
-	</category>
-	-->
-	
 	<category name="net.sf.hibernate.util.JDBCExceptionReporter">
 		<priority value="FATAL"/>
-	</category>	
+	</category>
 	
 	<category name="net.sf.hibernate.cfg.SettingsFactory">
 		<priority value="FATAL"/>
-	</category>	
+	</category>
 	
 	<category name="com.opensymphony.workflow.spi.hibernate.HibernateWorkflowStore">
 		<priority value="FATAL"/>
-	</category>	
+	</category>
 	
 	<category name="com.opensymphony.workflow.AbstractWorkflow">
 		<priority value="FATAL"/>
-	</category>	
+	</category>
 	
 	<category name="net.sf.hibernate">
 		<priority value="WARN"/>
 	</category>
 
 	<!--
-	This category is used by Infoglue to access the INFOGLUE-DEBUG appender
-	If this category is changed or removed Infoglue's debug loggin feature
-	may stop working. -->
+	This category is used by Infoglue to access the INFOGLUE-DEBUG appenders
+	If this category is changed or removed Infoglue's debug log feature may stop working. -->
 	<category name="org.infoglue.debug-dummy">
 		<priority value="ERROR"/>
 		<appender-ref ref="INFOGLUE-DEBUG"/>
+		<appender-ref ref="INFOGLUE-COMPONENT-DEBUG"/>
 	</category>
 
 	<category name="org.infoglue.components">
+		<param name="additivity" value="false"/>
 		<priority value="WARN"/>
 		<appender-ref ref="INFOGLUE-COMPONENT"/>
+		<appender-ref ref="INFOGLUE-COMPONENT-WARNING"/>
 	</category>
 
 	<!-- Anyhing not caught by the above categories will be caught here -->
 	<root>
 		<priority value="ERROR"/>
 		<appender-ref ref="CONSOLE"/>
-		<!--<appender-ref ref="EMAIL" />-->
 	</root>
 
 </log4j:configuration>

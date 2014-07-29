@@ -379,10 +379,10 @@ public abstract class PageInvoker
 			if(logger.isInfoEnabled())
 				logger.info("Using charset: " + charSet);
 			
-			Iterator headersIterator = this.getDeliveryContext().getHttpHeaders().keySet().iterator();
+			Iterator<String> headersIterator = this.getDeliveryContext().getHttpHeaders().keySet().iterator();
 			while(headersIterator.hasNext())
 			{
-				String key = (String)headersIterator.next();
+				String key = headersIterator.next();
 				Object valueObject = this.getDeliveryContext().getHttpHeaders().get(key);
 				if(valueObject instanceof Date)
 				{
@@ -592,7 +592,7 @@ public abstract class PageInvoker
 			this.generateExtensionBundles(this.getTemplateController().getDeliveryContext().getScriptExtensionBodyBundles(), "text/javascript", "body");
 			this.generateExtensionBundles(this.getTemplateController().getDeliveryContext().getCSSExtensionBundles(), "text/css", "head");
 			
-			List htmlHeadItems = this.getTemplateController().getDeliveryContext().getHtmlHeadItems();
+			List<String> htmlHeadItems = this.getTemplateController().getDeliveryContext().getHtmlHeadItems();
 			if(htmlHeadItems != null && htmlHeadItems.size() > 0)
 			{
 				int indexOfHeadEndTag = pageString.indexOf("</head");
@@ -603,10 +603,10 @@ public abstract class PageInvoker
 				{
 					sb = new StringBuilder(pageString);
 					String headerItems = "";
-					Iterator htmlHeadItemsIterator = htmlHeadItems.iterator();
+					Iterator<String> htmlHeadItemsIterator = htmlHeadItems.iterator();
 					while(htmlHeadItemsIterator.hasNext())
 					{
-						String value = (String)htmlHeadItemsIterator.next();
+						String value = htmlHeadItemsIterator.next();
 						//logger.info("headItem:" + value);
 						headerItems = headerItems + value + "\n";
 					}
@@ -628,10 +628,10 @@ public abstract class PageInvoker
 				if(indexOfBodyEndTag != -1)
 				{
 					String bodyItems = "";
-					Iterator htmlBodyItemsIterator = htmlBodyEndItems.iterator();
+					Iterator<String> htmlBodyItemsIterator = htmlBodyEndItems.iterator();
 					while(htmlBodyItemsIterator.hasNext())
 					{
-						String value = (String)htmlBodyItemsIterator.next();
+						String value = htmlBodyItemsIterator.next();
 						//logger.info("headItem:" + value);
 						bodyItems = bodyItems + value + "\n";
 					}
@@ -911,26 +911,25 @@ public abstract class PageInvoker
 	 * @return A default context with the templateLogic and portalLogic object in it.
 	 */
 	
-	public Map getDefaultContext() 
+	public Map<String, Object> getDefaultContext() 
 	{
-		Map context = new HashMap();
-		context.put("templateLogic", getTemplateController());		
-		
+		Map<String, Object> context = new HashMap<String, Object>();
+		context.put("templateLogic", getTemplateController());
+
 		// -- check if the portal is active
-        String portalEnabled = CmsPropertyHandler.getEnablePortal() ;
-        boolean active = ((portalEnabled != null) && portalEnabled.equals("true"));
-		if (active) 
+		String portalEnabled = CmsPropertyHandler.getEnablePortal() ;
+		boolean active = ((portalEnabled != null) && portalEnabled.equals("true"));
+		if (active)
 		{
-		    PortalController pController = new PortalController(getRequest(), getResponse(), getTemplateController().getDeliveryContext());
-		    context.put(PortalController.NAME, pController);
-		    if(logger.isInfoEnabled())
-		    {
-		    	logger.info("PortalController.NAME:" + PortalController.NAME);
-		    	logger.info("pController:" + pController);
-		    }
+			PortalController pController = new PortalController(getRequest(), getResponse(), getTemplateController().getDeliveryContext());
+			context.put(PortalController.NAME, pController);
+			if(logger.isInfoEnabled())
+			{
+				logger.info("PortalController.NAME:" + PortalController.NAME);
+				logger.info("pController:" + pController);
+			}
 		}
-		
+
 		return context;
 	}
-    
 }

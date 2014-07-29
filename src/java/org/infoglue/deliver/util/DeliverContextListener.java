@@ -81,9 +81,11 @@ public final class DeliverContextListener implements ServletContextListener
 			
 			CmsPropertyHandler.setContextRootPath(contextRootPath); 
 			CmsPropertyHandler.setOperatingMode(CmsPropertyHandler.getProperty("operatingMode"));
-			
+
+			/* The following section dealing with log4j appender is deprecated and only included for
+			 * compatibility with old installations. The appender's file path is now set at build-time.
+			 */
 			String logPath = CmsPropertyHandler.getLogPath();
-			
 			Enumeration enumeration = Logger.getLogger("org.infoglue.cms").getAllAppenders();
 	        while(enumeration.hasMoreElements())
 	        {

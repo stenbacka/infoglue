@@ -5,11 +5,13 @@ import javax.servlet.jsp.JspException;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
+import org.infoglue.deliver.applications.actions.InfoGlueComponent;
 import org.infoglue.deliver.controllers.kernel.impl.simple.TemplateController;
 import org.infoglue.deliver.taglib.TemplateControllerTag;
 import org.infoglue.deliver.util.Timer;
 
-public class LogTag extends TemplateControllerTag {
+public class LogTag extends TemplateControllerTag
+{
 	private static final long serialVersionUID = 1675678575675L;
 	private static final Logger tagLogger = Logger.getLogger(LogTag.class);
 
@@ -22,9 +24,11 @@ public class LogTag extends TemplateControllerTag {
 	private Long timerValue;
 
 	@Override
-	public int doEndTag() throws JspException {
+	public int doEndTag() throws JspException
+	{
 		Timer t = new Timer();
 		TemplateController controller = getController();
+		InfoGlueComponent component = controller.getComponentLogic().getInfoGlueComponent();
 		if (componentName != null)
 		{
 			this.logger = LoggerTagsUtil.getTagsUtil().getLogger(componentName);
@@ -49,6 +53,8 @@ public class LogTag extends TemplateControllerTag {
 
 			MDC.put("siteNodeId", controller.getSiteNodeId());
 			MDC.put("principalName", controller.getPrincipal().getName());
+			MDC.put("languageId", controller.getLanguageId());
+			MDC.put("componentId", component.getId());
 
 			if (throwable == null)
 			{

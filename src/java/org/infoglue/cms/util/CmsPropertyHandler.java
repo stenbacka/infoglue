@@ -1075,7 +1075,7 @@ public class CmsPropertyHandler
 				logger.warn("Problem reading meta info fields: " + e.getMessage(), e);
 			}
 		}
-		
+
 		return allowLocalizedSortAndVisibilityProperties;
 	}
 
@@ -1129,6 +1129,9 @@ public class CmsPropertyHandler
 		return getServerNodeProperty("cacheUpdateAction", true, "UpdateCache.action");
 	}
 
+	/**
+	 * @deprecated The paths to the log files are now determined at build-time so this property is not used. See the logging documentation at www.infoglue.org for more information.
+	 */
 	public static String getLogPath()
 	{
 		return getServerNodeProperty("logPath", true, "" + contextRootPath + "logs" + File.separator + applicationName + ".log");
@@ -1420,7 +1423,7 @@ public class CmsPropertyHandler
 		
 		return skipResultDialogIfPossible;
 	}
-	
+
 	public static boolean getEnableIfModifiedHeaders()
 	{
 		String enableIfModifiedHeaders = getServerNodeProperty("enableIfModifiedHeaders", true, "true");
@@ -1431,7 +1434,7 @@ public class CmsPropertyHandler
 		}
 		return enableIfModifiedHeadersBool;
 	}
-	
+
 	public static Boolean getUseHashCodeInCaches()
 	{
 		return getUseHashCodeInCaches(false);
@@ -2075,7 +2078,7 @@ public class CmsPropertyHandler
 	public static String getTheme(String userName)
 	{
 		String theme = getPropertySet().getString("principal_" + userName + "_theme");
-		
+
 		return (theme == null ? getDefaultSystemTheme() : theme);
 	}
 
@@ -3083,4 +3086,8 @@ public class CmsPropertyHandler
 		return getServerNodeProperty("metaDataContentTypeDefinitionName", true, "Meta info");
 	}
 
+	public static String getInfoglueComponentLoggingBasePackage()
+	{
+		return getServerNodeProperty("infoglueComponentLoggingBasePackage", true, "org.infoglue.components");
+	}
 }

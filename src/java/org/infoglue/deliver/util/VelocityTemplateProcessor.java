@@ -31,22 +31,30 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
+import org.apache.log4j.MDC;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.infoglue.cms.applications.tasktool.actions.ScriptController;
+import org.infoglue.cms.exception.SystemException;
 import org.infoglue.cms.io.FileHelper;
+import org.infoglue.cms.security.InfoGluePrincipal;
 import org.infoglue.cms.util.CmsPropertyHandler;
+import org.infoglue.cms.util.StringManager;
+import org.infoglue.cms.util.StringManagerFactory;
 import org.infoglue.deliver.applications.actions.InfoGlueComponent;
 import org.infoglue.deliver.applications.databeans.DeliveryContext;
 import org.infoglue.deliver.controllers.kernel.impl.simple.TemplateController;
 import org.infoglue.deliver.portal.PortalController;
+import org.infoglue.deliver.taglib.log.LoggerTagsUtil;
 
 import com.caucho.java.WorkDir;
 import com.caucho.quercus.QuercusContext;
@@ -64,125 +72,203 @@ import com.caucho.vfs.VfsStream;
 import com.caucho.vfs.WriteStream;
 
 /**
- *
  * @author Mattias Bogeblad
  */
 
 public class VelocityTemplateProcessor
 {
-    private final static Logger logger = Logger.getLogger(VelocityTemplateProcessor.class.getName());
+	private final static Logger logger = Logger.getLogger(VelocityTemplateProcessor.class.getName());
+
+	public static final String TEMPLATETYPE_COMPONENT_TEMPLATE = "ComponentTemplate";
+	public static final String TEMPLATETYPE_PRETEMPLATE_COMPONENT = "PreComponentTemplate";
+	public static final String TEMPLATETYPE_FULLPAGE = "FullPage";
 
 	/**
 	 * This method takes arguments and renders a template given as a string to the specified outputstream.
 	 * Improve later - cache for example the engine.
 	 */
-	
-	public void renderTemplate(Map params, PrintWriter pw, String templateAsString) throws Exception 
+	public void renderTemplate(Map<String, Object> params, PrintWriter pw, String templateAsString) throws Exception
 	{
-	    renderTemplate(params, pw, templateAsString, false, null);
+		renderTemplate(params, pw, templateAsString, false, null);
 	}
 
 	/**
 	 * This method takes arguments and renders a template given as a string to the specified outputstream.
 	 * Improve later - cache for example the engine.
 	 */
-	
-	public void renderTemplate(Map params, PrintWriter pw, String templateAsString, boolean forceVelocity) throws Exception 
+	public void renderTemplate(Map<String, Object> params, PrintWriter pw, String templateAsString, boolean forceVelocity) throws Exception
 	{
-	    renderTemplate(params, pw, templateAsString, forceVelocity, null);
+		renderTemplate(params, pw, templateAsString, forceVelocity, null);
 	}
 
 	/**
 	 * This method takes arguments and renders a template given as a string to the specified outputstream.
 	 * Improve later - cache for example the engine.
 	 */
-	
-	public void renderTemplate(Map params, PrintWriter pw, String templateAsString, boolean forceVelocity, InfoGlueComponent component) throws Exception 
+	public void renderTemplate(Map<String, Object> params, PrintWriter pw, String templateAsString, boolean forceVelocity, InfoGlueComponent component) throws Exception
 	{
-	    renderTemplate(params, pw, templateAsString, forceVelocity, component, null);
+		renderTemplate(params, pw, templateAsString, forceVelocity, component, null, null);
 	}
 
 	/**
 	 * This method takes arguments and renders a template given as a string to the specified outputstream.
 	 * Improve later - cache for example the engine.
 	 */
-	
-	public void renderTemplate(final Map params, PrintWriter pw, String templateAsString, boolean forceVelocity, InfoGlueComponent component, String statisticsSuffix) throws Exception 
+	public void renderTemplate(final Map<String, Object> params, PrintWriter pw, String templateAsString, boolean forceVelocity, InfoGlueComponent component, String statisticsSuffix, String templateType) throws Exception
 	{
-	 	String componentName = "Unknown name or not a component";
-	 	if(component != null)
-	    	componentName = "" + component.getName() + "(" + component.getContentId() + ")";
+		String componentName = "Unknown name or not a component";
+		if(component != null)
+		{
+			componentName = "" + component.getName() + "(" + component.getContentId() + ")";
+		}
 
 		try
 		{
-		    final Timer timer = new Timer();
-			
-		    if(!forceVelocity && (templateAsString.indexOf("<%") > -1 || templateAsString.indexOf("http://java.sun.com/products/jsp/dtd/jspcore_1_0.dtd") > -1))
-		    {
-		    	//dispatchJSP(params, pw, templateAsString);
-		    	dispatchJSP(params, pw, templateAsString, component);
-		    }
-		    else if(!forceVelocity && templateAsString.indexOf("<?php") > -1)
-		    {
-		    	logger.info("Dispatching php:" + templateAsString.trim());
-		    	dispatchPHP(params, pw, templateAsString, component);
-		    }
-		    else
-		    {
-		        boolean useFreeMarker = false;
-		        String useFreeMarkerString = CmsPropertyHandler.getUseFreeMarker();
-		        if(useFreeMarkerString != null && useFreeMarkerString.equalsIgnoreCase("true"))
-		            useFreeMarker = true;
-		        
-		        if((useFreeMarker || templateAsString.indexOf("<#-- IG:FreeMarker -->") > -1) && !forceVelocity)
-		        {
-		            FreemarkerTemplateProcessor.getProcessor().renderTemplate(params, pw, templateAsString);
-		        }
-		        else
-		        {
+			final Timer timer = new Timer();
+
+			if(!forceVelocity && (templateAsString.indexOf("<%") > -1 || templateAsString.indexOf("http://java.sun.com/products/jsp/dtd/jspcore_1_0.dtd") > -1))
+			{
+				dispatchJSP(params, pw, templateAsString, component);
+			}
+			else if(!forceVelocity && templateAsString.indexOf("<?php") > -1)
+			{
+				logger.info("Dispatching php:" + templateAsString.trim());
+				dispatchPHP(params, pw, templateAsString, component);
+			}
+			else
+			{
+				boolean useFreeMarker = false;
+				String useFreeMarkerString = CmsPropertyHandler.getUseFreeMarker();
+				if(useFreeMarkerString != null && useFreeMarkerString.equalsIgnoreCase("true"))
+				{
+					useFreeMarker = true;
+				}
+
+				if((useFreeMarker || templateAsString.indexOf("<#-- IG:FreeMarker -->") > -1) && !forceVelocity)
+				{
+					FreemarkerTemplateProcessor.getProcessor().renderTemplate(params, pw, templateAsString);
+				}
+				else
+				{
 					Velocity.init();
-			        VelocityContext context = new VelocityContext();
-			        Iterator i = params.keySet().iterator();
-			        while(i.hasNext())
-			        {
-			        	String key = (String)i.next();
-			            context.put(key, params.get(key));
-			        }
-			        
-			        Reader reader = new StringReader(templateAsString);
-			        if(logger.isInfoEnabled())
-			        	logger.info("Going to evaluate the string of length:" + templateAsString.length());
-			        
-			        boolean finished = Velocity.evaluate(context, pw, "Generator Error", reader);        
-		        }
-		    }
-		    
-		    RequestAnalyser.getRequestAnalyser().registerComponentStatistics(componentName + (statisticsSuffix == null ? "" : statisticsSuffix), timer.getElapsedTime());
-	        if(logger.isInfoEnabled())
-	        	logger.info("Rendering took:" + timer.getElapsedTime());
+					VelocityContext context = new VelocityContext();
+					Iterator<String> i = params.keySet().iterator();
+					while(i.hasNext())
+					{
+						String key = i.next();
+						context.put(key, params.get(key));
+					}
+
+					Reader reader = new StringReader(templateAsString);
+					if(logger.isInfoEnabled())
+					{
+						logger.info("Going to evaluate the string of length:" + templateAsString.length());
+					}
+
+					Velocity.evaluate(context, pw, "Generator Error", reader);
+				}
+			}
+
+			RequestAnalyser.getRequestAnalyser().registerComponentStatistics(componentName + (statisticsSuffix == null ? "" : statisticsSuffix), timer.getElapsedTime());
+			if(logger.isInfoEnabled())
+			{
+				logger.info("Rendering took:" + timer.getElapsedTime());
+			}
 		}
-		catch(Exception e)
+		catch(Exception ex)
 		{
-			logger.error("Error rendering template[" + componentName + "]. You should fix this. Find more information in the warning log.");
-			logger.warn("Error rendering template:" + e.getMessage(), e);
-			logger.info("templateAsString: \n" + (templateAsString.length() > 500 ? templateAsString.substring(0, 500) + "... (template truncated)." : templateAsString));
-		    
-			//If error we don't want the error cached - right?
+			/* The templateLogic should only be available if this is a component. However for
+			 * backward compatibility/safety it will be handled as it was in earlier versions.
+			*/
 			TemplateController templateController = (TemplateController)params.get("templateLogic");
-			if(templateController != null)
+			boolean exceptionHandled = false;
+			if (templateType != null)
+			{
+				if (templateType.equals(TEMPLATETYPE_COMPONENT_TEMPLATE) || templateType.equals(TEMPLATETYPE_PRETEMPLATE_COMPONENT) || templateType.equals(TEMPLATETYPE_FULLPAGE))
+				{
+					String componentNameForLogger = component == null ? null : component.getName();
+					Logger componentLogger = LoggerTagsUtil.getTagsUtil().getLogger(componentNameForLogger);
+					if (templateType.equals(TEMPLATETYPE_FULLPAGE))
+					{
+						MDC.put("componentId", -1);
+					}
+					else
+					{
+						MDC.put("componentId", component.getId());
+					}
+					MDC.put("templateType", templateType);
+					if (templateController != null)
+					{
+						InfoGluePrincipal principal = templateController.getPrincipal();
+						MDC.put("siteNodeId", templateController.getSiteNodeId());
+						MDC.put("principalName", principal == null ? "null" : principal.getName());
+						MDC.put("languageId", templateController.getLanguageId());
+					}
+					componentLogger.error("Error when rendering component. Message: " + ex.getMessage());
+					componentLogger.warn("Error when rendering component.", ex);
+					exceptionHandled = true;
+				}
+			}
+
+			if (!exceptionHandled)
+			{
+				logger.error("Error rendering template [" + componentName + "]. Message: " + ex.getMessage());
+				logger.warn("Error rendering template [" + componentName + "].", ex);
+				if (logger.isDebugEnabled())
+				{
+					logger.debug("Error rendering template [" + componentName + "]. Message: " + ex.getMessage() + ".\nParams: " + params);
+				}
+			}
+
+			//If error we don't want the error cached - right?
+			if (templateController != null)
 			{
 				DeliveryContext deliveryContext = templateController.getDeliveryContext();
 				deliveryContext.setDisablePageCache(true);
 			}
-			
-		    if(CmsPropertyHandler.getOperatingMode().equalsIgnoreCase("0") && (CmsPropertyHandler.getDisableTemplateDebug() == null || !CmsPropertyHandler.getDisableTemplateDebug().equalsIgnoreCase("true")))
-		        pw.println("Error rendering template:" + e.getMessage());
-		    else
-		    {
-			    logger.warn("Warning rendering template::" + e.getMessage(), e);
-			    throw e;
-		    }
+
+			if (CmsPropertyHandler.getOperatingMode().equalsIgnoreCase("0") && isTemplateDebuggingEnabled())
+			{
+				String errorMessage = formatComponentErrorMessage(ex, templateController);
+				pw.println(errorMessage);
+			}
+			else
+			{
+				if (logger.isInfoEnabled())
+				{
+					logger.info("Rendering template threw an exception and it should not be printed to the page. Message: " + ex.getMessage(), ex);
+				}
+				throw ex;
+			}
 		}
+	}
+
+	private boolean isTemplateDebuggingEnabled()
+	{
+		return CmsPropertyHandler.getDisableTemplateDebug() == null || !CmsPropertyHandler.getDisableTemplateDebug().equalsIgnoreCase("true");
+	}
+
+	private String formatComponentErrorMessage(Exception ex, TemplateController templateController) throws SystemException
+	{
+		String errorMessageTemplate = null;
+		if (templateController != null)
+		{
+			Locale locale = templateController.getLocale();
+			if (locale == null)
+			{
+				locale = Locale.ENGLISH;
+			}
+			StringManager stringManager = StringManagerFactory.getPresentationStringManager("org.infoglue.cms.applications", locale);
+			if (stringManager != null)
+			{
+				errorMessageTemplate = stringManager.getString("tool.structuretool.componentRendering.errorMessage");
+			}
+		}
+		if (errorMessageTemplate == null)
+		{
+			errorMessageTemplate = "Error rendering template: ${MESSAGE}"; // Fall-back format
+		}
+		return errorMessageTemplate.replaceAll("\\$\\{MESSAGE\\}", StringEscapeUtils.escapeHtml(ex.getMessage()).replaceAll("\\n+", "<br/>"));
 	}
 
 	/**
@@ -194,18 +280,21 @@ public class VelocityTemplateProcessor
 	 * @throws ServletException
 	 * @throws IOException
 	 */
-	public void dispatchJSP(final Map params, final PrintWriter pw, final String templateAsString, final InfoGlueComponent component) throws ServletException, IOException, Exception
+	public void dispatchJSP(final Map<String, Object> params, final PrintWriter pw, final String templateAsString, final InfoGlueComponent component) throws ServletException, IOException, Exception
 	{
-	    final String dir = CmsPropertyHandler.getContextRootPath() + "jsp";
-	    final String fileName;
-	    if ( component != null ) {
-	        fileName = "Template_" + component.getName().replaceAll( "[^\\w]", "" ) + "_" + templateAsString.hashCode() +  ".jsp";
-	    } else {
-	        fileName = "Template_" + templateAsString.hashCode() + ".jsp";
-	    }
-	    final File template = new File(dir , fileName);
+		final String dir = CmsPropertyHandler.getContextRootPath() + "jsp";
+		final String fileName;
+		if ( component != null )
+		{
+			fileName = "Template_" + component.getName().replaceAll( "[^\\w]", "" ) + "_" + templateAsString.hashCode() +  ".jsp";
+		}
+		else
+		{
+			fileName = "Template_" + templateAsString.hashCode() + ".jsp";
+		}
+		final File template = new File(dir , fileName);
 
-	    synchronized (fileName.intern()) {
+		synchronized (fileName.intern()) {
 		    if(!template.exists()) {
 		        final PrintWriter fpw = new PrintWriter(template);
 		        fpw.print(templateAsString);    
@@ -217,7 +306,8 @@ public class VelocityTemplateProcessor
 	    final ScriptController scriptController = (ScriptController)params.get("scriptLogic");
 	    final TemplateController templateController = (TemplateController)params.get("templateLogic");
 	    final PortalController portletController = (PortalController)params.get("portalLogic");
-	    final Map<String,Object> model = (Map<String,Object>)params.get("model");
+	    @SuppressWarnings("unchecked")
+		final Map<String,Object> model = (Map<String,Object>)params.get("model");
 	    if(templateController != null)
 	    {
 	    	final DeliveryContext deliveryContext = templateController.getDeliveryContext();
@@ -259,7 +349,7 @@ public class VelocityTemplateProcessor
 	 * @deprecated
 	 */
 	@Deprecated
-	public void dispatchJSP(Map params, PrintWriter pw, String templateAsString) throws ServletException, IOException, Exception
+	public void dispatchJSP(Map<String, Object> params, PrintWriter pw, String templateAsString) throws ServletException, IOException, Exception
 	{
 	    Timer timer = new Timer();
 	    timer.setActive(false);
@@ -320,7 +410,8 @@ public class VelocityTemplateProcessor
 	 * @throws ServletException
 	 * @throws IOException
 	 */
-	public void dispatchPHP(final Map params, final PrintWriter pw, final String templateAsString, final InfoGlueComponent component) throws ServletException, IOException, Exception
+	@SuppressWarnings("unused") // TODO: evaluate if we can safely remove the unused variables. Are there any chance of there being a problem?
+	public void dispatchPHP(final Map<String, Object> params, final PrintWriter pw, final String templateAsString, final InfoGlueComponent component) throws ServletException, IOException, Exception
 	{
 	    final String dir = CmsPropertyHandler.getContextRootPath() + "jsp";
 	    final String fileName;
@@ -343,7 +434,8 @@ public class VelocityTemplateProcessor
 	    final ScriptController scriptController = (ScriptController)params.get("scriptLogic");
 	    final TemplateController templateController = (TemplateController)params.get("templateLogic");
 	    final PortalController portletController = (PortalController)params.get("portalLogic");
-	    final Map<String,Object> model = (Map<String,Object>)params.get("model");
+	    @SuppressWarnings("unchecked")
+		final Map<String,Object> model = (Map<String,Object>)params.get("model");
 
 	    byte[] result = null;
 	    if(templateController != null)
