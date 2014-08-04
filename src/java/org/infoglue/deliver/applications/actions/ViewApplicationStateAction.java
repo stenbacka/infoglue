@@ -1331,8 +1331,13 @@ public class ViewApplicationStateAction extends InfoGlueAbstractAction
 	    	if(originalSummary != null && originalStats != null)
 	    	{
 		    	int startLocation = originalSummary.indexOf("Approximate size");
+		    	int endLocation =  originalSummary.indexOf("KB");
 		    	//logger.info("startLocation:" + startLocation);
-		    	//String size = originalSummary.substring(startLocation + 17, originalSummary.indexOf("KB") + 2);
+		    	String size = "N/A";
+		    	if (startLocation > -1 && endLocation > -1)
+		    	{
+		    		size = originalSummary.substring(startLocation + 17, endLocation + 2);
+		    	}
 		    	//logger.info("size:" + size);
 		    	data.put("estimatedSize", "Unknown");
 		

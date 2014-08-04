@@ -481,7 +481,7 @@ public class RedirectController extends BaseController
 			dc.setSiteNodeId(siteNodeId);
 			dc.setContentId(-1);
 
-			List<LanguageVO> languageVOList =  LanguageController.getController().getLanguageVOList(repositoryId, db);
+			List<LanguageVO> languageVOList = LanguageController.getController().getLanguageVOList(repositoryId, db);
 			for(LanguageVO languageVO : languageVOList)
 			{
 				dc.setLanguageId(languageVO.getLanguageId());

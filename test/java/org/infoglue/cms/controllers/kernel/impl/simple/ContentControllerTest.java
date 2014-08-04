@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.infoglue.cms.controllers.kernel.impl.simple.CastorDatabaseService;
+import org.infoglue.cms.controllers.kernel.impl.simple.ContentController;
 import org.infoglue.cms.entities.content.Content;
 import org.infoglue.cms.entities.content.ContentVO;
 import org.infoglue.cms.entities.content.impl.simple.SmallContentImpl;
