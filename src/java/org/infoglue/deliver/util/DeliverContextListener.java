@@ -86,18 +86,18 @@ public final class DeliverContextListener implements ServletContextListener
 			 * compatibility with old installations. The appender's file path is now set at build-time.
 			 */
 			String logPath = CmsPropertyHandler.getLogPath();
-			Enumeration enumeration = Logger.getLogger("org.infoglue.cms").getAllAppenders();
-	        while(enumeration.hasMoreElements())
-	        {
-	        	RollingFileAppender appender = (RollingFileAppender)enumeration.nextElement();
-	            if(appender.getName().equalsIgnoreCase("INFOGLUE-FILE"))
-	            {
-	    			appender.setFile(logPath);
-	    			appender.activateOptions();
-	            	Logger.getLogger(ComponentBasedHTMLPageInvoker.class).addAppender(appender);
-	            	break;
-	            }
-	        }
+			Enumeration<RollingFileAppender> enumeration = Logger.getLogger("org.infoglue.cms").getAllAppenders();
+			while(enumeration.hasMoreElements())
+			{
+				RollingFileAppender appender = enumeration.nextElement();
+				if(appender.getName().equalsIgnoreCase("INFOGLUE-FILE"))
+				{
+					appender.setFile(logPath);
+					appender.activateOptions();
+					Logger.getLogger(ComponentBasedHTMLPageInvoker.class).addAppender(appender);
+					break;
+				}
+			}
 
 			String expireCacheAutomaticallyString = CmsPropertyHandler.getExpireCacheAutomatically();
 			if(expireCacheAutomaticallyString != null)

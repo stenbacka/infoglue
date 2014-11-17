@@ -1,17 +1,14 @@
 package org.infoglue.deliver.taglib.log;
 
 import org.apache.log4j.Logger;
-import org.infoglue.cms.applications.common.VisualFormatter;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.deliver.applications.actions.InfoGlueComponent;
 import org.infoglue.deliver.controllers.kernel.impl.simple.TemplateController;
-import org.infoglue.deliver.util.Timer;
 
 public class LoggerTagsUtil {
 	private static final Logger logger = Logger.getLogger(LoggerTagsUtil.class);
 	
 	private static LoggerTagsUtil singleton;
-	private final VisualFormatter vf;
 	
 	public static LoggerTagsUtil getTagsUtil()
 	{
@@ -24,12 +21,12 @@ public class LoggerTagsUtil {
 	
 	private LoggerTagsUtil()
 	{
-		this.vf = new VisualFormatter();
 	}
 	
 	/**
 	 * Gets a Log4J {@link Logger} reference based on the given <em>componentName</em>. That is, the Logger's name will be the 
 	 * component package name (InfoGlue property: infoglueComponentBasePackage) combined with the componentName (as a Java package).
+	 * The name is strips of spaces and then lower cased before it is used to get a logger.
 	 * @param componentName The name of the component. Will be appended to the base component package. If null the string "infoGlueComponent"
 	 * will be used as the component name.
 	 * @return A Log4J logger retrieved with {@link Logger#getLogger(String)}
@@ -41,7 +38,7 @@ public class LoggerTagsUtil {
 			componentName = "infoGlueComponent";
 		}
 		String infoglueComponentBasePackage = CmsPropertyHandler.getInfoglueComponentLoggingBasePackage();
-
+		componentName = componentName.replaceAll("[\\s]", "").toLowerCase();
 		return Logger.getLogger(infoglueComponentBasePackage + "." + componentName);
 	}
 

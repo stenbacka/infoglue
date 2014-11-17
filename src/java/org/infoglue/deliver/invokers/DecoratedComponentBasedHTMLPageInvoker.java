@@ -188,18 +188,17 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 			if(decoratePageTemplate.length() > 300000)
 				logger.error("The page at " + this.getTemplateController().getOriginalFullURL() + " was huge and the extra rendering of decorated pages takes some time and memory. If possible please make sure the components handles all rendering they need themselves and disable this step.");
 			logger.info("Running extra decoration");
-			Map context = getDefaultContext();
+			Map<String, Object> context = getDefaultContext();
 			String componentEditorUrl = CmsPropertyHandler.getComponentEditorUrl();
 			context.put("componentEditorUrl", componentEditorUrl);
 			boolean oldUseFullUrl = this.getTemplateController().getDeliveryContext().getUseFullUrl();
 			this.getTemplateController().getDeliveryContext().setUseFullUrl(true);
-			//context.put("currentUrl", URLEncoder.encode(this.getTemplateController().getCurrentPageUrl(), "UTF-8"));
 			context.put("currentUrl", URLEncoder.encode(this.getTemplateController().getOriginalFullURL(), "UTF-8"));
 			context.put("contextName", this.getRequest().getContextPath());
 			this.getTemplateController().getDeliveryContext().setUseFullUrl(oldUseFullUrl);
 			StringWriter cacheString = new StringWriter();
 			PrintWriter cachedStream = new PrintWriter(cacheString);
-			new VelocityTemplateProcessor().renderTemplate(context, cachedStream, decoratePageTemplate, false, baseComponent);
+			new VelocityTemplateProcessor().renderTemplate(context, cachedStream, decoratePageTemplate, false, baseComponent, null, VelocityTemplateProcessor.TEMPLATETYPE_FULLPAGE);
 			decoratePageTemplate = cacheString.toString();
 		}
 
@@ -770,7 +769,7 @@ public class DecoratedComponentBasedHTMLPageInvoker extends ComponentBasedHTMLPa
 			context.put("model", component.getModel());
 			StringWriter cacheString = new StringWriter();
 			PrintWriter cachedStream = new PrintWriter(cacheString);
-			new VelocityTemplateProcessor().renderTemplate(context, cachedStream, componentString, false, component);
+			new VelocityTemplateProcessor().renderTemplate(context, cachedStream, componentString, false, component, null, VelocityTemplateProcessor.TEMPLATETYPE_COMPONENT_TEMPLATE);
 			componentString = cacheString.toString();
 	
 			int bodyIndex = componentString.indexOf("<body");

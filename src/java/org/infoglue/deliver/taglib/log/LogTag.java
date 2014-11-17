@@ -26,7 +26,6 @@ public class LogTag extends TemplateControllerTag
 	@Override
 	public int doEndTag() throws JspException
 	{
-		Timer t = new Timer();
 		TemplateController controller = getController();
 		InfoGlueComponent component = controller.getComponentLogic().getInfoGlueComponent();
 		if (componentName != null)
@@ -69,6 +68,8 @@ public class LogTag extends TemplateControllerTag
 			MDC.remove("siteNodeId");
 			MDC.remove("timerValue");
 			MDC.remove("principalName");
+			MDC.remove("languageId");
+			MDC.remove("componentId");
 		}
 
 		this.message = null;

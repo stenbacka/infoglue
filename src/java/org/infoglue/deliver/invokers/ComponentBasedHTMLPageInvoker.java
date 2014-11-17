@@ -296,7 +296,7 @@ public class ComponentBasedHTMLPageInvoker extends PageInvoker
 				Map<String, Object> context = getDefaultContext();
 				StringWriter cacheString = new StringWriter();
 				PrintWriter cachedStream = new PrintWriter(cacheString);
-				new VelocityTemplateProcessor().renderTemplate(context, cachedStream, pageContent, false, baseComponent);
+				new VelocityTemplateProcessor().renderTemplate(context, cachedStream, pageContent, false, baseComponent, null, VelocityTemplateProcessor.TEMPLATETYPE_FULLPAGE);
 			
 				pageString = cacheString.toString();
 			}

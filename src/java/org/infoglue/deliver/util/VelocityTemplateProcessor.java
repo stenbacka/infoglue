@@ -30,6 +30,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
@@ -39,12 +40,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.MDC;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.infoglue.cms.applications.tasktool.actions.ScriptController;
-import org.infoglue.cms.exception.SystemException;
 import org.infoglue.cms.io.FileHelper;
 import org.infoglue.cms.security.InfoGluePrincipal;
 import org.infoglue.cms.util.CmsPropertyHandler;
@@ -84,8 +85,9 @@ public class VelocityTemplateProcessor
 	public static final String TEMPLATETYPE_FULLPAGE = "FullPage";
 
 	/**
-	 * This method takes arguments and renders a template given as a string to the specified outputstream.
-	 * Improve later - cache for example the engine.
+	 * Convenience method for {@link #renderTemplate(Map, PrintWriter, String, boolean, InfoGlueComponent, String, String)}. Passes <em>null</em> as value
+	 * for the parameters <em>component</em, <em>statisticsSuffix</em> and <em>templateType</em>. Passes <em>false</em> as value for the parameter
+	 * forceVelocity.
 	 */
 	public void renderTemplate(Map<String, Object> params, PrintWriter pw, String templateAsString) throws Exception
 	{
@@ -93,8 +95,8 @@ public class VelocityTemplateProcessor
 	}
 
 	/**
-	 * This method takes arguments and renders a template given as a string to the specified outputstream.
-	 * Improve later - cache for example the engine.
+	 * Convenience method for {@link #renderTemplate(Map, PrintWriter, String, boolean, InfoGlueComponent, String, String)}. Passes <em>null</em> as value
+	 * for the parameters <em>component</em, <em>statisticsSuffix</em> and <em>templateType</em>
 	 */
 	public void renderTemplate(Map<String, Object> params, PrintWriter pw, String templateAsString, boolean forceVelocity) throws Exception
 	{
@@ -102,8 +104,8 @@ public class VelocityTemplateProcessor
 	}
 
 	/**
-	 * This method takes arguments and renders a template given as a string to the specified outputstream.
-	 * Improve later - cache for example the engine.
+	 * Convenience method for {@link #renderTemplate(Map, PrintWriter, String, boolean, InfoGlueComponent, String, String)}. Passes <em>null</em> as value
+	 * for the parameters <em>statisticsSuffix</em> and <em>templateType</em>
 	 */
 	public void renderTemplate(Map<String, Object> params, PrintWriter pw, String templateAsString, boolean forceVelocity, InfoGlueComponent component) throws Exception
 	{
@@ -111,10 +113,18 @@ public class VelocityTemplateProcessor
 	}
 
 	/**
-	 * This method takes arguments and renders a template given as a string to the specified outputstream.
-	 * Improve later - cache for example the engine.
+	 * <p>This method takes arguments and renders a template given as a string to the specified <em>PrintWriter</em>.
+	 * The method tries to identify what rendering engine to use depending the given input.</p>
+
+	 * @param params Parameters to be passed to the execution context
+	 * @param printWriter The result of the rendering will be printed to this writer
+	 * @param templateAsString The text to execute as a template
+	 * @param forceVelocity Circumvent the rendering engine detection and force Velocity rendering
+	 * @param component If an Infoglue component is to be rendered a reference to it should be passed here. Used for utility functionality. May be null, but should not be for component rendering.
+	 * @param statisticsSuffix Used  by RequestAnalyser. May be null.
+	 * @param templateType Used internally to identify special cases in rendering. May be null.
 	 */
-	public void renderTemplate(final Map<String, Object> params, PrintWriter pw, String templateAsString, boolean forceVelocity, InfoGlueComponent component, String statisticsSuffix, String templateType) throws Exception
+	public void renderTemplate(final Map<String, Object> params, PrintWriter printWriter, String templateAsString, boolean forceVelocity, InfoGlueComponent component, String statisticsSuffix, String templateType) throws Exception
 	{
 		String componentName = "Unknown name or not a component";
 		if(component != null)
@@ -128,12 +138,12 @@ public class VelocityTemplateProcessor
 
 			if(!forceVelocity && (templateAsString.indexOf("<%") > -1 || templateAsString.indexOf("http://java.sun.com/products/jsp/dtd/jspcore_1_0.dtd") > -1))
 			{
-				dispatchJSP(params, pw, templateAsString, component);
+				dispatchJSP(params, printWriter, templateAsString, component);
 			}
 			else if(!forceVelocity && templateAsString.indexOf("<?php") > -1)
 			{
 				logger.info("Dispatching php:" + templateAsString.trim());
-				dispatchPHP(params, pw, templateAsString, component);
+				dispatchPHP(params, printWriter, templateAsString, component);
 			}
 			else
 			{
@@ -146,7 +156,7 @@ public class VelocityTemplateProcessor
 
 				if((useFreeMarker || templateAsString.indexOf("<#-- IG:FreeMarker -->") > -1) && !forceVelocity)
 				{
-					FreemarkerTemplateProcessor.getProcessor().renderTemplate(params, pw, templateAsString);
+					FreemarkerTemplateProcessor.getProcessor().renderTemplate(params, printWriter, templateAsString);
 				}
 				else
 				{
@@ -165,7 +175,7 @@ public class VelocityTemplateProcessor
 						logger.info("Going to evaluate the string of length:" + templateAsString.length());
 					}
 
-					Velocity.evaluate(context, pw, "Generator Error", reader);
+					Velocity.evaluate(context, printWriter, "Generator Error", reader);
 				}
 			}
 
@@ -175,42 +185,41 @@ public class VelocityTemplateProcessor
 				logger.info("Rendering took:" + timer.getElapsedTime());
 			}
 		}
-		catch(Exception ex)
+		catch (Exception ex)
 		{
 			/* The templateLogic should only be available if this is a component. However for
 			 * backward compatibility/safety it will be handled as it was in earlier versions.
 			*/
 			TemplateController templateController = (TemplateController)params.get("templateLogic");
-			boolean exceptionHandled = false;
+			boolean componentRelatedRendering = false;
 			if (templateType != null)
 			{
-				if (templateType.equals(TEMPLATETYPE_COMPONENT_TEMPLATE) || templateType.equals(TEMPLATETYPE_PRETEMPLATE_COMPONENT) || templateType.equals(TEMPLATETYPE_FULLPAGE))
-				{
-					String componentNameForLogger = component == null ? null : component.getName();
-					Logger componentLogger = LoggerTagsUtil.getTagsUtil().getLogger(componentNameForLogger);
-					if (templateType.equals(TEMPLATETYPE_FULLPAGE))
-					{
-						MDC.put("componentId", -1);
-					}
-					else
-					{
-						MDC.put("componentId", component.getId());
-					}
-					MDC.put("templateType", templateType);
-					if (templateController != null)
-					{
-						InfoGluePrincipal principal = templateController.getPrincipal();
-						MDC.put("siteNodeId", templateController.getSiteNodeId());
-						MDC.put("principalName", principal == null ? "null" : principal.getName());
-						MDC.put("languageId", templateController.getLanguageId());
-					}
-					componentLogger.error("Error when rendering component. Message: " + ex.getMessage());
-					componentLogger.warn("Error when rendering component.", ex);
-					exceptionHandled = true;
-				}
+				componentRelatedRendering = CmsPropertyHandler.getIsEnabledComponentLogging() && templateType.equals(TEMPLATETYPE_COMPONENT_TEMPLATE) || templateType.equals(TEMPLATETYPE_PRETEMPLATE_COMPONENT) || templateType.equals(TEMPLATETYPE_FULLPAGE);
 			}
-
-			if (!exceptionHandled)
+			if (componentRelatedRendering)
+			{
+				String componentNameForLogger = component == null ? null : component.getName();
+				Logger componentLogger = LoggerTagsUtil.getTagsUtil().getLogger(componentNameForLogger);
+				if (templateType.equals(TEMPLATETYPE_FULLPAGE))
+				{
+					MDC.put("componentId", -1);
+				}
+				else
+				{
+					MDC.put("componentId", component.getId());
+				}
+				MDC.put("templateType", templateType);
+				if (templateController != null)
+				{
+					InfoGluePrincipal principal = templateController.getPrincipal();
+					MDC.put("siteNodeId", templateController.getSiteNodeId());
+					MDC.put("principalName", principal == null ? "null" : principal.getName());
+					MDC.put("languageId", templateController.getLanguageId());
+				}
+				componentLogger.error("Error when rendering component. Message: " + ex.getMessage());
+				componentLogger.warn("Error when rendering component.", ex);
+			}
+			else
 			{
 				logger.error("Error rendering template [" + componentName + "]. Message: " + ex.getMessage());
 				logger.warn("Error rendering template [" + componentName + "].", ex);
@@ -229,8 +238,8 @@ public class VelocityTemplateProcessor
 
 			if (CmsPropertyHandler.getOperatingMode().equalsIgnoreCase("0") && isTemplateDebuggingEnabled())
 			{
-				String errorMessage = formatComponentErrorMessage(ex, templateController);
-				pw.println(errorMessage);
+				String errorMessage = formatComponentErrorMessage(ex, templateController == null ? null : templateController.getLocale(), componentRelatedRendering);
+				printWriter.println(errorMessage);
 			}
 			else
 			{
@@ -248,27 +257,53 @@ public class VelocityTemplateProcessor
 		return CmsPropertyHandler.getDisableTemplateDebug() == null || !CmsPropertyHandler.getDisableTemplateDebug().equalsIgnoreCase("true");
 	}
 
-	private String formatComponentErrorMessage(Exception ex, TemplateController templateController) throws SystemException
+	/**
+	 * <p>Prepares a string that can be inserted into a HTML document to present an exception. Primarily intended for displaying component exceptions.</p>
+	 * 
+	 * <p>The string is based on the file <em>/src/webapp/deliver/componentError.vm</em> if that file can be read from disc.</p>
+	 * 
+	 * @param exception The exception that will be presented in the string.
+	 * @param locale A string manager will be used when generating the string. This locale will be used in that string manager.
+	 * @param formatForHtml true if the returned string should be formated for display in an HTML environment.
+	 * @return A message for the given <em>exception</em>. May contain HTML depending on the value of <em>formatForHtml</em>
+	 */
+	private String formatComponentErrorMessage(Exception exception, Locale locale, boolean formatForHtml)
 	{
 		String errorMessageTemplate = null;
-		if (templateController != null)
+		if (formatForHtml)
 		{
-			Locale locale = templateController.getLocale();
-			if (locale == null)
+			try
 			{
-				locale = Locale.ENGLISH;
+				errorMessageTemplate = FileHelper.getFileAsString(new File(CmsPropertyHandler.getContextDiskPath() + (CmsPropertyHandler.getContextDiskPath().endsWith("/") ? "" : "/") + "deliver/componentError.vm"), "UTF-8");
+				if (locale == null)
+				{
+					locale = Locale.ENGLISH;
+				}
+				StringManager stringManager = StringManagerFactory.getPresentationStringManager("org.infoglue.cms.applications", locale);
+				if (stringManager != null)
+				{
+					Map<String, Object> parameters = new HashMap<String, Object>();
+					parameters.put("ui", stringManager);
+					parameters.put("message", StringEscapeUtils.escapeHtml(exception.getMessage()).replaceAll("\\n+", "<br/>"));
+					parameters.put("rootCauseMessage", StringEscapeUtils.escapeHtml(ExceptionUtils.getRootCauseMessage(exception)).replaceAll("\\n+", "<br/>"));
+					parameters.put("stackTrace", StringEscapeUtils.escapeHtml(ExceptionUtils.getFullStackTrace(exception)).replaceAll("\\n+", "<br/>"));
+
+					java.io.StringWriter tempString = new java.io.StringWriter();
+					PrintWriter pw = new PrintWriter(tempString);
+					renderTemplate(parameters, pw, errorMessageTemplate, true);
+					return tempString.toString();
+				}
 			}
-			StringManager stringManager = StringManagerFactory.getPresentationStringManager("org.infoglue.cms.applications", locale);
-			if (stringManager != null)
+			catch (Throwable fhex)
 			{
-				errorMessageTemplate = stringManager.getString("tool.structuretool.componentRendering.errorMessage");
+				logger.warn("Failed to get velocity template for component error. Will use fall-back message. Message: " + fhex.getMessage());
 			}
+			return "<div class=\"igComponentError\">Error rendering template: " + StringEscapeUtils.escapeHtml(exception.getMessage()).replaceAll("\\n+", "<br/>") + "</div>";
 		}
-		if (errorMessageTemplate == null)
+		else
 		{
-			errorMessageTemplate = "Error rendering template: ${MESSAGE}"; // Fall-back format
+			return "Error rendering template: " + exception.getMessage();
 		}
-		return errorMessageTemplate.replaceAll("\\$\\{MESSAGE\\}", StringEscapeUtils.escapeHtml(ex.getMessage()).replaceAll("\\n+", "<br/>"));
 	}
 
 	/**

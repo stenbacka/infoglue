@@ -3090,4 +3090,10 @@ public class CmsPropertyHandler
 	{
 		return getServerNodeProperty("infoglueComponentLoggingBasePackage", true, "org.infoglue.components");
 	}
+
+	public static boolean getIsEnabledComponentLogging()
+	{
+		String isEnabledComponentLogging = getServerNodeProperty("redirectUsingSystemRedirect", true, "true");
+		return Boolean.parseBoolean(isEnabledComponentLogging);
+	}
 }
