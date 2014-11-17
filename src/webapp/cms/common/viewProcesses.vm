@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+#beginManagementTool("tool.common.viewProcesses.header" "tool.common.viewProcesses.header" "")
+
+<script type="text/javascript" src="script/jquery/jquery-1.2.6.min.js"></script>
+<script type="text/javascript" src="script/underscore/underscore.js"></script>
+
+
+<div class="fullymarginalized">
+	<table class="managementtooledit" cellpadding="2" cellspacing="2" border="0" width="100%" height="30">
+		<tr>
+			<td>
+				<div id="status"></div>
+			</td>
+		</tr>
+	</table>
+</div>
+<script type="underscore/template" id="processTemplate">
+<% _.each(processes, function(process) { %>
+	<p>Name: <%= process.processName %></p>
+	<ol>
+		<% _.each(process.processEvents, function(event) { %>
+			<li><%= event %></li>
+		<% }); %>
+	</ol>
+<% }); %>
+</script>
+<script type="text/javascript">
+//<![CDATA[
+	(function() {
+		var processTemplate = _.template(jQuery("#processTemplate").html());
+		function updateView()
+		{
+			jQuery.getJSON('ViewProcess!showProcessesAsJSON.action?returnAddress=$!returnAddress&processId=$!processId&processName=$!processName', function(data) {
+				if (data)
+				{
+					if (typeof data.redirect !== 'undefined')
+					{
+						document.location.href = data.redirect;
+					}
+					else
+					{
+						jQuery("#status").html(processTemplate(data));
+					}
+				}
+			});
+		};
+
+		var interval = setInterval(function() {
+			if (updateView())
+			{
+				clearInterval(interval);
+			}
+		}, 1000);
+	}());
+//]]>
+</script>
+</body>
+</html>

@@ -65,6 +65,7 @@ import org.infoglue.cms.entities.structure.SiteNodeVersion;
 import org.infoglue.cms.entities.structure.SiteNodeVersionVO;
 import org.infoglue.cms.entities.workflow.EventVO;
 import org.infoglue.cms.security.InfoGluePrincipal;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.deliver.util.HttpHelper;
 
@@ -432,7 +433,7 @@ public class ViewCommonAjaxServicesAction extends InfoGlueAbstractAction
 			}
 		}
 
-		ProcessBean processBean = ProcessBean.createProcessBean(ViewListSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName());
+		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(ViewListSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 		SiteNodeVersionController.getController().getSiteNodeAndAffectedItemsRecursive(siteNodeId, SiteNodeVersionVO.WORKING_STATE, siteNodeVersionVOList, contentVersionVOList, false, false, this.getInfoGluePrincipal(), processBean, getLocale(), -1);
 		
 		this.getResponse().setContentType("text/plain");

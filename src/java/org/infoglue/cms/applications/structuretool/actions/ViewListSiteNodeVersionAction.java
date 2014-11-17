@@ -50,6 +50,7 @@ import org.infoglue.cms.entities.structure.SiteNodeVersionVO;
 import org.infoglue.cms.exception.AccessConstraintException;
 import org.infoglue.cms.exception.SystemException;
 import org.infoglue.cms.security.InfoGluePrincipal;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.AccessConstraintExceptionBuffer;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.cms.util.sorters.ReflectionComparator;
@@ -89,7 +90,7 @@ public class ViewListSiteNodeVersionAction extends InfoGlueAbstractAction
 
 	protected String doExecute() throws Exception 
 	{
-		ProcessBean processBean = ProcessBean.createProcessBean(ViewListSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName());
+		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(ViewListSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 		processBean.setStatus(ProcessBean.RUNNING);
 
 		try

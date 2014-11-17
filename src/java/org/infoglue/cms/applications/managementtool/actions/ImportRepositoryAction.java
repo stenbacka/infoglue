@@ -68,6 +68,7 @@ import org.infoglue.cms.entities.management.RepositoryVO;
 import org.infoglue.cms.entities.management.impl.simple.InfoGlueExportImpl;
 import org.infoglue.cms.entities.structure.SiteNode;
 import org.infoglue.cms.exception.SystemException;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.cms.util.FileUploadHelper;
 import org.infoglue.cms.util.handlers.DigitalAssetBytesHandler;
@@ -115,7 +116,7 @@ public class ImportRepositoryAction extends InfoGlueAbstractAction
 	{
 		if(this.processId != null)
 		{
-			ProcessBean pb = ProcessBean.getProcessBean(ImportRepositoryAction.class.getName(), processId);
+			ProcessBean pb = ProcessBeanService.getService().getProcessBean(ImportRepositoryAction.class.getName(), processId, getInfoGluePrincipal());
 			if(pb != null)
 				pb.removeProcess();
 		}
@@ -356,7 +357,7 @@ public class ImportRepositoryAction extends InfoGlueAbstractAction
 	protected String importV3(File file) throws Exception 
 	{
 		String exportId = "Import_" + visualFormatter.formatDate(new Date(), "yyyy-MM-dd_HHmm");
-		ProcessBean processBean = ProcessBean.createProcessBean(ImportRepositoryAction.class.getName(), exportId);
+		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(ImportRepositoryAction.class.getName(), exportId, getInfoGluePrincipal());
 		
 		OptimizedImportController.importRepositories(file, this.onlyLatestVersions, this.standardReplacement, this.replacements, processBean);
 		
@@ -385,7 +386,7 @@ public class ImportRepositoryAction extends InfoGlueAbstractAction
 				String[] repositories = getRequest().getParameterValues("repositoryId");
 				
 				String exportId = "Copy_Import_" + visualFormatter.formatDate(new Date(), "yyyy-MM-dd_HHmm");
-				ProcessBean processBean = ProcessBean.createProcessBean(ImportRepositoryAction.class.getName(), exportId);
+				ProcessBean processBean = ProcessBeanService.getService().createProcessBean(ImportRepositoryAction.class.getName(), exportId, getInfoGluePrincipal());
 				
 				OptimizedExportController.copy(repositories, -1, false, null, processBean, onlyLatestVersions, standardReplacement, replacements);
 
@@ -613,9 +614,9 @@ public class ImportRepositoryAction extends InfoGlueAbstractAction
 		this.processId = processId;
 	}
 
-	public List<ProcessBean> getProcessBeans()
+	public List<ProcessBean> getProcessBeans() throws SystemException
 	{
-		return ProcessBean.getProcessBeans(ImportRepositoryAction.class.getName());
+		return ProcessBeanService.getService().getProcessBeans(ImportRepositoryAction.class.getName(), getInfoGluePrincipal());
 	}
 	
 	public String getStatusAsJSON()

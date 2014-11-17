@@ -60,9 +60,11 @@ import org.infoglue.cms.applications.databeans.ProcessBean;
 import org.infoglue.cms.applications.managementtool.actions.ImportRepositoryAction;
 import org.infoglue.cms.entities.content.Content;
 import org.infoglue.cms.entities.kernel.BaseEntityVO;
+import org.infoglue.cms.exception.ConstraintException;
 import org.infoglue.cms.exception.SystemException;
 import org.infoglue.cms.io.FileHelper;
 import org.infoglue.cms.security.InfoGlueAuthenticationFilter;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.cms.util.dom.DOMBuilder;
 import org.infoglue.cms.util.workflow.InfoGlueJDBCPropertySet;
@@ -1047,7 +1049,7 @@ public class InstallationController extends BaseController
 			createSampleSites();
 	}
 
-	private void createSampleSites() throws SystemException 
+	private void createSampleSites() throws ConstraintException, Exception 
 	{
 		VisualFormatter visualFormatter = new VisualFormatter();
 
@@ -1056,7 +1058,7 @@ public class InstallationController extends BaseController
 			throw new SystemException("The file upload must have gone bad as no example site was found.");
 		
 		String exportId = "Import_" + visualFormatter.formatDate(new Date(), "yyyy-MM-dd_HHmm");
-		ProcessBean processBean = ProcessBean.createProcessBean(ImportRepositoryAction.class.getName(), exportId);
+		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(ImportRepositoryAction.class.getName(), exportId, UserControllerProxy.getController().getUser(CmsPropertyHandler.getAnonymousUser()));
 		try 
 		{
 			OptimizedImportController.importRepositories(file, "false", null, null, processBean);

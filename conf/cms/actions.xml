@@ -1909,4 +1909,10 @@
 		<view name="error">/cms/common/error.vm</view>
 	</action>
 
+	<action name="org.infoglue.cms.applications.common.actions.ViewProcessAction" alias="ViewProcess">
+		<view name="success">/cms/common/viewProcesses.vm</view>
+		<view name="successList">/cms/common/viewListProcesses.vm</view>
+		<view name="accessDenied">/cms/contenttool/viewConstraintException.vm</view>
+	</action>
+
 </actions>

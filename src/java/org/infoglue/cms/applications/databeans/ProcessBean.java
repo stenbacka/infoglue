@@ -28,183 +28,147 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import net.sf.cglib.core.ProcessArrayCallback;
+import java.util.MissingResourceException;
 
 import org.apache.log4j.Logger;
-import org.infoglue.cms.applications.managementtool.actions.ExportRepositoryAction;
-import org.infoglue.cms.security.InfoGluePrincipal;
-import org.infoglue.cms.util.ChangeNotificationController;
-
-import com.google.gson.Gson;
-import com.google.gson.annotations.Expose;
+import org.infoglue.cms.services.ProcessBeanService;
+import org.infoglue.cms.util.StringManager;
 
 /**
- * This bean allows for processes to give information about the process itself and what the status is.
- * The bean has a listener option in which an external class can ask it to report process when it happens (push).
+ * A bean class used by the {@link org.infoglue.cms.services.ProcessBeanService} to keep track of processes.
  * 
  * @author Mattias Bogeblad
+ * @author Erik Stenbacka <stenbacka@gmail.com>
  */
-
 public class ProcessBean
 {
-    private final static Logger logger = Logger.getLogger(ProcessBean.class.getName());
+	private final static Logger logger = Logger.getLogger(ProcessBean.class.getName());
 
-    //The class has its own factory and list of all active processBeans
-    private static List<ProcessBean> processBeans = new ArrayList<ProcessBean>();
-    public static List<ProcessBean> getProcessBeans()
-    {
-    	return processBeans;
-    }
-    /**
-     * Returns a list of all processes that has he given <em>processName</em>.
-     * 
-     * The returned list is a shallow (filtered) copy of the list holding all processes.
-     * As such changes made to the list will not be reflected in the original list however
-     * changes made to the ProcessBeans in the list <b>will</b> affect the original process object.
-     * @param processName
-     * @return
-     */
-    public static List<ProcessBean> getProcessBeans(String processName)
-    {
-    	List<ProcessBean> processBeansWithName = new ArrayList<ProcessBean>();
-    	for(ProcessBean processBean : processBeans)
-    	{
-    		if(processBean.getProcessName().equals(processName))
-    			processBeansWithName.add(processBean);
-    	}
-    	
-    	return processBeansWithName;
-    }
-    public static ProcessBean getProcessBean(String processName, String processId)
-    {
-    	for(ProcessBean processBean : processBeans)
-    	{
-    		if(processBean.getProcessName().equals(processName) && processBean.getProcessId().equals(processId))
-    			return processBean;
-    	}
-    	
-    	return null;
-    }
-    public static ProcessBean createProcessBean(String processName, String processId)
-    {
-    	ProcessBean processBean = new ProcessBean(processName, processId);
-    	getProcessBeans().add(processBean);
-    	
-    	return processBean;
-    }
-    //-End factory stuff
-    
-    
-    public static final int NOT_STARTED = 0;
-    public static final int RUNNING = 1;
-    public static final int FINISHED = 2;
-    /** Indicates that the process has entered an unrecoverable error state. */
-    public static final int ERROR = 3;
-    
+	public static final int NOT_STARTED = 0;
+	public static final int RUNNING = 1;
+	public static final int FINISHED = 2;
+	/** Indicates that the process has entered an unrecoverable error state. */
+	public static final int ERROR = 3;
+
 	//ID can be any string the process decides while processName is a general name for all instances of a certain process.
-    private String processName;
-    private String processId;
-    private int status = NOT_STARTED;
-    // TODO should the dates really be initiated here? getFinished() will say that the process has finished even though it has not
-    private Date started = new Date();
+	private String processName;
+	private String processId;
+	private String initiator;
+	private transient StringManager stringManager;
+	private int status = NOT_STARTED;
+	// TODO should the dates really be initiated here? getFinished() will say that the process has finished even though it has not
+	private Date started = new Date();
 	private Date finished = new Date();
-    
+	private transient boolean autoRemoveOnSuccess = false;
+
 	private String errorMessage;
-	private Throwable exception;
-    
-    private transient List<ProcessBeanListener> listeners = new ArrayList<ProcessBeanListener>();
-    private List<String> processEvents = new ArrayList<String>();
-    private Map<String,Map<String,Object>> artifacts = new HashMap<String,Map<String,Object>>();
-    private List<File> files = new ArrayList<File>();
+	// TODO Write custom serializer so we don't get circular dependency
+	private transient Throwable exception;
 
-    private ProcessBean()
-    {
-    }
+	private transient List<ProcessBeanListener> listeners = new ArrayList<ProcessBeanListener>();
+	private List<String> processEvents = new ArrayList<String>();
+	private Map<String,Map<String,Object>> artifacts = new HashMap<String,Map<String,Object>>();
+	private List<File> files = new ArrayList<File>();
 
-    private ProcessBean(String processName, String processId)
-    {
-    	this.processName = processName;
-    	this.processId = processId;
-    }
-    
-    /**
-     * This method sends the event description to all listeners.
-     * 
-     * @param eventDescription
-     */
-    public void updateProcess(String eventDescription)
-    {
-    	processEvents.add(eventDescription);
-    	// TODO Does this need to be synchronized with adding listeners?
-    	for(ProcessBeanListener processBeanListener : listeners)
-    	{
-    		try
-    		{
-        		processBeanListener.processUpdated(eventDescription);
-    		}
-    		catch (Exception e) 
-    		{
-    			logger.error("Error updating ProcessBeanListener: " + e.getMessage());
+	public ProcessBean(String processName, String processId)
+	{
+		this(processName, processId, null, null);
+	}
+
+	public ProcessBean(String processName, String processId, String initiator, StringManager stringManager)
+	{
+		this.processName = processName;
+		this.processId = processId;
+		this.initiator = initiator;
+		this.stringManager = stringManager;
+	}
+	
+	private String processDescription(String eventDescription, Object[] args)
+	{
+		if (stringManager != null)
+		{
+			try
+			{
+				return stringManager.getString(eventDescription, args);
 			}
-    	}
-    }
-
-    /**
-     * This method sends the event description to all listeners.
-     * 
-     * @param eventDescription
-     */
-    public void updateLastDescription(String eventDescription)
-    {
-    	if(processEvents.size() > 0)
-    		processEvents.remove(processEvents.size() - 1);
-    	processEvents.add(eventDescription);
-    	// TODO Does this need to be synchronized with adding listeners?
-    	for(ProcessBeanListener processBeanListener : listeners)
-    	{
-    		try
-    		{
-        		processBeanListener.processUpdatedLastDescription(eventDescription);
-    		}
-    		catch (Exception e) 
-    		{
-    			logger.error("Error updating ProcessBeanListener: " + e.getMessage());
+			catch (MissingResourceException mrex)
+			{
+				logger.debug("The given event description was not a valid resource key. Event description: " + eventDescription);
 			}
-    	}
-    }
+		}
+		return eventDescription;
+	}
 
-    /**
-     * This method sends the new artifact to all listeners.
-     * 
-     * 
-     */
-    public void updateProcessArtifacts(String artifactId, String url, File file)
-    {
-    	Map<String,Object> artifactDescMap = new HashMap<String,Object>();
-    	artifactDescMap.put("url", url);
-    	artifactDescMap.put("file", file);
-    	artifactDescMap.put("fileSize", file.length());
-    	
-    	artifacts.put(artifactId, artifactDescMap);
-    	
-    	files.add(file);
-    	for(ProcessBeanListener processBeanListener : listeners)
-    	{
-    		try
-    		{
-        		processBeanListener.processArtifactsUpdated(artifactId, url, file);
-    		}
-    		catch (Exception e) 
-    		{
-    			logger.error("Error updating ProcessBeanListener: " + e.getMessage());
+	/**
+	 * This method sends the event description to all listeners.
+	 * 
+	 * @param eventDescription
+	 */
+	public void updateProcess(String eventDescription, Object... args)
+	{
+		eventDescription = processDescription(eventDescription, args);
+		processEvents.add(eventDescription);
+		// TODO Does this need to be synchronized with adding listeners?
+		for(ProcessBeanListener processBeanListener : listeners)
+		{
+			try
+			{
+				processBeanListener.processUpdated(eventDescription);
 			}
-    	}
-    }
+			catch (Exception e) 
+			{
+				logger.error("Error updating ProcessBeanListener: " + e.getMessage());
+			}
+		}
+	}
+	
+	public void updateLastDescription(String eventDescription, Object... args)
+	{
+		eventDescription = processDescription(eventDescription, args);
+		processEvents.set(processEvents.size() - 1, eventDescription);
+		for(ProcessBeanListener processBeanListener : listeners)
+		{
+			try
+			{
+				processBeanListener.processUpdated(eventDescription);
+			}
+			catch (Exception e) 
+			{
+				logger.error("Error updating ProcessBeanListener: " + e.getMessage());
+			}
+		}
+	}
 
-    /**
-     * This method removes the bean from list of active processes and clears all references.
-     */
+	/**
+	 * This method sends the new artifact to all listeners.
+	 * 
+	 */
+	public void updateProcessArtifacts(String artifactId, String url, File file)
+	{
+		Map<String,Object> artifactDescMap = new HashMap<String,Object>();
+		artifactDescMap.put("url", url);
+		artifactDescMap.put("file", file);
+		artifactDescMap.put("fileSize", file.length());
+
+		artifacts.put(artifactId, artifactDescMap);
+
+		files.add(file);
+		for(ProcessBeanListener processBeanListener : listeners)
+		{
+			try
+			{
+	    		processBeanListener.processArtifactsUpdated(artifactId, url, file);
+			}
+			catch (Exception e) 
+			{
+				logger.error("Error updating ProcessBeanListener: " + e.getMessage());
+			}
+		}
+	}
+
+	/**
+	 * This method removes the bean from list of active processes and clears all references.
+	 */
 	public void removeProcess()
 	{
 		updateProcess("Process removed");
@@ -216,7 +180,7 @@ public class ProcessBean
 				file.delete();
 			}
 		}
-		getProcessBeans().remove(this);
+		ProcessBeanService.getService().getProcessBeans().remove(this);
 	}
 
 	/**
@@ -224,9 +188,9 @@ public class ProcessBean
 	 * second parameter.
 	 * @param errorMessage
 	 */
-	public void setError(String errorMessage)
+	public void setError(String errorMessage, Object... args)
 	{
-		setError(errorMessage, null);
+		setError(errorMessage, null, args);
 	}
 
 	/**
@@ -235,18 +199,24 @@ public class ProcessBean
 	 * @param errorMessage
 	 * @param exception The exception that caused the process to fail. May be null if the error was not related to an exception.
 	 */
-	public void setError(String errorMessage, Throwable exception)
+	public void setError(String errorMessage, Throwable exception, Object... args)
 	{
+		errorMessage = processDescription(errorMessage, args);
 		this.errorMessage = errorMessage;
 		this.exception = exception;
 		setStatus(ERROR);
 	}
-	
+
+	public void setAutoRemoveOnSuccess(boolean autoRemoveOnSuccess)
+	{
+		this.autoRemoveOnSuccess = autoRemoveOnSuccess;
+	}
+
 	public String getErrorMessage()
 	{
 		return this.errorMessage;
 	}
-	
+
 	public Throwable getException()
 	{
 		return this.exception;
@@ -262,10 +232,15 @@ public class ProcessBean
 		return processId;
 	}
 
-    public int getStatus()
-    {
-    	return this.status;
-    }
+	public String getInitiator()
+	{
+		return initiator;
+	}
+
+	public int getStatus()
+	{
+		return this.status;
+	}
 
 	public Date getStarted() 
 	{
@@ -293,25 +268,38 @@ public class ProcessBean
 	 * 
 	 * @param status The new status. See available values in text above.
 	 */
-    public void setStatus(int status)
-    {
-    	this.status = status;
-    	if(status == RUNNING)
-    		this.started = new Date();
-    	else if(status == FINISHED || status == ERROR)
-    	{
-    		this.finished = new Date();
-    		ChangeNotificationController.getInstance().notifyListeners();
-    	}
-    }
-    
-    public List<String> getProcessEvents()
-    {
-    	return this.processEvents;
-    }
-    
-    public Map<String,Map<String,Object>> getProcessArtifacts()
-    {
-    	return this.artifacts;
-    }
+	public void setStatus(int status)
+	{
+		this.status = status;
+		switch (this.status)
+		{
+			case RUNNING:
+				this.started = new Date();
+				break;
+			case FINISHED: // Fall-through case (!)
+				if (this.autoRemoveOnSuccess)
+				{
+					removeProcess();
+				}
+			case ERROR:
+				this.finished = new Date();
+				break;
+		}
+	}
+
+	public List<String> getProcessEvents()
+	{
+		return this.processEvents;
+	}
+
+	public Map<String,Map<String,Object>> getProcessArtifacts()
+	{
+		return this.artifacts;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "ProcessBean [processName=" + processName + ", processId=" + processId + ", initiator=" + initiator + ", status=" + status + ", started=" + started + ", finished=" + finished + ", errorMessage=" + errorMessage + "]";
+	}
 }

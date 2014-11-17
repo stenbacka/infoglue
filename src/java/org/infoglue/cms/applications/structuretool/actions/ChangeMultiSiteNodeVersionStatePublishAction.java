@@ -46,6 +46,7 @@ import org.infoglue.cms.entities.management.RepositoryVO;
 import org.infoglue.cms.entities.publishing.PublicationVO;
 import org.infoglue.cms.entities.structure.SiteNodeVO;
 import org.infoglue.cms.entities.structure.SiteNodeVersionVO;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.deliver.util.Timer;
 
@@ -83,7 +84,7 @@ public class ChangeMultiSiteNodeVersionStatePublishAction extends InfoGlueAbstra
 	   
     public String doExecute() throws Exception
     {      
-			ProcessBean processBean = ProcessBean.createProcessBean(this.getClass().getName(), "" + getInfoGluePrincipal().getName());
+			ProcessBean processBean = ProcessBeanService.getService().createProcessBean(this.getClass().getName(), "" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 			processBean.setStatus(ProcessBean.RUNNING);
 			
 			try

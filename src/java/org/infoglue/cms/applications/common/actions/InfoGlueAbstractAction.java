@@ -70,6 +70,7 @@ import org.infoglue.cms.entities.management.LanguageVO;
 import org.infoglue.cms.entities.management.RepositoryVO;
 import org.infoglue.cms.entities.structure.SiteNodeVO;
 import org.infoglue.cms.entities.structure.SiteNodeVersionVO;
+import org.infoglue.cms.exception.AccessConstraintException;
 import org.infoglue.cms.exception.Bug;
 import org.infoglue.cms.exception.ConstraintException;
 import org.infoglue.cms.exception.SystemException;
@@ -80,6 +81,7 @@ import org.infoglue.cms.security.interceptors.InfoGlueInterceptor;
 import org.infoglue.cms.services.AdminToolbarService;
 import org.infoglue.cms.services.AdminToolsService;
 import org.infoglue.cms.services.InterceptionService;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.cms.util.sorters.ReflectionComparator;
 import org.infoglue.deliver.controllers.kernel.impl.simple.ExtranetController;
@@ -1753,9 +1755,9 @@ public abstract class InfoGlueAbstractAction extends WebworkAbstractAction
 		return "" + (((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024)) + " MB used of " + ((Runtime.getRuntime().maxMemory() / 1024 / 1024)) + " MB";
 	}
 	
-	public ProcessBean getProcessBean()
+	public ProcessBean getProcessBean() throws AccessConstraintException, SystemException
 	{
-		return ProcessBean.getProcessBean(this.getClass().getName(), ""+getInfoGluePrincipal().getName());
+		return ProcessBeanService.getService().getProcessBean(this.getClass().getName(), ""+getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 	}
 	
 	public String getStatusAsJSON()

@@ -49,6 +49,7 @@ import org.infoglue.cms.entities.structure.SiteNodeVersionVO;
 import org.infoglue.cms.exception.ConstraintException;
 import org.infoglue.cms.exception.SystemException;
 import org.infoglue.cms.security.InfoGluePrincipal;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.cms.util.ConstraintExceptionBuffer;
 import org.infoglue.deliver.util.RequestAnalyser;
@@ -315,7 +316,7 @@ public class SiteNodeNodeSupplier extends BaseNodeSupplier
 							Set<SiteNodeVersionVO> siteNodeVersionVOList = new HashSet<SiteNodeVersionVO>();
 							Set<ContentVersionVO> contentVersionVOList = new HashSet<ContentVersionVO>();
 							
-							ProcessBean processBean = ProcessBean.createProcessBean(ViewListSiteNodeVersionAction.class.getName(), "" + infogluePrincipal.getName());
+							ProcessBean processBean = ProcessBeanService.getService().createProcessBean(ViewListSiteNodeVersionAction.class.getName(), "" + infogluePrincipal.getName(), infogluePrincipal);
 							SiteNodeVersionController.getController().getSiteNodeAndAffectedItemsRecursive(vo.getId(), SiteNodeVersionVO.WORKING_STATE, siteNodeVersionVOList, contentVersionVOList, false, false, infogluePrincipal, processBean, masterLanguageVO.getLocale(), -1);
 							if(siteNodeVersionVOList.size() > 0 || contentVersionVOList.size() > 0)
 								node.getParameters().put("stateId", "0");

@@ -52,6 +52,7 @@ import org.infoglue.cms.entities.publishing.PublicationVO;
 import org.infoglue.cms.entities.workflow.EventVO;
 import org.infoglue.cms.exception.AccessConstraintException;
 import org.infoglue.cms.exception.SystemException;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.AccessConstraintExceptionBuffer;
 
 /**
@@ -130,7 +131,7 @@ public class UnpublishContentVersionAction extends InfoGlueAbstractAction
 
 	public String doInputChooseContents() throws Exception 
 	{
-		ProcessBean processBean = ProcessBean.createProcessBean(UnpublishContentVersionAction.class.getName(), "" + getInfoGluePrincipal().getName());
+		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(UnpublishContentVersionAction.class.getName(), "" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 		processBean.setStatus(ProcessBean.RUNNING);
 
 		try
@@ -298,7 +299,7 @@ public class UnpublishContentVersionAction extends InfoGlueAbstractAction
 	   
     public String doUnpublishAll() throws Exception
     {   
-		ProcessBean processBean = ProcessBean.createProcessBean(UnpublishContentVersionAction.class.getName(), "" + getInfoGluePrincipal().getName());
+		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(UnpublishContentVersionAction.class.getName(), "" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 		processBean.setStatus(ProcessBean.RUNNING);
 
 		String[] contentIdStrings = getRequest().getParameterValues("sel");

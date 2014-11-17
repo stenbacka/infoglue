@@ -52,6 +52,8 @@ import org.infoglue.cms.entities.structure.SiteNodeVersion;
 import org.infoglue.cms.entities.structure.SiteNodeVersionVO;
 import org.infoglue.cms.entities.workflow.EventVO;
 import org.infoglue.cms.exception.AccessConstraintException;
+import org.infoglue.cms.exception.SystemException;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.AccessConstraintExceptionBuffer;
 
 /**
@@ -116,7 +118,7 @@ public class UnpublishSiteNodeVersionAction extends InfoGlueAbstractAction
 	
 	public String doInputChooseSiteNodes() throws Exception 
 	{
-		ProcessBean processBean = ProcessBean.createProcessBean(UnpublishSiteNodeVersionAction.class.getName(), "" + siteNodeId + "_" + getInfoGluePrincipal().getName());
+		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(UnpublishSiteNodeVersionAction.class.getName(), "" + siteNodeId + "_" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 		processBean.setStatus(ProcessBean.RUNNING);
 		
 		try
@@ -270,7 +272,7 @@ public class UnpublishSiteNodeVersionAction extends InfoGlueAbstractAction
 	   
     public String doUnpublishAll() throws Exception
     {   
-    	ProcessBean processBean = ProcessBean.createProcessBean(UnpublishSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName());
+    	ProcessBean processBean = ProcessBeanService.getService().createProcessBean(UnpublishSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 		processBean.setStatus(ProcessBean.RUNNING);
 
 		try
@@ -412,7 +414,7 @@ public class UnpublishSiteNodeVersionAction extends InfoGlueAbstractAction
 	   
     public String doUnpublishLatest() throws Exception
     {   
-    	ProcessBean processBean = ProcessBean.createProcessBean(UnpublishSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName());
+    	ProcessBean processBean = ProcessBeanService.getService().createProcessBean(UnpublishSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 		processBean.setStatus(ProcessBean.RUNNING);
 
 		try
@@ -661,9 +663,9 @@ public class UnpublishSiteNodeVersionAction extends InfoGlueAbstractAction
 		this.userSessionKey = userSessionKey;
 	}
 
-	public ProcessBean getProcessBean()
+	public ProcessBean getProcessBean() throws AccessConstraintException, SystemException
 	{
-		return ProcessBean.getProcessBean(UnpublishSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName());
+		return ProcessBeanService.getService().getProcessBean(UnpublishSiteNodeVersionAction.class.getName(), "" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 	}
 
 	public String getStatusAsJSON()

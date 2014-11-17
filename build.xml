@@ -591,6 +591,13 @@
 		<copy file="${conf}/web-app_2_3.dtd" tofile="${deploy.dir.cms}/WEB-INF/web-app_2_3.dtd" overwrite="true">
 			<filterset refid="project.filters"/>
 		</copy>
+		<copy file="${conf}/log4j.xml" tofile="${deploy.dir.cms}/WEB-INF/classes/log4j.xml" overwrite="true">
+			<filterset>
+				<filter token="deployDirectory" value="${deploy.dir.cms}" />
+				<filter token="warningLogName" value="cms" />
+			</filterset>
+			<filterset refid="project.filters"/>
+		</copy>
 		<unzip dest="${deploy.dir.cms}/applications/">
 		    <fileset dir="${deploy.dir.cms}/applications/">
 		        <include name="*.zip"/>
@@ -620,6 +627,13 @@
 			<filterset refid="project.filters"/>
 		</copy>
 		<copy file="${conf}/web-app_2_3.dtd" tofile="${deploy.dir.working}/WEB-INF/web-app_2_3.dtd" overwrite="true">
+			<filterset refid="project.filters"/>
+		</copy>
+		<copy file="${conf}/log4j.xml" tofile="${deploy.dir.working}/WEB-INF/classes/log4j.xml" overwrite="true">
+			<filterset>
+				<filter token="deployDirectory" value="${deploy.dir.working}" />
+				<filter token="warningLogName" value="deliver" />
+			</filterset>
 			<filterset refid="project.filters"/>
 		</copy>
 		<unzip dest="${deploy.dir.working}/applications/">
@@ -652,6 +666,13 @@
 		<copy file="${conf}/web-app_2_3.dtd" tofile="${deploy.dir.preview}/WEB-INF/web-app_2_3.dtd" overwrite="true">
 			<filterset refid="project.filters"/>
 		</copy>
+		<copy file="${conf}/log4j.xml" tofile="${deploy.dir.preview}/WEB-INF/classes/log4j.xml" overwrite="true">
+			<filterset>
+				<filter token="deployDirectory" value="${deploy.dir.preview}" />
+				<filter token="warningLogName" value="deliver" />
+			</filterset>
+			<filterset refid="project.filters"/>
+		</copy>
 		<unzip dest="${deploy.dir.preview}/applications/">
 		    <fileset dir="${deploy.dir.preview}/applications/">
 		        <include name="*.zip"/>
@@ -680,6 +701,13 @@
 			<filterset refid="project.filters"/>
 		</copy>
 		<copy file="${conf}/web-app_2_3.dtd" tofile="${deploy.dir.live}/WEB-INF/web-app_2_3.dtd" overwrite="true">
+			<filterset refid="project.filters"/>
+		</copy>
+		<copy file="${conf}/log4j.xml" tofile="${deploy.dir.live}/WEB-INF/classes/log4j.xml" overwrite="true">
+			<filterset>
+				<filter token="deployDirectory" value="${deploy.dir.live}" />
+				<filter token="warningLogName" value="deliver" />
+			</filterset>
 			<filterset refid="project.filters"/>
 		</copy>
 			<copy file="${conf}/robots-live.txt" tofile="${deploy.dir.live}/robots.txt" overwrite="true">

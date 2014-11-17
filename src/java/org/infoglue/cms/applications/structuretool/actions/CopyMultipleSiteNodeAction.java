@@ -40,6 +40,7 @@ import org.infoglue.cms.controllers.kernel.impl.simple.SiteNodeController;
 import org.infoglue.cms.controllers.kernel.impl.simple.SiteNodeControllerProxy;
 import org.infoglue.cms.entities.structure.SiteNodeVO;
 import org.infoglue.cms.exception.ConstraintException;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.ConstraintExceptionBuffer;
 import org.infoglue.cms.util.dom.DOMBuilder;
 
@@ -140,7 +141,7 @@ public class CopyMultipleSiteNodeAction extends InfoGlueAbstractAction
     	
         String errorMessage = "";
         
-		ProcessBean processBean = ProcessBean.createProcessBean(this.getClass().getName(), "" + getInfoGluePrincipal().getName());
+		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(this.getClass().getName(), "" + getInfoGluePrincipal().getName(), getInfoGluePrincipal());
 		processBean.setStatus(ProcessBean.RUNNING);
 
 		try

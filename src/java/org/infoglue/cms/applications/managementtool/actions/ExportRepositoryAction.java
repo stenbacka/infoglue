@@ -62,6 +62,7 @@ import org.infoglue.cms.entities.management.impl.simple.InfoGlueExportImpl;
 import org.infoglue.cms.entities.structure.SiteNode;
 import org.infoglue.cms.entities.structure.SiteNodeVersionVO;
 import org.infoglue.cms.exception.SystemException;
+import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.cms.util.handlers.DigitalAssetBytesHandler;
 
@@ -109,7 +110,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 	{
 		if(this.processId != null)
 		{
-			ProcessBean pb = ProcessBean.getProcessBean(ExportRepositoryAction.class.getName(), processId);
+			ProcessBean pb = ProcessBeanService.getService().getProcessBean(ExportRepositoryAction.class.getName(), processId, getInfoGluePrincipal());
 			if(pb != null)
 				pb.removeProcess();
 		}
@@ -157,7 +158,7 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 		String[] repositories = getRequest().getParameterValues("repositoryId");
 
 		String exportId = "Export_" + visualFormatter.formatDate(new Date(), "yyyy-MM-dd_HHmm");
-		ProcessBean processBean = ProcessBean.createProcessBean(ExportRepositoryAction.class.getName(), exportId);
+		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(ExportRepositoryAction.class.getName(), exportId, getInfoGluePrincipal());
 		processBean.setStatus(ProcessBean.RUNNING);
 		
 		OptimizedExportController.export(repositories, assetMaxSize, onlyPublishedVersions, exportFileName, processBean);
@@ -572,14 +573,14 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 		}
 	}
 
-	public List<ProcessBean> getProcessBeans()
+	public List<ProcessBean> getProcessBeans() throws SystemException
 	{
-		return ProcessBean.getProcessBeans(ExportRepositoryAction.class.getName());
+		return ProcessBeanService.getService().getProcessBeans(ExportRepositoryAction.class.getName(), getInfoGluePrincipal());
 	}
 
-	public List<ProcessBean> getFilteredProcessBeans()
+	public List<ProcessBean> getFilteredProcessBeans() throws SystemException
 	{
-		List<ProcessBean> processes = ProcessBean.getProcessBeans(ExportRepositoryAction.class.getName());
+		List<ProcessBean> processes = ProcessBeanService.getService().getProcessBeans(ExportRepositoryAction.class.getName(), getInfoGluePrincipal());
 
 		if (logger.isDebugEnabled())
 		{
