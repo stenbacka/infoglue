@@ -1,0 +1,114 @@
+#define( $headerMarkup )
+
+	<link rel="stylesheet" type="text/css" href="css/cms.css" />
+	
+	<script type="text/javascript">
+	</script>
+#end
+
+#beginLightCommonToolV3Impl("tool.common.viewProcess.header" "" "" false true $!disableCloseButton $headerMarkup false "")
+
+	#lightMenuToolbar("" $buttons $rightButtons)
+
+	<div id="igEditArea" class="igScrollArea" onfocus="this.blur();">
+		<h1>$ui.getString("tool.common.viewProcess.header")</h1>
+		<h3>$!processId</h3>
+		#if($processBeanExists)
+			<div id="processSteps">
+				<p class="initializing">$ui.getString("tool.common.viewProcess.initializing")</p>
+				<ol class="stepList">
+					<li class="itemTemplate"></li>
+				</ol>
+			</div>
+		#else
+			<p>$ui.getString("tool.common.viewProcess.noProcessBeanFound")</p>
+		#end
+	</div>
+
+#if( $processBeanExists )
+	<script type="text/javascript">
+	//<![CDATA[
+		(function() {
+			var processTemplate = (function(jq, template) {
+				var list = template.find(".stepList"),
+					itemTemplate = template.find(".itemTemplate"),
+					initializingInfo = template.find(".initializing");
+				
+				itemTemplate.removeClass("template").remove();
+				
+				return {
+					finish: function finishCallback (data) {
+						list.empty();
+						jq.each(data.successActions, function (index, successAction) {
+							var link = jq("<a/>");
+							link.attr("href", successAction.actionURL);
+							link.text(successAction.title);
+							list.append(itemTemplate.clone().append(link));
+						});
+					},
+					error: function errorCallback (data) {
+						list.empty();
+						jq.each(data.errorActions, function (index, errorAction) {
+							var link = jq("<a/>");
+							link.attr("href", errorAction.actionURL);
+							link.text(errorAction.title);
+							list.append(itemTemplate.clone().append(link));
+						});
+					},
+					updateProgress: function updateProgressCallback (data) {
+						initializingInfo.remove();
+						var currentItems = list.children();
+						currentItems.each(function currentItemLoop(index, item) {
+							var item_ = jq(item);
+							if (item_.text() !== data.processEvents[index]) {
+								item_.text(data.processEvents[index]);
+							}
+						});
+						if (data.processEvents.length > currentItems.length) {
+							jq.each(data.processEvents.slice(currentItems.length), function(index, event) {
+								list.append(itemTemplate.clone().text(event));
+							});
+						}
+					}
+				}
+			}(jQuery, jQuery("#processSteps")));
+	
+			function updateView()
+			{
+				jQuery.getJSON('ViewProcess!getProcessAsJSON.action?processId=$!processId&processName=$!processName', function(data) {
+					if (data)
+					{
+						if (data.status === 2)
+						{
+							stopUpdates = true;
+							processTemplate.finish(data);
+						}
+						else if (data.status === 3)
+						{
+							stopUpdates = true;
+							processTemplate.error(data);
+						}
+						else
+						{
+							processTemplate.updateProgress(data);
+						}
+					}
+				});
+			};
+
+			var stopUpdates = false;
+			var interval = setInterval(function() {
+				updateView();
+				if (stopUpdates)
+				{
+					clearInterval(interval);
+				}
+			}, 1000);
+			updateView();
+		}());
+	//]]>
+	</script>
+#end
+	#lightFooterToolbar($footerButtons)
+
+#endLightCommonToolV3()

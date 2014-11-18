@@ -59,7 +59,7 @@ public class ProcessBean
 	// TODO should the dates really be initiated here? getFinished() will say that the process has finished even though it has not
 	private Date started = new Date();
 	private Date finished = new Date();
-	private transient boolean autoRemoveOnSuccess = false;
+	private List<LinkBean> successActions = new ArrayList<LinkBean>();
 
 	private String errorMessage;
 	// TODO Write custom serializer so we don't get circular dependency
@@ -207,11 +207,6 @@ public class ProcessBean
 		setStatus(ERROR);
 	}
 
-	public void setAutoRemoveOnSuccess(boolean autoRemoveOnSuccess)
-	{
-		this.autoRemoveOnSuccess = autoRemoveOnSuccess;
-	}
-
 	public String getErrorMessage()
 	{
 		return this.errorMessage;
@@ -276,11 +271,7 @@ public class ProcessBean
 			case RUNNING:
 				this.started = new Date();
 				break;
-			case FINISHED: // Fall-through case (!)
-				if (this.autoRemoveOnSuccess)
-				{
-					removeProcess();
-				}
+			case FINISHED:
 			case ERROR:
 				this.finished = new Date();
 				break;
@@ -295,6 +286,18 @@ public class ProcessBean
 	public Map<String,Map<String,Object>> getProcessArtifacts()
 	{
 		return this.artifacts;
+	}
+	
+	
+
+	public List<LinkBean> getSuccessActions()
+	{
+		return successActions;
+	}
+
+	public void addSuccessActions(LinkBean successAction)
+	{
+		this.successActions.add(successAction);
 	}
 
 	@Override

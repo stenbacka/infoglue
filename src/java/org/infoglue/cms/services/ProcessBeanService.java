@@ -23,18 +23,29 @@
 
 package org.infoglue.cms.services;
 
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.infoglue.cms.applications.databeans.LinkBean;
 import org.infoglue.cms.applications.databeans.ProcessBean;
 import org.infoglue.cms.controllers.kernel.impl.simple.AccessRightController;
 import org.infoglue.cms.exception.AccessConstraintException;
 import org.infoglue.cms.exception.SystemException;
 import org.infoglue.cms.security.InfoGluePrincipal;
 import org.infoglue.cms.util.StringManager;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * <p>This service provides and administrates {@link ProcessBean}.</p>
@@ -196,5 +207,55 @@ public class ProcessBeanService
 		ProcessBean processBean = new ProcessBean(processName, processId, principal.getName(), stringManager);
 		getProcessBeans().add(processBean);
 		return processBean;
+	}
+	
+	public String getProcessBeanAsJSON(ProcessBean processBean)
+	{
+		Gson gson = createGsonInstance();
+		return gson.toJson(processBean);
+	}
+	
+	public String getProcessBeansAsJSON(List<ProcessBean> processBeans) throws SystemException
+	{
+		Gson gson = createGsonInstance();
+		JsonElement list = null;
+		try
+		{
+			if (processBeans != null)
+			{
+				Type processBeanListType = new TypeToken<List<ProcessBean>>() {}.getType();
+				list = gson.toJsonTree(processBeans, processBeanListType);
+			}
+		}
+		catch (Throwable tr)
+		{
+			logger.error("An error occured when generating JSON for process bean listing. Message: " + tr.getMessage());
+			logger.warn("An error occured when generating JSON for process bean listing.", tr);
+			throw new SystemException("Error when generating JSON", tr);
+		}
+		return gson.toJson(list);
+	}
+	
+	private Gson createGsonInstance()
+	{
+		GsonBuilder builder = new GsonBuilder()
+			.excludeFieldsWithModifiers(Modifier.TRANSIENT, Modifier.STATIC)
+			.setDateFormat("dd MMM HH:mm:ss");
+		builder.registerTypeAdapter(new TypeToken<LinkBean>() {}.getType(), new JsonSerializer<LinkBean>()
+		{
+
+			@Override
+			public JsonElement serialize(LinkBean linkBean, Type type, JsonSerializationContext context)
+			{
+				JsonObject result = new JsonObject();
+				result.addProperty("id", linkBean.getId());
+				result.addProperty("text", linkBean.getText());
+				result.addProperty("title", linkBean.getTitle());
+				result.addProperty("description", linkBean.getDescription());
+				result.addProperty("actionURL", linkBean.getActionURL());
+				return result;
+			}
+		});
+		return builder.create();
 	}
 }

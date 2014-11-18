@@ -43,6 +43,7 @@ import org.exolab.castor.mapping.Mapping;
 import org.exolab.castor.xml.Marshaller;
 import org.infoglue.cms.applications.common.VisualFormatter;
 import org.infoglue.cms.applications.common.actions.InfoGlueAbstractAction;
+import org.infoglue.cms.applications.databeans.LinkBean;
 import org.infoglue.cms.applications.databeans.ProcessBean;
 import org.infoglue.cms.controllers.kernel.impl.simple.AccessRightController;
 import org.infoglue.cms.controllers.kernel.impl.simple.CastorDatabaseService;
@@ -158,12 +159,14 @@ public class ExportRepositoryAction extends InfoGlueAbstractAction
 		String[] repositories = getRequest().getParameterValues("repositoryId");
 
 		String exportId = "Export_" + visualFormatter.formatDate(new Date(), "yyyy-MM-dd_HHmm");
-		ProcessBean processBean = ProcessBeanService.getService().createProcessBean(ExportRepositoryAction.class.getName(), exportId, getInfoGluePrincipal());
+		ProcessBean processBean = prepareProcessBean(ExportRepositoryAction.class.getName(), exportId, null);
+		processBean.addSuccessActions(new LinkBean("apa", "En text", "En titel", "En beskrivning", "GOGOGOG", false, null, null, null, null));
+		processBean.addSuccessActions(new LinkBean("bepa", "En text2", "En titel2", "En beskrivning2", "GOGOGOG2", false, null, null, null, null));
 		processBean.setStatus(ProcessBean.RUNNING);
-		
+
 		OptimizedExportController.export(repositories, assetMaxSize, onlyPublishedVersions, exportFileName, processBean);
 		
-		return "successRedirectToProcesses";
+		return "successV3";
 	}
 
 	/**

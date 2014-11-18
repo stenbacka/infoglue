@@ -408,7 +408,8 @@
 	<action name="org.infoglue.cms.applications.managementtool.actions.ExportRepositoryAction" alias="ExportRepository">
 		<view name="input">/cms/managementtool/viewExportRepositoryInput.vm</view>
 		<view name="success">/cms/managementtool/viewExportRepositoryFinished.vm</view>
-		<view name="successRedirectToProcesses">org.infoglue.cms.applications.common.actions.ExtendedRedirect.action?url=ExportRepository!showProcesses.action</view>
+		<view name="successV3">org.infoglue.cms.applications.common.actions.ExtendedRedirect.action?url=ViewProcess.action#processId#processName</view>
+<!-- 		<view name="successRedirectToProcesses">org.infoglue.cms.applications.common.actions.ExtendedRedirect.action?url=ExportRepository!showProcesses.action</view> -->
 		<view name="successShowProcesses">/cms/managementtool/viewExportRepositoryProcesses.vm</view>
 		<view name="successShowProcessesAsJSON">/cms/managementtool/viewExportRepositoryProcessesAsJson.vm</view>
 		<view name="error">/cms/managementtool/error.vm</view>
@@ -1910,7 +1911,7 @@
 	</action>
 
 	<action name="org.infoglue.cms.applications.common.actions.ViewProcessAction" alias="ViewProcess">
-		<view name="success">/cms/common/viewProcesses.vm</view>
+		<view name="success">/cms/common/viewProcess.vm</view>
 		<view name="successList">/cms/common/viewListProcesses.vm</view>
 		<view name="accessDenied">/cms/contenttool/viewConstraintException.vm</view>
 	</action>

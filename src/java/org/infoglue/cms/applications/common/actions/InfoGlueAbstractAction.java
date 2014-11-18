@@ -83,6 +83,7 @@ import org.infoglue.cms.services.AdminToolsService;
 import org.infoglue.cms.services.InterceptionService;
 import org.infoglue.cms.services.ProcessBeanService;
 import org.infoglue.cms.util.CmsPropertyHandler;
+import org.infoglue.cms.util.StringManager;
 import org.infoglue.cms.util.sorters.ReflectionComparator;
 import org.infoglue.deliver.controllers.kernel.impl.simple.ExtranetController;
 import org.infoglue.deliver.controllers.kernel.impl.simple.RepositoryDeliveryController;
@@ -92,6 +93,8 @@ import org.infoglue.deliver.util.LiveInstanceMonitor;
 import org.infoglue.deliver.util.graphics.ColorHelper;
 import org.infoglue.deliver.util.ioqueue.PublicationQueue;
 import org.infoglue.deliver.util.ioqueue.PublicationQueueBean;
+
+import com.google.gson.JsonObject;
 
 import webwork.action.ActionContext;
 import webwork.config.Configuration;
@@ -104,12 +107,15 @@ import webwork.config.Configuration;
 
 public abstract class InfoGlueAbstractAction extends WebworkAbstractAction
 {
-    private final static Logger logger = Logger.getLogger(InfoGlueAbstractAction.class.getName());
+	private final static Logger logger = Logger.getLogger(InfoGlueAbstractAction.class.getName());
 
 	private final static AdminToolbarService toolbarService = AdminToolbarService.getService();
 
-    protected String colorScheme = null; 
-    
+	protected String colorScheme = null;
+
+	private String processName;
+	private String processId;
+
 	/**
 	 * This method lets the velocity template get hold of all actions inheriting.
 	 * 
@@ -1806,6 +1812,31 @@ public abstract class InfoGlueAbstractAction extends WebworkAbstractAction
 			navigationTitle = siteNodeVO.getName();
 		}
 		return navigationTitle;
+	}
+
+	/**
+	 * Helper method for creating a {@link ProcessBean}. The bean is created and the state for redirecting to
+	 * the ViewProcess action is setup.
+	 * 
+	 * The arguments passed to this method is passed on the the {@link ProcessBeanService}.
+	 * 
+	 * @return A newly created process bean. See the <em>ProcessBeanService</em> documentation for more information.
+	 */
+	protected ProcessBean prepareProcessBean(String processName, String processId, StringManager stringManager)
+	{
+		this.processId = processId;
+		this.processName = processName;
+		return ProcessBeanService.getService().createProcessBean(processName, processId, getInfoGluePrincipal(), stringManager);
+	}
+	
+	public String getProcessId()
+	{
+		return processId;
+	}
+
+	public String getProcessName()
+	{
+		return processName;
 	}
 
 }
