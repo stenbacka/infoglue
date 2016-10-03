@@ -16,7 +16,38 @@
 -->
 	<tlib-version>1.0</tlib-version>
     <short-name>infoglue-component</short-name>
-    
+
+	<tag>
+	    <name>protectEmail</name>
+	    <tag-class>org.infoglue.deliver.taglib.common.ProtectEmailTag</tag-class>
+	    <body-content>JSP</body-content>
+	    <attribute>
+		    <name>id</name>
+	    	<required>false</required>
+	        <rtexprvalue>false</rtexprvalue>
+		</attribute>
+	    <attribute>
+		    <name>value</name>
+	    	<required>true</required>
+	        <rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+		    <name>prefix</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+		    <name>spanClass</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+		    <name>wrapperSpanClass</name>
+	    	<required>false</required>
+	        <rtexprvalue>true</rtexprvalue>
+		</attribute>
+	</tag>
+
 	<tag>
 	    <name>sublist</name>
 	    <tag-class>org.infoglue.deliver.taglib.common.el.SublistTag</tag-class>
