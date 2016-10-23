@@ -3,8 +3,8 @@
 	<script type="text/javascript">
 	<!--
 		$(document).ready(function(){
-			$("#tabsContainer").tabs({ show:function() { resizeInlineTabDivs();} });
-			setTimeout("resizeInlineTabDivs()", 500);
+			$("#tabsContainer").tabs({ show:function() { /*resizeInlineTabDivs();*/} });
+			//setTimeout("resizeInlineTabDivs()", 500);
 						
 			init();
 		});
@@ -17,16 +17,15 @@
 		#end
 
 		var exp;
-	    function notifyExp(v)
-	    {
-	    	exp=v;
-	    }
+		function notifyExp(v)
+		{
+			exp=v;
+		}
 
 		function notifyIsLoaded()
-	    {
-	    	//alert("Tree was loaded - notifyIsLoaded");
-	    	treeIsLoaded = true;
-	    }
+		{
+			treeIsLoaded = true;
+		}
 		
 		function changeRepository(selectBox, iframeName)
 		{
@@ -156,15 +155,33 @@
 		    parent.onCancel(null);
 			return false;
 		}
+		
+		$(document).ready(function() {
+		(function() {
+			var articleToggleButtons = $(".articleAdd-button"),
+				overlayAdd = $("#contentOverlay-add"),
+				overlayChoose = $("#contentOverlay-choose"),
+				tabsContainer = $("#tabsContainer");
+				
+			articleToggleButtons.on("click", function() {
+				var self = $(this);
+				overlayAdd.removeClass("active");
+				overlayChoose.addClass("active");
+				
+				tabsContainer.tabs("option", "active", self.data("tabIndex"));
+			});
+		}())
+		});
 	-->
 	</script>
 	
 	<link rel="stylesheet" type="text/css" href="css/assets.css" />
 	<style type="text/css">
+		html, body { height: 100%; }
+	
 		.linkContainer {
-			width: 660px;
 			display: block;
-			float: left;
+			height: 100%;
 		}
 		
 		.optionalContent {
@@ -172,12 +189,97 @@
 			background-position: 0px 0px;
 			font-family:Arial, Helvetica, sans-serif;
 			font-size:11px;
-			width:20px;
-			height:20px;
+			min-height:20px;
 			display:block;
-			float:left;		
+			padding-left: 30px;
+			line-height: 20px;
+			margin: 10px 0;
 		}
 		
+		.optionalContent > p {
+			margin: 0;
+		}
+
+		.bindingDialogSeperator {
+			background-color: #f6f6f6;
+		}
+		
+		.bindingViewContainer {
+			height: 100%;
+		}
+		
+		.linkDialog-dialog {
+			position: absolute;
+			top: 0;
+			height: 100%;
+			height: 100vh;
+			width: 49vw;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.linkDialog-dialog.structure {
+			left: 0;
+		}
+
+		.linkDialog-dialog.structure:after {
+			content: "";
+			display: block;
+			width: 2vw;
+			height: 100%;
+			background-color: #f6f6f6;
+			position: absolute;
+			right: -2vw;
+			top: 0;
+		}
+
+		.linkDialog-dialog.content {
+			right: 0;
+		}
+
+		linkDialog-contentPicker {
+			width: 100%;
+			height: 100%;
+		}
+
+		.linkDialogArticleIntro {
+			margin: 10px;
+		}
+
+		.optionalContentText {
+			display: none;
+		}
+		
+		.optionalContentText.active {
+			display: inline;
+			display: initial;
+		}
+
+		.linkDialog-contentOverlay {
+			position: absolute;
+			left: 0;
+			top: 0;
+			display: none;
+			background-color: white;
+		}
+
+		.linkDialog-contentOverlay.active {
+			display: block;
+		}
+		
+		.contentOverlay-add > .inner {
+			width: 70%;
+			min-width: 200px;
+			margin: 0 auto;
+			
+		}
+		
+		.articleAdd-button {
+			background: none;
+			border: none;
+			display: block;
+		}
+
 	</style>
 </head>
 
@@ -192,42 +294,16 @@
 </form>
 
 <div id="linkDiv" class="linkContainer">
-
-<table cellpadding="2" cellspacing="0" border="0" width="200">
-<tr>
-	<td valign="top">
-		<div id="structure" style="display: block;">
-			<table cellpadding="0" cellspacing="0" border="0">
-			<tr>
-				<td colspan="2">
-			  		<select size="1" name="repositoryId" class="sitedropbox" onChange="javascript:changeRepository(this, 'itreeFrame');" class="contenttool">
-					    <option value="">$ui.getString("tool.contenttool.chooseRepositoryLabel")</option>
-					    #foreach ($repositoryVO in $repositories)
-					    <option value="$repositoryVO.getRepositoryId()"#if(${repositoryId} == $repositoryVO.getRepositoryId()) selected#end>$repositoryVO.getName()</option>
-					    #end
-					</select>
-				</td>
-			</tr>
-			<tr>
-				<td height="1" colspan="2"><img src="css/images/trans.gif" width="1" height="5"></td>
-			</tr>	
-			<tr>
-				<td class="menu" colspan="2">
-					#set($exp = $this.getExpansion($oldSiteNodeId))
-					<iframe frameborder="0" name="itreeFrame" id="itreeFrame" src="ViewStructureToolMenuHtml!bindingViewV3.action?repositoryId=${repositoryId}$sortArg&exp=$exp&akey=/$!oldSiteNodeId/&select=$!oldSiteNodeId" width="310" height="385" ></iframe>
-				</td>
-			</tr>	
-			</table>
-		</div>
-	</td>	
-	<td valign="middle" width="20">
-		<img src="css/images/trans.gif" width="20" height="1"/>
-	</td>
-	<td valign="top">
+	<div id="structure" style="display: block;" class="structure linkDialog-dialog">
 		<table cellpadding="0" cellspacing="0" border="0">
 		<tr>
-			<td>
-				<a href="javascript:toggleContentDiv();" class="optionalContent" title="$ui.getString('tool.contenttool.linkDialog.optionalContentHeader')"><p>$ui.getString('tool.contenttool.linkDialog.optionalContentHeader')</p></a>
+			<td colspan="2">
+				<select size="1" name="repositoryId" class="sitedropbox" onChange="javascript:changeRepository(this, 'itreeFrame');" class="contenttool">
+					<option value="">$ui.getString("tool.contenttool.chooseRepositoryLabel")</option>
+					#foreach ($repositoryVO in $repositories)
+					<option value="$repositoryVO.getRepositoryId()"#if(${repositoryId} == $repositoryVO.getRepositoryId()) selected#end>$repositoryVO.getName()</option>
+					#end
+				</select>
 			</td>
 		</tr>
 		<tr>
@@ -235,16 +311,70 @@
 		</tr>
 		<tr>
 			<td class="menu" colspan="2">
-				<div id="content" style="display: none;">
-					<iframe frameborder="0" name="listFrameBoundContent" id="listFrameBoundContent" src="ViewContentToolBoundList.action?repositoryId=$!repositoryId&siteNodeId=$!oldSiteNodeId&anchorId=$!oldAnchorId"></iframe>
-					##  ---- IG-3618 deleted code ----
-				</div>
+				#set($exp = $this.getExpansion($oldSiteNodeId))
+				<iframe frameborder="0" name="itreeFrame" id="itreeFrame" src="ViewStructureToolMenuHtml!bindingViewV3.action?repositoryId=${repositoryId}$sortArg&exp=$exp&akey=/$!oldSiteNodeId/&select=$!oldSiteNodeId" width="310" height="385" ></iframe>
 			</td>
 		</tr>
 		</table>
-	</td>
-</tr>
-</table>
+	</div>
+
+	#if( $hasContentView )
+	<div class="contentViewContainer">
+		<div class="linkDialog-contentOverlay contentOverlay-add #if( !$hasArticleContentSelected ) active #end" id="contentOverlay-add">
+			<div class="inner">
+				<p>
+					$ui.getString("tool.contenttool.linkDialog.article.addText")
+					#if( $hasArticleLinkInLinkDialog )
+					<button class="articleAdd-button" data-tab-index="0">$ui.getString("tool.contenttool.linkDialog.article.addContent")</button>
+					#end
+					#if( $hasHTMLHashInLinkDialog )
+					<button class="articleAdd-button" data-tab-index="1">$ui.getString("tool.contenttool.linkDialog.article.addHash")</button>
+					#end
+				</p>
+			</div>
+		</div>
+		<div class="linkDialog-contentOverlay #if( $hasArticleContentSelected ) active #end" id="contentOverlay-choose">
+			<div id="tabsContainer" class="flora content linkDialog-dialog">
+				
+				<p class="linkDialogArticleIntro">
+					$ui.getString("tool.contenttool.linkDialog.linkDialogArticleIntro")
+				</p>
+				<ul>
+					#if( $hasArticleLinkInLinkDialog ) <li><a href="#internalContentLinkTab"><span>$ui.getString("tool.contenttool.linkDialog.bindArticleLink")</span></a></li> #end
+					#if( $hasHTMLHashInLinkDialog ) <li><a href="#internalHashTab"><span>$ui.getString("tool.contenttool.linkDialog.bindArticleHash")</span></a></li> #end
+				</ul>
+		
+				#if( $hasArticleLinkInLinkDialog )
+				<div id="internalContentLinkTab" class="inlineTabDiv">
+					<a href="javascript:toggleContentDiv();" class="optionalContent" title="$ui.getString('tool.contenttool.linkDialog.optionalContentHeader')">
+						#if( "$!oldContentId" == "" )
+							#set( $addContentClasses = "active" )
+							#set( $clearContentClasses = "" )
+						#else
+							#set( $addContentClasses = "" )
+							#set( $clearContentClasses = "active" )
+						#end
+						<p class="optionalContentText addContent $!addContentClasses">$ui.getString('tool.contenttool.linkDialog.optionalContentHeader')</p>
+						<p class="optionalContentText clearContent $!clearContentClasses">$ui.getString('tool.contenttool.linkDialog.optionalContentHeader')</p>
+					</a>
+					<iframe frameborder="0" marginwidth="0" marginheight="0" ascrolling="no" name="internalArticleLinkFrame" id="internalLinkFrame" src="ViewContentHtmlTree.action?repositoryId=$!repositoryId&exp=$exp&akey=/$!oldContentId/&select=$!oldContentId&bodyClass=generaltooledit" class="linkDialog-contentPicker" ></iframe>
+				</div>
+				#end
+		
+				#if( $hasHTMLHashInLinkDialog )
+				<div id="internalHashTab" class="inlineTabDiv">
+					<a href="javascript:toggleContentDiv();" class="optionalContent" title="$ui.getString('tool.contenttool.linkDialog.optionalContentHeader')"><p>$ui.getString('tool.contenttool.linkDialog.optionalContentHeader')</p></a>
+					<div id="content" style="display: none;">
+						<iframe frameborder="0" name="listFrameBoundContent" id="listFrameBoundContent" src="ViewContentToolBoundList.action?repositoryId=$!repositoryId&siteNodeId=$!oldSiteNodeId&anchorId=$!oldAnchorId"></iframe>
+						##  ---- IG-3618 deleted code ----
+					</div>
+					<iframe frameborder="0" marginwidth="0" marginheight="0" scrolling="no" name="internalArticleHashFrame" id="internalAssetFrame" src="" class="linkDialog-contentPicker"></iframe>
+				</div>
+				#end
+			</div>
+		</div>
+	</div>
+	#end
 </div>
 
 #*

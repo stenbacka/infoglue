@@ -191,7 +191,13 @@
 				#editPropertyTextAreaCSS("ServerNode.property.workingGeneralSettings" "workingGeneralSettings" "$this.getDataPropertyValue('workingGeneralSettings')" "40" "6" "righttextarea" "$!serverNodeId" $!cmsPH.workingGeneralSettings)
 
 				#yesNoDropDownWithInheritCSS("ServerNode.property.enableDiskBasedDeployment" "enableDiskBasedDeployment" "$this.getPropertyValue('enableDiskBasedDeployment')" $!cmsPH.enableDiskBasedDeployment)
-				#editPropertyFieldCSS("ServerNode.property.diskBasedDeploymentBasePath" "diskBasedDeploymentBasePath" "$this.getPropertyValue('diskBasedDeploymentBasePath')" "51" "$!serverNodeId" $!cmsPH.diskBasedDeploymentBasePath)	
+				#editPropertyFieldCSS("ServerNode.property.diskBasedDeploymentBasePath" "diskBasedDeploymentBasePath" "$this.getPropertyValue('diskBasedDeploymentBasePath')" "51" "$!serverNodeId" $!cmsPH.diskBasedDeploymentBasePath)
+
+				#set($option1 = ["referenceOnly", "$ui.getString('entity.ServerNode.property.linkArticleInLinkDialog.referenceOnly')"])
+				#set($option2 = ["hashOnly", "$ui.getString('entity.ServerNode.property.linkArticleInLinkDialog.hashOnly')"])
+				#set($option3 = ["referenceAndHash", "$ui.getString('entity.ServerNode.property.linkArticleInLinkDialog.referenceAndHash')"])
+				#set($linkArticleInLinkDialogOptions = [$option1, $option2, $option3])
+				#selectFieldCSS("ServerNode.property.linkArticleInLinkDialog" "linkArticleInLinkDialog" $this.getPropertyValue('linkArticleInLinkDialog') $linkArticleInLinkDialogOptions $!cmsPH.linkArticleInLinkDialog)
 			</div>
 		
 			<div class="inlineTabDiv" id="niceURISettings">

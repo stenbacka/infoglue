@@ -66,6 +66,12 @@ public class ViewContentToolBoundListAction extends InfoGlueAbstractAction
 	@Override
 	public String doExecute() throws Exception
 	{
+		if (this.siteNodeId == null)
+		{
+			logger.debug("Tried to view bound content list without a site node id.");
+			contentList = new HashMap<Integer, String>();
+			return "success";
+		}
 		List<LanguageVO> enabledLangs = SiteNodeController.getController().getEnabledLanguageVOListForSiteNode(this.siteNodeId);
 		SiteNodeVersionVO latestSiteNodeVersion = SiteNodeVersionControllerProxy.getSiteNodeVersionControllerProxy().getLatestActiveSiteNodeVersionVO(this.siteNodeId);
 		
@@ -79,7 +85,7 @@ public class ViewContentToolBoundListAction extends InfoGlueAbstractAction
 			logger.info("componentXML:" + componentXML);
 			
 			Document document = XMLHelper.readDocumentFromByteArray(componentXML.getBytes("UTF-8"));
-			String xpath = "//component[@name='" + slotName + "']/properties/property[@name='" + contentName + "']/binding";
+			String xpath = "//binding";
 			NodeList components = org.apache.xpath.XPathAPI.selectNodeList(document.getDocumentElement(), xpath);
 			int NrOfComponents = components.getLength();
 			logger.info("Number of sitenode contents: " + NrOfComponents);

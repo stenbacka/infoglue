@@ -56,6 +56,9 @@ if(typeof CKEDITOR != "undefined")
 	    config.filebrowserImageBrowseUrl = '$request.contextPath/ViewContentVersion!viewAssetBrowserForFCKEditorV3.action?repositoryId=$!request.getParameter("repositoryId")&contentId=$!request.getParameter("contentId")&languageId=$!request.getParameter("languageId")&assetTypeFilter=*';
 	    config.filebrowserImageUploadUrl = '$request.contextPath/CreateDigitalAsset.action?contentVersionId=$!contentVersionId&useFckUploadMessages=true';
 	    config.filebrowserUploadUrl = '$request.contextPath/CreateDigitalAsset.action?contentVersionId=$!contentVersionId&useFckUploadMessages=true';
+	    
+	    config.filebrowserWindowWidth = 690;
+	    config.filebrowserWindowHeight = 700;
 	};
 }
 else if(typeof FCKConfig != "undefined")
@@ -354,11 +357,11 @@ function overrideLabels()
 	//alert("Lang:" + FCKConfig.DefaultLanguage);
 	if(FCKConfig.DefaultLanguage == "sv")
 	{
-		FCKLang.DlgBtnBrowseServer = "VŠlj frŒn InfoGlue...";
+		FCKLang.DlgBtnBrowseServer = "Vï¿½lj frï¿½n InfoGlue...";
 		FCKLang.DlgImgBtnUpload = "Ladda upp till InfoGlue";
 		FCKLang.DlgLnkBtnUpload = "Ladda upp till InfoGlue";
-	    FCKLang.DlgImgURL = "URL (glšm ej http:// om du anger extern URL)";
-	    FCKLang.DlgLnkURL = "URL (glšm ej http:// om du anger extern URL)";
+	    FCKLang.DlgImgURL = "URL (glï¿½m ej http:// om du anger extern URL)";
+	    FCKLang.DlgLnkURL = "URL (glï¿½m ej http:// om du anger extern URL)";
 	}
 	else
 	{
@@ -366,6 +369,6 @@ function overrideLabels()
 		FCKLang.DlgImgBtnUpload = "Send to InfoGlue";
 		FCKLang.DlgLnkBtnUpload = "Send to InfoGlue";
 	    FCKLang.DlgImgURL = "URL (don't forget http:// if you state an external url)";
-	    FCKLang.DlgLnkURL = "URL (glšm ej http:// om du anger extern URL)";
+	    FCKLang.DlgLnkURL = "URL (glï¿½m ej http:// om du anger extern URL)";
 	}
 }

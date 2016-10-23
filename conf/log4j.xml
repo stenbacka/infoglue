@@ -39,13 +39,13 @@
 	Infoglue's debug logging feature. See the Infoglue documentation for more information about this.
 	The appender type may be changed but the name has to be 'INFOGLUE-DEBUG' for the debug logging
 	feature to work. -->
-	<appender name="INFOGLUE-DEBUG" class="org.apache.log4j.ConsoleAppender">
-		<param name="Target" value="System.out"/>
-		<param name="Threshold" value="TRACE"/>
-		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%d{dd MMM yyyy HH:mm:ss.SSS} [%-5p] [%t] [%c] - %m%n"/>
-		</layout>
-	</appender>
+<!-- 	<appender name="INFOGLUE-DEBUG" class="org.apache.log4j.ConsoleAppender"> -->
+<!-- 		<param name="Target" value="System.out"/> -->
+<!-- 		<param name="Threshold" value="TRACE"/> -->
+<!-- 		<layout class="org.apache.log4j.PatternLayout"> -->
+<!-- 			<param name="ConversionPattern" value="%d{dd MMM yyyy HH:mm:ss.SSS} [%-5p] [%t] [%c] - %m%n"/> -->
+<!-- 		</layout> -->
+<!-- 	</appender> -->
 
 	<!-- Not used anymore. Included for compatibility. -->
 	<appender name="CONSOLE-DEBUG" class="org.apache.log4j.ConsoleAppender">
@@ -57,12 +57,12 @@
 	</appender>
 
 	<!-- Not used anymore. Included for compatibility. -->
-	<appender name="INFOGLUE-FILE-DEBUG" class="org.apache.log4j.RollingFileAppender">
+	<appender name="INFOGLUE-DEBUG" class="org.apache.log4j.RollingFileAppender">
 		<param name="File" value="${catalina.base}/logs/infoglue-debug.log"/>
 		<param name="Append" value="true"/>
  		<param name="MaxFileSize" value="10MB"/>
 		<param name="MaxBackupIndex" value="5"/>
-		<param name="Threshold" value="DEBUG"/>
+		<param name="Threshold" value="TRACE"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%d{dd MMM yyyy HH:mm:ss.SSS} [%-5p] [%t] [%c] - %m%n"/>
 		</layout>

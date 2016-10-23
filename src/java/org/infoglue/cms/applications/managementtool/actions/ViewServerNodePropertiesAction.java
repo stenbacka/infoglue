@@ -394,12 +394,11 @@ public class ViewServerNodePropertiesAction extends InfoGluePropertiesAbstractAc
 	    
 	    populate(ps, "enableDiskBasedDeployment");
 	    populate(ps, "diskBasedDeploymentBasePath");
-	    
-	    System.out.println("CmsPropertyHandler.getEnableDiskBasedDeployment()......");
-	    System.out.println("CmsPropertyHandler.getEnableDiskBasedDeployment():" + CmsPropertyHandler.getEnableDiskBasedDeployment());
-	    if(CmsPropertyHandler.getEnableDiskBasedDeployment())
+
+		populate(ps, "linkArticleInLinkDialog");
+
+		if(CmsPropertyHandler.getEnableDiskBasedDeployment())
 		{
-			System.out.println("Starting disk sync area");
 			org.infoglue.cms.filesync.DevelopmentResourcesSyncService.getInstance(true);
 		}
 

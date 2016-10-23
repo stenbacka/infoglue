@@ -5,34 +5,17 @@
 	
 	function resize()
 	{
-		var dimensionsWidth = $(window).width();
-		var dimensionsHeight = $(window).height();
-		var offsetTop = $("#tabsContainer").offset().top;
-		var availableHeight = dimensionsHeight - offsetTop - $("#footertoolbar").height();
-		$("#tabsContainer").height(availableHeight);
-		
-	  	if(dimensionsWidth != 0)
-	  	{
-	  		/*
-	  		alert($("#tabsContainer").height() - $("#tabsContainer > ul").height() - 4);
-	  		alert($("#tabsContainer").height() - $("#tabsContainer > ul").height() - 6);
-	  		alert(dimensionsHeight - 220);
-	  		$(".inlineTabDiv").height($("#tabsContainer").height() - $("#tabsContainer > ul").height() - 4);
-			$(".inlineTabDiv > iframe").height($("#tabsContainer").height() - $("#tabsContainer > ul").height() - 6);
-			$(".inlineSubTabDiv").height(dimensionsHeight - 220);
-			*/
-			$(".inlineTabDiv").height($("#tabsContainer").height() - $("#tabsContainer > ul").height() - 4).width($("#tabsContainer").width());
-			$(".inlineTabDiv > iframe").height($("#tabsContainer").height() - $("#tabsContainer > ul").height() - 6).width($("#tabsContainer").width());
-
-	  		$(".inlineSubTabDiv").height(dimensionsHeight - 220);
-			$(".inlineSubTabDiv").width(dimensionsHeight - 40);
-			$(".inlineSubTabDiv > iframe").width(dimensionsWidth - 60);
-		}
-		else
-		{
-			setTimeout("resize()", 300);
-		}
+		console.log("DEBUG was called");
 	}
+	
+	var resizeScrollArea = function()
+	{
+		var sum = 0, container = $("#tabsContainer"), parent = container.parent();
+		container.siblings().each(function(index, element) {
+			sum += $(element).outerHeight(true);
+		});
+		$("#tabsContainer").height(parent.outerHeight(true) - sum);
+	};
 
 	var uploadButton = true;
 	function showUploadButton(val)
@@ -90,7 +73,7 @@
 				/*resizeInlineTabDivs();*/ 
 			} 
 		});
-		setTimeout("resize();", 100);
+		//setTimeout("resize();", 100);
 		//setTimeout("resizeInlineTabDivs()", 100);
 		init();
 	});
@@ -347,30 +330,50 @@
 	}
 	-->
 	</script>
-	
+
+	<style>
+		html, body {
+			height: 100%;
+		}
+
+		#tabsContainer {
+			display: flex;
+			flex-direction: column;
+		}
+		
+		#tabsContainer > .inlineTabDiv {
+			margin-bottom: 0;
+			flex: 1 1 100%;
+		}
+		
+		.inlineTabDiv > iframe {
+			width: 100%;
+			height: 100%;
+		}
+	</style>
+
 </head>
 
 <body class="generaltooledit">
-    
 	#lightMenuToolbar("" $buttons $rightButtons) 
 
 	<div style="clear: both;"></div>
 	
 	<h3>$ui.getString("tool.contenttool.linkDialog.linkDialogHeader")</h3>
 
-	<div id="tabsContainer" class="flora">      
+	<div id="tabsContainer" class="flora">
 
 		<ul>
-	        <li><a href="#internalLinkTab"><span>$ui.getString("tool.contenttool.linkDialog.internalPageTabLabel")</span></a></li>
-	        <li><a href="#internalAssetTab"><span>$ui.getString("tool.contenttool.linkDialog.internalAssetTabLabel")</span></a></li>	        
-	    </ul>
+			<li><a href="#internalLinkTab"><span>$ui.getString("tool.contenttool.linkDialog.internalPageTabLabel")</span></a></li>
+			<li><a href="#internalAssetTab"><span>$ui.getString("tool.contenttool.linkDialog.internalAssetTabLabel")</span></a></li>
+		</ul>
 	
 		<div id="internalLinkTab" class="inlineTabDiv">
-			<iframe frameborder="0" marginwidth="0" marginheight="0" ascrolling="no" name="internalLinkFrame" id="internalLinkFrame" src="" width="690" height="450" ></iframe>
+			<iframe frameborder="0" marginwidth="0" marginheight="0" ascrolling="no" name="internalLinkFrame" id="internalLinkFrame" src=""></iframe>
 		</div>
 
 		<div id="internalAssetTab" class="inlineTabDiv">
-			<iframe frameborder="0" marginwidth="0" marginheight="0" scrolling="no" name="internalAssetFrame" id="internalAssetFrame" src="" width="690" height="450" ></iframe>
+			<iframe frameborder="0" marginwidth="0" marginheight="0" scrolling="no" name="internalAssetFrame" id="internalAssetFrame" src=""></iframe>
 		</div>
 
 	</div>

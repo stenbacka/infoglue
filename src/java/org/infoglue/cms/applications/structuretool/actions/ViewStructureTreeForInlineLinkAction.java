@@ -32,6 +32,7 @@ import org.infoglue.cms.controllers.kernel.impl.simple.RepositoryController;
 import org.infoglue.cms.controllers.kernel.impl.simple.SiteNodeController;
 import org.infoglue.cms.entities.content.ContentVO;
 import org.infoglue.cms.entities.structure.SiteNodeVO;
+import org.infoglue.cms.util.CmsPropertyHandler;
 import org.infoglue.cms.util.ConstraintExceptionBuffer;
 
 /**
@@ -56,7 +57,7 @@ public class ViewStructureTreeForInlineLinkAction extends InfoGlueAbstractAction
 	
 	public ViewStructureTreeForInlineLinkAction()
 	{
-		this.ceb = new ConstraintExceptionBuffer();			
+		this.ceb = new ConstraintExceptionBuffer();
 	}	
 
 	public void setRepositoryId(Integer repositoryId)
@@ -212,4 +213,25 @@ public class ViewStructureTreeForInlineLinkAction extends InfoGlueAbstractAction
 	public void setOldAnchorId(Integer oldAnchorId) {
 		this.oldAnchorId = oldAnchorId;
 	}
+
+	public boolean getHasContentView()
+	{
+		return CmsPropertyHandler.hasArticleLinkInLinkDialog() || CmsPropertyHandler.hasHTMLHashInLinkDialog();
+	}
+
+	public boolean getHasArticleLinkInLinkDialog()
+	{
+		return CmsPropertyHandler.hasArticleLinkInLinkDialog();
+	}
+
+	public boolean getHasHTMLHashInLinkDialog()
+	{
+		return CmsPropertyHandler.hasHTMLHashInLinkDialog();
+	}
+
+	public boolean getHasArticleContentSelected()
+	{
+		return getOldContentId() != null || getOldAnchorId() != null;
+	}
+
 }
